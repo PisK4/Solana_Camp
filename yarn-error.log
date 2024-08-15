@@ -1,0 +1,45 @@
+Arguments: 
+  /root/.volta/tools/image/node/18.17.0/bin/node /root/.volta/tools/image/yarn/1.3.2/bin/yarn.js install
+
+PATH: 
+  /root/.volta/tools/image/yarn/1.3.2/bin:/root/.volta/tools/image/node/18.17.0/bin:/root/.local/share/solana/install/active_release/bin:/root/.volta/bin:/root/.volta/tools/image/packages/rustup/lib/node_modules/rustup/CARGO_HOME/bin:/root/.cargo/bin:/root/.volta/bin:/root/go/bin:/usr/local/go/bin:FOUNDRY:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/usr/lib/wsl/lib:/mnt/c/Users/pis/AppData/Local/Programs/cursor/resources/app/bin:/mnt/c/WINDOWS/system32:/mnt/c/WINDOWS:/mnt/c/WINDOWS/System32/Wbem:/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/:/mnt/c/WINDOWS/System32/OpenSSH/:/mnt/c/Program Files/nodejs/:/mnt/c/ProgramData/chocolatey/bin:/mnt/c/Program Files/Git/cmd:/mnt/c/Users/pis/.cargo/bin:/mnt/c/Users/pis/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/pis/AppData/Roaming/npm:/mnt/c/Users/pis/AppData/Local/GitHubDesktop/bin:/mnt/c/Users/pis/AppData/Local/Programs/cursor/resources/app/bin:/mnt/c/Android:/mnt/c/Windows/System32:/mnt/c/Program Files/dotnet/:/mnt/c/Users/pis/.cargo/bin:/mnt/c/Users/pis/AppData/Local/Microsoft/WindowsApps:/mnt/c/Users/pis/AppData/Local/Programs/Microsoft VS Code/bin:/mnt/c/Users/pis/AppData/Roaming/npm:/mnt/c/Users/pis/.dotnet/tools:/snap/bin:/root/.dotnet/tools:/mnt/c/Users/pis/AppData/Roaming/npm/mine/circom:/root/.foundry/bin
+
+Yarn version: 
+  1.3.2
+
+Node version: 
+  18.17.0
+
+Platform: 
+  linux x64
+
+npm manifest: 
+  {
+      "scripts": {
+          "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
+          "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
+      },
+      "dependencies": {
+          "@coral-xyz/anchor": "^0.28.0"
+      },
+      "devDependencies": {
+          "chai": "^4.3.4",
+          "mocha": "^9.0.3",
+          "ts-mocha": "^10.0.0",
+          "@types/bn.js": "^5.1.0",
+          "@types/chai": "^4.3.0",
+          "@types/mocha": "^9.0.0",
+          "typescript": "^4.3.5",
+          "prettier": "^2.6.2"
+      }
+  }
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
+
+Trace: 
+  Error: getaddrinfo EAI_AGAIN registry.npmmirror.com
+      at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:108:26)

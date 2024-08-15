@@ -1,0 +1,4 @@
+{
+  "rust-analyzer.linkedProjects": ["./programs/camp/Cargo.toml"],
+  "rust-analyzer.showUnlinkedFileNotification": false
+}
