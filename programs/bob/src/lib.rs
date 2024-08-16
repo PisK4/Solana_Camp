@@ -56,8 +56,8 @@ pub struct BobAddOp<'info> {
     #[account(mut)]
     pub bob_data_account: Account<'info, BobData>,
     /// CHECK: We need signer to claim ownership
-    #[account(mut)]
-    pub message_authority: Signer<'info>,
+    #[account(signer)]
+    pub message_authority: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
