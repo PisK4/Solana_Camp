@@ -1,7 +1,9 @@
+pub mod channel;
 pub mod errors;
 pub mod governance;
 pub mod library;
 use anchor_lang::prelude::*;
+use channel::*;
 use errors::*;
 use governance::*;
 
@@ -24,5 +26,9 @@ pub mod vizing_core {
         params: ModifySettingsParams,
     ) -> Result<()> {
         ModifySettings::execute(&mut ctx, &params)
+    }
+
+    pub fn launch(mut ctx: Context<LaunchOp>, params: LaunchParams) -> Result<()> {
+        LaunchOp::execute(&mut ctx, params)
     }
 }

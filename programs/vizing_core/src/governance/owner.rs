@@ -8,7 +8,13 @@ pub struct InitVizingPad<'info> {
         payer = payer,
         space = 8 + VizingPadSettings::INIT_SPACE,
         seeds = [library::contants::VIZING_PAD_SETTINGS_SEED],
-        bump
+        bump,
+        constraint = vizing.owner != library::contants::SYSTEM_ACCOUNT
+            && vizing.engine_admin != library::contants::SYSTEM_ACCOUNT
+            && vizing.station_admin != library::contants::SYSTEM_ACCOUNT
+            && vizing.gas_pool_admin != library::contants::SYSTEM_ACCOUNT
+            && vizing.trusted_relayer != library::contants::SYSTEM_ACCOUNT
+            && vizing.registered_validator != library::contants::SYSTEM_ACCOUNT
     )]
     pub vizing: Account<'info, VizingPadSettings>,
 
@@ -69,7 +75,13 @@ pub struct VizingPadSettings {
 #[derive(Accounts)]
 pub struct ModifySettings<'info> {
     pub owner: Signer<'info>,
-    #[account(mut, has_one = owner @ VizingError::NotOwner, seeds = [library::contants::VIZING_PAD_SETTINGS_SEED], bump = vizing.bump)]
+    #[account(mut, has_one = owner @ VizingError::NotOwner, seeds = [library::contants::VIZING_PAD_SETTINGS_SEED], bump = vizing.bump, 
+     constraint = vizing.owner != library::contants::SYSTEM_ACCOUNT
+        && vizing.engine_admin != library::contants::SYSTEM_ACCOUNT
+        && vizing.station_admin != library::contants::SYSTEM_ACCOUNT
+        && vizing.gas_pool_admin != library::contants::SYSTEM_ACCOUNT
+        && vizing.trusted_relayer != library::contants::SYSTEM_ACCOUNT
+        && vizing.registered_validator != library::contants::SYSTEM_ACCOUNT)]
     pub vizing: Account<'info, VizingPadSettings>,
 }
 

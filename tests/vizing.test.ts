@@ -207,4 +207,36 @@ describe("Vizing Test", () => {
       );
     }
   });
+
+  it("Launch", async () => {
+    const message = {
+      mode: 5,
+      targetContract: anchor.web3.Keypair.generate().publicKey,
+      executeGasLimit: new anchor.BN(6),
+      maxFeePerGas: new anchor.BN(7),
+      signature: Buffer.from("1234"),
+    };
+
+    const launchParams = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: provider.wallet.publicKey,
+      sender: provider.wallet.publicKey,
+      value: new anchor.BN(3),
+      destChainid: new anchor.BN(4),
+      additionParams: Buffer.alloc(0),
+      message: message,
+    };
+
+    {
+      const tx = await vizingProgram.methods
+        .launch(launchParams)
+        .accounts({
+          feePayer: provider.wallet.publicKey,
+          messageAuthority: provider.wallet.publicKey,
+        })
+        .rpc();
+      console.log(`launch: ${tx}`);
+    }
+  });
 });
