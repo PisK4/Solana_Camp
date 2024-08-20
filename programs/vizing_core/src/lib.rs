@@ -5,6 +5,15 @@ use anchor_lang::prelude::*;
 use channel::*;
 use governance::*;
 
+pub mod vizing_gas_system;
+pub mod error;
+pub mod state;
+pub mod message_type_lib;
+pub mod l2_support_lib;
+pub mod message_monitor_lib;
+pub mod message_core;
+pub mod expert_hook;
+
 declare_id!("VzgnUvjAQD9oXjHLsVGrS67GCMVdzKpwHGj3QanJhk3");
 
 #[program]

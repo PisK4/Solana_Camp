@@ -8,10 +8,7 @@ use crate::message_type_lib::*;
 use crate::state::*;
 use crate::message_monitor_lib::*;
 
-declare_id!("Ga4UfvXHBB4V1FgA5bvvrHT4gg7rraGLG1vshzxndW4i");
-
-#[program]
-mod expert_hook {
+pub mod expert_hook {
     use super::*;
 
     pub fn init_power_user(
