@@ -1,3 +1,4 @@
+use super::*;
 use crate::governance::*;
 use crate::library::*;
 use anchor_lang::prelude::*;
@@ -75,7 +76,7 @@ impl LaunchOp<'_> {
             sender: params.sender,
             src_contract: ctx.accounts.message_authority.key(),
             value: params.value,
-            fee: 0,
+            fee: fee,
             dest_chainid: params.dest_chainid,
             addition_params: params.addition_params,
             message: params.message,
@@ -83,28 +84,4 @@ impl LaunchOp<'_> {
 
         Ok(())
     }
-}
-
-#[account]
-#[derive(InitSpace)]
-pub struct LaunchParams {
-    pub erliest_arrival_timestamp: u64,
-    pub latest_arrival_timestamp: u64,
-    pub relayer: Pubkey,
-    pub sender: Pubkey,
-    pub value: u64,
-    pub dest_chainid: u64,
-    #[max_len(256)]
-    pub addition_params: Vec<u8>,
-    pub message: Message,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
-pub struct Message {
-    pub mode: u8,
-    pub target_contract: Pubkey,
-    pub execute_gas_limit: u64,
-    pub max_fee_per_gas: u64,
-    #[max_len(256)]
-    pub signature: Vec<u8>,
 }
