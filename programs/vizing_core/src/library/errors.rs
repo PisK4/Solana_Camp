@@ -10,10 +10,14 @@ pub enum VizingError {
     NotEngineAdmin,
     #[msg("Unauthorized: Not Gas Pool Admin")]
     NotGasPoolAdmin,
+    #[msg("Unauthorized: Not Relayer")]
+    NotRelayer,
+    #[msg("Unauthorized: Relayer Not Active")]
+    RelayerNotActivated,
     #[msg("Already Initialized")]
     AlreadyInitialized,
     #[msg("Unauthorized: Fee Collector Invalid")]
     FeeCollectorInvalid,
-    #[msg("Vizing Not Active")]
-    VizingNotActive,
+    #[msg("Vizing Not Activated")]
+    VizingNotActivated,
 }

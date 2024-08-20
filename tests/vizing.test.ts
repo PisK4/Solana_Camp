@@ -18,9 +18,11 @@ describe("Vizing Test", () => {
   const vizingProgram = anchor.workspace.VizingCore as Program<VizingCore>;
   const vizingPadSettingsSeed = Buffer.from("Vizing_Pad_Settings_Seed");
   const relayerSettingsSeed = Buffer.from("Relayer_Settings_Seed");
+  const vizingAuthoritySeed = Buffer.from("Vizing_Authority_Seed");
 
   let vizingPadSettings: anchor.web3.PublicKey;
   let relayerSettings: anchor.web3.PublicKey;
+  let vizingAuthority: anchor.web3.PublicKey;
 
   const feeReceiverKeyPair = anchor.web3.Keypair.fromSeed(
     Buffer.from(padStringTo32Bytes("fee_receiver"))
@@ -107,11 +109,23 @@ describe("Vizing Test", () => {
     }
 
     {
+      const seed = [vizingAuthoritySeed];
+      const [authority, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+        seed,
+        vizingProgram.programId
+      );
+
+      console.log(`authority: ${authority.toBase58()}, bump: ${bump}`);
+      vizingAuthority = authority;
+    }
+
+    {
       const tx = await vizingProgram.methods
         .initializeVizingPad(initParams)
         .accounts({
           vizing: vizingPadSettings,
           relayer: relayerSettings,
+          vizingAuthority: vizingAuthority,
           payer: provider.wallet.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
         })
@@ -148,6 +162,7 @@ describe("Vizing Test", () => {
           .accounts({
             vizing: vizingPadSettings,
             relayer: relayerSettings,
+            vizingAuthority: vizingAuthority,
             payer: provider.wallet.publicKey,
             systemProgram: anchor.web3.SystemProgram.programId,
           })

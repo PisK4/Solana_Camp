@@ -18,6 +18,10 @@ pub mod vizing_core {
         LaunchOp::execute(&mut ctx, params)
     }
 
+    pub fn landing(mut ctx: Context<LandingOp>, params: LandingParams) -> Result<()> {
+        LandingOp::execute(&mut ctx, params)
+    }
+
     // **********  channel end ************
 
     // **********  governance start ************

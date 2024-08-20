@@ -27,6 +27,16 @@ pub struct InitVizingPad<'info> {
     )]
     pub relayer: Account<'info, RelayerSettings>,
 
+    /// CHECK: We need this PDA as a signer
+    #[account(
+        init,
+        payer = payer,
+        space = 8 + VizingAuthorityParams::INIT_SPACE,
+        seeds = [contants::VIZING_AUTHORITY_SEED],
+        bump,
+    )]
+    pub vizing_authority: Account<'info, VizingAuthorityParams>,
+
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -58,6 +68,15 @@ impl InitVizingPad<'_> {
         ctx.accounts.relayer.bump = bump;
         ctx.accounts.relayer.relayer = params.trusted_relayer;
         ctx.accounts.relayer.is_enabled = true;
+
+        let (_, bump) = Pubkey::find_program_address(
+            &[contants::VIZING_AUTHORITY_SEED],
+            &ctx.program_id,
+        );
+
+        ctx.accounts.vizing_authority.bump = bump;
+
+
         Ok(())
     }
 }
@@ -253,5 +272,12 @@ impl GrantFeeCollector<'_> {
         ctx.accounts.vizing.fee_receiver = _fee_collector;
         Ok(())
     }
+}
+
+
+#[account]
+#[derive(InitSpace)]
+pub struct VizingAuthorityParams {
+    pub bump: u8,
 }
 
