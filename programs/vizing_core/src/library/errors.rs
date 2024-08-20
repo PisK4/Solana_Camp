@@ -6,6 +6,12 @@ pub enum VizingError {
     MessageSigerInvalid,
     #[msg("Unauthorized: Not Owner")]
     NotOwner,
+    #[msg("Unauthorized: Not Engine Admin")]
+    NotEngineAdmin,
     #[msg("Already Initialized")]
     AlreadyInitialized,
+    #[msg("Unauthorized: Fee Collector Invalid")]
+    FeeCollectorInvalid,
+    #[msg("Vizing Not Active")]
+    VizingNotActive,
 }

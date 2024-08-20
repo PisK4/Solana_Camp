@@ -1,3 +1,3 @@
-pub mod owner;
+pub mod ownership;
 
-pub use owner::*;
+pub use ownership::*;
