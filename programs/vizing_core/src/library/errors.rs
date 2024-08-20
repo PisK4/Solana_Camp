@@ -8,6 +8,8 @@ pub enum VizingError {
     NotOwner,
     #[msg("Unauthorized: Not Engine Admin")]
     NotEngineAdmin,
+    #[msg("Unauthorized: Not Gas Pool Admin")]
+    NotGasPoolAdmin,
     #[msg("Already Initialized")]
     AlreadyInitialized,
     #[msg("Unauthorized: Fee Collector Invalid")]

@@ -54,5 +54,12 @@ pub mod vizing_core {
     pub fn revoke_relayer(mut ctx: Context<GrantRelayer>, relayer: Pubkey) -> Result<()> {
         GrantRelayer::revoke_relayer(&mut ctx, relayer)
     }
+
+    pub fn grant_fee_collector(
+        mut ctx: Context<GrantFeeCollector>,
+        fee_collector: Pubkey,
+    ) -> Result<()> {
+        GrantFeeCollector::grant_fee_collector(&mut ctx, fee_collector)
+    }
     // ***********  governance end ************
 }

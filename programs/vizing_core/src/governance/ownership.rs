@@ -14,7 +14,6 @@ pub struct InitVizingPad<'info> {
             && vizing.fee_receiver != contants::SYSTEM_ACCOUNT
             && vizing.engine_admin != contants::SYSTEM_ACCOUNT
             && vizing.station_admin != contants::SYSTEM_ACCOUNT
-            && vizing.trusted_relayer != contants::SYSTEM_ACCOUNT
             && vizing.registered_validator != contants::SYSTEM_ACCOUNT
     )]
     pub vizing: Account<'info, VizingPadSettings>,
@@ -46,6 +45,7 @@ impl InitVizingPad<'_> {
         ctx.accounts.vizing.fee_receiver = params.fee_receiver;
         ctx.accounts.vizing.engine_admin = params.engine_admin;
         ctx.accounts.vizing.station_admin = params.station_admin;
+        ctx.accounts.vizing.gas_pool_admin = params.gas_pool_admin;
         ctx.accounts.vizing.registered_validator = params.registered_validator;
         ctx.accounts.vizing.is_paused = params.is_paused;
 
@@ -56,6 +56,7 @@ impl InitVizingPad<'_> {
         );
 
         ctx.accounts.relayer.bump = bump;
+        ctx.accounts.relayer.relayer = params.trusted_relayer;
         ctx.accounts.relayer.is_enabled = true;
         Ok(())
     }
@@ -68,6 +69,7 @@ pub struct InitVizingPadParams {
     pub fee_receiver: Pubkey,
     pub engine_admin: Pubkey,
     pub station_admin: Pubkey,
+    pub gas_pool_admin: Pubkey,
     pub trusted_relayer: Pubkey,
     pub registered_validator: Pubkey,   
     pub is_paused: bool,
@@ -83,7 +85,7 @@ pub struct VizingPadSettings {
     pub fee_receiver: Pubkey,
     pub engine_admin: Pubkey,
     pub station_admin: Pubkey,
-    pub trusted_relayer: Pubkey,
+    pub gas_pool_admin: Pubkey,
     pub registered_validator: Pubkey,
     // state
     pub is_paused: bool,
@@ -96,6 +98,7 @@ pub struct ModifySettings<'info> {
      constraint = vizing.owner != contants::SYSTEM_ACCOUNT
         && vizing.fee_receiver != contants::SYSTEM_ACCOUNT
         && vizing.engine_admin != contants::SYSTEM_ACCOUNT
+        && vizing.gas_pool_admin != contants::SYSTEM_ACCOUNT
         && vizing.station_admin != contants::SYSTEM_ACCOUNT
         && vizing.registered_validator != contants::SYSTEM_ACCOUNT)]
     pub vizing: Account<'info, VizingPadSettings>,
@@ -106,6 +109,7 @@ impl ModifySettings<'_> {
         ctx.accounts.vizing.owner = params.owner;
         ctx.accounts.vizing.fee_receiver = params.fee_receiver;
         ctx.accounts.vizing.engine_admin = params.engine_admin;
+        ctx.accounts.vizing.gas_pool_admin = params.gas_pool_admin;
         ctx.accounts.vizing.station_admin = params.station_admin;
         ctx.accounts.vizing.registered_validator = params.registered_validator;
         Ok(())
@@ -118,6 +122,7 @@ pub struct ModifySettingsParams {
     pub owner: Pubkey,
     pub fee_receiver: Pubkey,
     pub engine_admin: Pubkey,
+    pub gas_pool_admin: Pubkey,
     pub station_admin: Pubkey,
     pub registered_validator: Pubkey,
     pub is_paused: bool,
@@ -177,7 +182,7 @@ pub struct GrantRelayer<'info> {
 
     #[account(mut, has_one = station_admin @ VizingError::NotOwner, seeds = [contants::VIZING_PAD_SETTINGS_SEED], bump = vizing.bump, 
      constraint = vizing.owner != contants::SYSTEM_ACCOUNT
-        && vizing.station_admin != contants::SYSTEM_ACCOUNT)]
+        || vizing.station_admin != contants::SYSTEM_ACCOUNT)]
     pub vizing: Account<'info, VizingPadSettings>,
 
     #[account(
@@ -227,5 +232,26 @@ impl GrantRelayer<'_> {
         Ok(())
     }
     
+}
+
+#[derive(Accounts)]
+pub struct GrantFeeCollector<'info> {
+    #[account(mut)]
+    pub gas_pool_admin: Signer<'info>,
+
+    #[account(mut, has_one = gas_pool_admin @ VizingError::NotGasPoolAdmin, seeds = [contants::VIZING_PAD_SETTINGS_SEED], bump = vizing.bump, 
+     constraint = vizing.owner != contants::SYSTEM_ACCOUNT
+        || vizing.gas_pool_admin != contants::SYSTEM_ACCOUNT)]
+    pub vizing: Account<'info, VizingPadSettings>,
+
+    pub system_program: Program<'info, System>,
+}
+
+
+impl GrantFeeCollector<'_> {
+    pub fn grant_fee_collector(ctx: &mut Context<GrantFeeCollector>, _fee_collector: Pubkey) -> Result<()> {
+        ctx.accounts.vizing.fee_receiver = _fee_collector;
+        Ok(())
+    }
 }
 

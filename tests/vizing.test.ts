@@ -39,6 +39,10 @@ describe("Vizing Test", () => {
     Buffer.from(padStringTo32Bytes("station_admim"))
   );
 
+  const gasPoolAdminKeyPair = anchor.web3.Keypair.fromSeed(
+    Buffer.from(padStringTo32Bytes("gas_pool_admin"))
+  );
+
   const trustedRelayerKeyPairs = [
     anchor.web3.Keypair.fromSeed(
       Buffer.from(padStringTo32Bytes("trusted_relayer_1"))
@@ -78,6 +82,7 @@ describe("Vizing Test", () => {
       owner: provider.wallet.publicKey,
       feeReceiver: feeReceiverKeyPair.publicKey,
       engineAdmin: engineAdminKeyPairs.map((keypair) => keypair.publicKey)[0],
+      gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
       stationAdmin: stationAdminKeyPair.publicKey,
       trustedRelayer: trustedRelayerKeyPairs.map(
         (keypair) => keypair.publicKey
@@ -161,6 +166,7 @@ describe("Vizing Test", () => {
       owner: provider.wallet.publicKey,
       feeReceiver: feeReceiverKeyPair.publicKey,
       engineAdmin: engineAdminKeyPairs.map((keypair) => keypair.publicKey)[0],
+      gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
       stationAdmin: stationAdminKeyPair.publicKey,
       trustedRelayer: trustedRelayerKeyPairs.map(
         (keypair) => keypair.publicKey
@@ -213,6 +219,65 @@ describe("Vizing Test", () => {
       );
       expect(vizingPadAccount.registeredValidator.toBase58()).to.equal(
         modifyParams.registeredValidator.toBase58()
+      );
+    }
+  });
+
+  it("grant fee collector", async () => {
+    const newFeeCollector = anchor.web3.Keypair.generate();
+
+    {
+      try {
+        const fakeGasPoolAdmin = anchor.web3.Keypair.generate();
+        await vizingProgram.methods
+          .grantFeeCollector(newFeeCollector.publicKey)
+          .accounts({
+            gasPoolAdmin: fakeGasPoolAdmin.publicKey,
+            vizing: vizingPadSettings,
+          })
+          .signers([fakeGasPoolAdmin])
+          .rpc();
+        throw new Error("should not come here");
+      } catch (error) {
+        expect(error.error.errorMessage).to.equal(
+          "Unauthorized: Not Gas Pool Admin"
+        );
+      }
+    }
+
+    {
+      const tx = await vizingProgram.methods
+        .grantFeeCollector(newFeeCollector.publicKey)
+        .accounts({
+          gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
+          vizing: vizingPadSettings,
+        })
+        .signers([gasPoolAdminKeyPair])
+        .rpc();
+      console.log(`grant fee collector: ${tx}`);
+
+      let vizingPadAccount =
+        await vizingProgram.account.vizingPadSettings.fetch(vizingPadSettings);
+
+      expect(vizingPadAccount.feeReceiver.toBase58()).to.equal(
+        newFeeCollector.publicKey.toBase58()
+      );
+
+      await vizingProgram.methods
+        .grantFeeCollector(feeReceiverKeyPair.publicKey)
+        .accounts({
+          gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
+          vizing: vizingPadSettings,
+        })
+        .signers([gasPoolAdminKeyPair])
+        .rpc();
+
+      vizingPadAccount = await vizingProgram.account.vizingPadSettings.fetch(
+        vizingPadSettings
+      );
+
+      expect(vizingPadAccount.feeReceiver.toBase58()).to.equal(
+        feeReceiverKeyPair.publicKey.toBase58()
       );
     }
   });
