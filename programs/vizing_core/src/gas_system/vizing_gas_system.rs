@@ -664,8 +664,8 @@ mod vizing_gas_system {
         global_base_price: u64,
         fee_config_base_price: u64,
         dapp_config_value: u64,
-        fee_config_molecular_decimal: u64,
-        fee_config_denominator_decimal: u64,
+        fee_config_molecular_decimal: u8,
+        fee_config_denominator_decimal: u8,
         trade_fee_config_molecular: u64,
         trade_fee_config_denominator: u64,
         global_trade_fee_molecular: u64,
@@ -717,13 +717,12 @@ mod vizing_gas_system {
         let mut final_fee: u64= fee;
         if(amount_out>0){
             if(fee_config_molecular_decimal != 0){
-                let value=exact_output(
+                amount_in=exact_output(
                     fee_config_molecular_decimal,
                     fee_config_denominator_decimal,
                     dest_chain_id,
                     amount_out
                 )?;
-                amount_in=value;
             }
 
             if let Some(trade_fee2) = compute_trade_fee2(
@@ -913,7 +912,7 @@ mod vizing_gas_system {
         fee_config_molecular_decimal: u8,
         fee_config_denominator_decimal: u8,
         dest_chain_id: u64,
-        amount_out: u64,
+        amount_out: u64,    
     ) -> Option<u64> {
             if (fee_config_molecular_decimal != fee_config_denominator_decimal) {
                 if (fee_config_molecular_decimal > fee_config_denominator_decimal) {
@@ -952,23 +951,6 @@ mod vizing_gas_system {
         let amount_out = this_amount_in * (fee_config_molecular_decimal as u64)
             / (fee_config_denominator_decimal as u64);
         Some(amount_out)
-    }
-
-    pub fn get_trade_fee_config_map(
-        ctx: Context<GetTradeFeeConfigMap>,
-        chain_id: u64,
-        dapp: [u16; 20],
-    ) -> Option<TradeFeeConfig> {
-        let m = &ctx.accounts.mapping_fee_config;
-        m.get_trade_fee_config(chain_id,dapp)
-    }
-
-    pub fn get_token_fee_config(
-        ctx: Context<GetTokenFeeConfig>,
-        chain_id: u64,
-    ) -> Option<TradeFee> {
-        let m = &ctx.accounts.mapping_fee_config;
-        m.get_trade_fee(chain_id)
     }
 
 }
@@ -1285,19 +1267,19 @@ pub struct ComputeTradeFee1<'info> {
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
 }
 
-#[derive(Accounts)]
-pub struct GetDappBasePrice<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(mut)]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
-    #[account(
-        mut,
-        seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub gas_system_global: Account<'info, GasSystemGlobal>,
-}
+// #[derive(Accounts)]
+// pub struct GetDappBasePrice<'info> {
+//     #[account(mut)]
+//     pub save_chain_id: Account<'info,SaveChainId>,
+//     #[account(mut)]
+//     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+//     #[account(
+//         mut,
+//         seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+//         bump
+//     )]
+//     pub gas_system_global: Account<'info, GasSystemGlobal>,
+// }
 
 #[derive(Accounts)]
 pub struct EstimatePrice1<'info> {
@@ -1313,39 +1295,39 @@ pub struct EstimatePrice1<'info> {
     pub gas_system_global: Account<'info, GasSystemGlobal>,
 }
 
-#[derive(Accounts)]
-pub struct EstimatePrice2<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(mut)]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
-    #[account(
-        mut,
-        seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub gas_system_global: Account<'info, GasSystemGlobal>,
-}
+// #[derive(Accounts)]
+// pub struct EstimatePrice2<'info> {
+//     #[account(mut)]
+//     pub save_chain_id: Account<'info,SaveChainId>,
+//     #[account(mut)]
+//     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+//     #[account(
+//         mut,
+//         seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+//         bump
+//     )]
+//     pub gas_system_global: Account<'info, GasSystemGlobal>,
+// }
 
-#[derive(Accounts)]
-pub struct EstimateGas<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(mut)]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
-    #[account(
-        mut,
-        seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub gas_system_global: Account<'info, GasSystemGlobal>,
-    #[account(
-        mut,
-        seeds = [b"global_trade_fee".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub global_trade_fee: Account<'info, GlobalTradeFee>,
-}
+// #[derive(Accounts)]
+// pub struct EstimateGas<'info> {
+//     #[account(mut)]
+//     pub save_chain_id: Account<'info,SaveChainId>,
+//     #[account(mut)]
+//     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+//     #[account(
+//         mut,
+//         seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+//         bump
+//     )]
+//     pub gas_system_global: Account<'info, GasSystemGlobal>,
+//     #[account(
+//         mut,
+//         seeds = [b"global_trade_fee".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+//         bump
+//     )]
+//     pub global_trade_fee: Account<'info, GlobalTradeFee>,
+// }
 
 #[derive(Accounts)]
 pub struct BatchEstimateTotalFee<'info> {
@@ -1398,15 +1380,3 @@ pub struct BatchEstimateTotalFee<'info> {
 //     #[account(mut)]
 //     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
 // }
-
-#[derive(Accounts)]
-pub struct GetTradeFeeConfigMap<'info> {
-    #[account(mut)]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
-}
-
-#[derive(Accounts)]
-pub struct GetTokenFeeConfig<'info> {
-    #[account(mut)]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
-}
