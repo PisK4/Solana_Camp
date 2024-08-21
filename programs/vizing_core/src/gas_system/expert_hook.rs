@@ -147,32 +147,7 @@ impl MappingSymbolConfig {
     }
 }
 
-pub mod expert_hook {
-    use super::*;
-
-    pub fn init_power_user(
-        ctx: Context<InitPowerUser>,
-        new_admin: Pubkey,
-        new_engine_admin: Pubkey,
-        new_station_admin: Pubkey,
-        new_gas_pool_admin: Pubkey,
-        new_trusted_relayer: Pubkey,
-        new_registered_validator: Pubkey,
-        new_gas_manager: Vec<Pubkey>,
-        new_swap_manager: Vec<Pubkey>,
-    ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        power_user.admin_role = new_admin;
-        power_user.engine_admin = new_engine_admin;
-        power_user.station_admin = new_station_admin;
-        power_user.gas_pool_admin = new_gas_pool_admin;
-        power_user.trusted_relayer = new_trusted_relayer;
-        power_user.registered_validator = new_registered_validator;
-        power_user.gas_manager = new_gas_manager;
-        power_user.swap_manager = new_swap_manager;
-        Ok(())
-    }
-
+impl ChangePowerUser<'_>{
     pub fn change_power_user(
         ctx: Context<ChangePowerUser>,
         new_admin: Pubkey,
@@ -195,7 +170,9 @@ pub mod expert_hook {
         power_user.swap_manager = new_swap_manager;
         Ok(())
     }
+}
 
+impl WithdrawSplToken<'_>{
     pub fn withdraw_spl_token(
         ctx: Context<WithdrawSplToken>,
         withdraw_amount: u64,
@@ -225,7 +202,9 @@ pub mod expert_hook {
 
         Ok(())
     }
+}
 
+impl WithdrawSol<'_>{
     pub fn withdraw_sol(ctx: Context<WithdrawSol>, withdraw_amount: u64) -> Result<()> {
         let power_user = &mut ctx.accounts.power_user;
         let user_key = ctx.accounts.user.key();
@@ -238,7 +217,9 @@ pub mod expert_hook {
         **destination.try_borrow_mut_lamports()? += withdraw_amount;
         Ok(())
     }
+}
 
+impl SetTokenInfoBase<'_>{
     pub fn set_token_info_base(
         ctx: Context<SetTokenInfoBase>,
         symbol: Vec<u8>,
@@ -253,7 +234,9 @@ pub mod expert_hook {
         symbol_config.set(symbol_clone, token_address);
         Ok(())
     }
+}
 
+impl SetTokenTradeFeeMap<'_>{
     pub fn set_token_trade_fee_map(
         ctx: Context<SetTokenTradeFeeMap>,
         token_address: [u16; 20],
@@ -275,8 +258,8 @@ pub mod expert_hook {
             );
         }
         Ok(())
-
     }
+}
 
     pub fn compute_trade_fee(
         global_trade_fee_molecular: u64,
@@ -302,7 +285,7 @@ pub mod expert_hook {
     }
 
     /// totalAmount =  expectAmountReceive + expectAmountReceive * (molecular / denominator)
-    pub fn computeTotalAmont(
+    pub fn compute_total_amont(
         global_trade_fee_molecular: u64,
         global_trade_fee_denominator: u64,
         token_fee_config_molecular: u64,
@@ -354,24 +337,7 @@ pub mod expert_hook {
         Some((real_amount, trade_fee))
     }
 
-}
 
-#[derive(Accounts)]
-pub struct InitPowerUser<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        init, 
-        payer = user, 
-        space = 8 + 128,
-        seeds = [b"init_power_user".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
 
 #[derive(Accounts)]
 pub struct ChangePowerUser<'info> {
