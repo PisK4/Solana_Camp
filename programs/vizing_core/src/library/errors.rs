@@ -10,6 +10,8 @@ pub enum VizingError {
     NotEngineAdmin,
     #[msg("Unauthorized: Not Gas Pool Admin")]
     NotGasPoolAdmin,
+    #[msg("Unauthorized: Not Station Admin")]
+    NotStationAdmin,
     #[msg("Unauthorized: Not Relayer")]
     NotRelayer,
     #[msg("Unauthorized: Relayer Not Active")]
@@ -20,4 +22,8 @@ pub enum VizingError {
     FeeCollectorInvalid,
     #[msg("Vizing Not Activated")]
     VizingNotActivated,
+    #[msg("Target Program Invalid")]
+    TargetContractInvalid,
+    #[msg("target program calling failed")]
+    CallingFailed,
 }

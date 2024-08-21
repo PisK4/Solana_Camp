@@ -3,6 +3,7 @@ import { Program, Coder } from "@coral-xyz/anchor";
 import { expect } from "chai";
 
 import { VizingCore } from "../target/types/vizing_core";
+import { VizingApp } from "../target/types/vizing_app";
 
 function padStringTo32Bytes(str: string): Buffer {
   const buffer = Buffer.alloc(32);
@@ -16,8 +17,9 @@ describe("Vizing Test", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(provider);
   const vizingProgram = anchor.workspace.VizingCore as Program<VizingCore>;
+  const vizingAppProgram = anchor.workspace.VizingApp as Program<VizingApp>;
   const vizingPadSettingsSeed = Buffer.from("Vizing_Pad_Settings_Seed");
-  const relayerSettingsSeed = Buffer.from("Relayer_Settings_Seed");
+  // const relayerSettingsSeed = Buffer.from("Relayer_Settings_Seed");
   const vizingAuthoritySeed = Buffer.from("Vizing_Authority_Seed");
 
   let vizingPadSettings: anchor.web3.PublicKey;
@@ -86,27 +88,27 @@ describe("Vizing Test", () => {
       engineAdmin: engineAdminKeyPairs.map((keypair) => keypair.publicKey)[0],
       gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
       stationAdmin: stationAdminKeyPair.publicKey,
-      trustedRelayer: trustedRelayerKeyPairs.map(
+      trustedRelayers: trustedRelayerKeyPairs.map(
         (keypair) => keypair.publicKey
-      )[0],
+      ),
       registeredValidator: registeredValidatorKeyPairs.map(
         (keypair) => keypair.publicKey
       )[0],
+      relayers: trustedRelayerKeyPairs.map((keypair) => keypair.publicKey),
       isPaused: false,
     };
+    // {
+    //   const seed = [relayerSettingsSeed, initParams.trustedRelayer.toBuffer()];
+    //   const [relayer, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+    //     seed,
+    //     vizingProgram.programId
+    //   );
 
-    {
-      const seed = [relayerSettingsSeed, initParams.trustedRelayer.toBuffer()];
-      const [relayer, bump] = anchor.web3.PublicKey.findProgramAddressSync(
-        seed,
-        vizingProgram.programId
-      );
+    //   relayerSettings = relayer;
+    //   relayerBump = bump;
 
-      relayerSettings = relayer;
-      relayerBump = bump;
-
-      console.log(`relayer: ${relayer.toBase58()}, bump: ${bump}`);
-    }
+    //   console.log(`relayer: ${relayer.toBase58()}, bump: ${bump}`);
+    // }
 
     {
       const seed = [vizingAuthoritySeed];
@@ -124,7 +126,6 @@ describe("Vizing Test", () => {
         .initializeVizingPad(initParams)
         .accounts({
           vizing: vizingPadSettings,
-          relayer: relayerSettings,
           vizingAuthority: vizingAuthority,
           payer: provider.wallet.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
@@ -147,6 +148,9 @@ describe("Vizing Test", () => {
       expect(vizingPadAccount.stationAdmin.toBase58()).to.equal(
         initParams.stationAdmin.toBase58()
       );
+      expect(vizingPadAccount.gasPoolAdmin.toBase58()).to.equal(
+        initParams.gasPoolAdmin.toBase58()
+      );
       expect(vizingPadAccount.registeredValidator.toBase58()).to.equal(
         initParams.registeredValidator.toBase58()
       );
@@ -161,7 +165,6 @@ describe("Vizing Test", () => {
           .initializeVizingPad(initParams)
           .accounts({
             vizing: vizingPadSettings,
-            relayer: relayerSettings,
             vizingAuthority: vizingAuthority,
             payer: provider.wallet.publicKey,
             systemProgram: anchor.web3.SystemProgram.programId,
@@ -172,6 +175,7 @@ describe("Vizing Test", () => {
         expect(error.transactionMessage).to.be.eql(
           "Transaction simulation failed: Error processing Instruction 0: custom program error: 0x0"
         );
+        console.log("could not initialize vizing pad twice");
       }
     }
   });
@@ -183,9 +187,9 @@ describe("Vizing Test", () => {
       engineAdmin: engineAdminKeyPairs.map((keypair) => keypair.publicKey)[0],
       gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
       stationAdmin: stationAdminKeyPair.publicKey,
-      trustedRelayer: trustedRelayerKeyPairs.map(
+      trustedRelayers: trustedRelayerKeyPairs.map(
         (keypair) => keypair.publicKey
-      )[0],
+      ),
       registeredValidator: anchor.web3.Keypair.generate().publicKey,
       isPaused: false,
     };
@@ -365,6 +369,53 @@ describe("Vizing Test", () => {
       );
 
       expect(feeReceiverBalanceAfter).to.greaterThan(feeReceiverBalanceBefore);
+    }
+  });
+
+  it("Landing", async () => {
+    await vizingAppProgram.methods.initialize().rpc();
+
+    const message = {
+      mode: 5,
+      targetContract: vizingAppProgram.programId,
+      executeGasLimit: new anchor.BN(6),
+      maxFeePerGas: new anchor.BN(7),
+      signature: Buffer.alloc(0),
+    };
+
+    const landingParams = {
+      messageId: Buffer.from([
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+        21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+      ]),
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      srcChainid: new anchor.BN(3),
+      srcTxHash: Buffer.from([
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+        21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+      ]),
+      srcContract: anchor.web3.Keypair.generate().publicKey,
+      srcChainNonce: new anchor.BN(4),
+      sender: provider.wallet.publicKey,
+      value: new anchor.BN(5),
+      additionParams: Buffer.alloc(0),
+      message: message,
+    };
+
+    {
+      const tx = await vizingProgram.methods
+        .landing(landingParams)
+        .accounts({
+          relayer: trustedRelayerKeyPairs[0].publicKey,
+          vizing: vizingPadSettings,
+          vizingAuthority: vizingAuthority,
+          targetContract: vizingAppProgram.programId,
+          systemProgram: anchor.web3.SystemProgram.programId,
+        })
+        .signers([trustedRelayerKeyPairs[0]])
+        .rpc();
+      console.log(`landing tx: ${tx}`);
     }
   });
 });

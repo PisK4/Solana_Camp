@@ -1,12 +1,12 @@
 [package]
-name = "vizing_core"
+name = "vizing_app"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "vizing_core"
+name = "vizing_app"
 
 [features]
 no-entrypoint = []
@@ -17,4 +17,3 @@ default = []
 
 [dependencies]
 anchor-lang = "0.28.0"
-vizing_app = {path = "../vizing_app", features = ["cpi"]}

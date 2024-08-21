@@ -1,9 +1,9 @@
 use super::*;
-use crate::channel::*;
 use crate::governance::*;
 use crate::library::*;
 use anchor_lang::prelude::*;
 use anchor_lang::system_program::{transfer, Transfer};
+use vizing_app::{self, cpi::accounts::LandingAppOp};
 
 #[derive(Accounts)]
 pub struct LaunchOp<'info> {
@@ -88,18 +88,15 @@ impl LaunchOp<'_> {
 }
 
 #[derive(Accounts)]
+#[instruction(params: LandingParams)]
 pub struct LandingOp<'info> {
     /// CHECK: We need signer to claim ownership
     #[account(signer)]
     pub relayer: AccountInfo<'info>,
 
-    #[account(
-        seeds = [contants::RELAYER_SETTINGS_SEED, relayer.key().as_ref()],
-        bump = relayer_settings.bump,
-        constraint = relayer.key() == relayer_settings.relayer @VizingError::NotRelayer,
-        constraint = relayer_settings.is_enabled == true @VizingError::RelayerNotActivated
-    )]
-    pub relayer_settings: Account<'info, RelayerSettings>,
+    #[account(mut, seeds = [contants::VIZING_PAD_SETTINGS_SEED], bump = vizing.bump,
+    constraint = vizing.trusted_relayers.contains(&relayer.key()) @VizingError::NotRelayer)]
+    pub vizing: Account<'info, VizingPadSettings>,
 
     /// CHECK: We need this PDA as a signer
     #[account(
@@ -108,12 +105,36 @@ pub struct LandingOp<'info> {
         )]
     pub vizing_authority: Account<'info, message::VizingAuthorityParams>,
 
+    /// CHECK: target contract
+    #[account(mut, constraint = target_contract.key() == params.message.target_contract @VizingError::TargetContractInvalid)]
+    pub target_contract: AccountInfo<'info>,
+
     pub system_program: Program<'info, System>,
 }
 
 impl LandingOp<'_> {
-    pub fn execute(ctx: &mut Context<LandingOp>, params: LandingParams) -> Result<()> {
-        Ok(())
+    pub fn execute(ctx: &mut Context<LandingOp>, _params: LandingParams) -> Result<()> {
+        let seeds = &[
+            contants::VIZING_AUTHORITY_SEED,
+            &[ctx.accounts.vizing_authority.bump],
+        ];
+        let signer = &[&seeds[..]];
+
+        let cpi_ctx = CpiContext::new_with_signer(
+            ctx.accounts.target_contract.to_account_info(),
+            LandingAppOp {
+                vizing_authority: ctx.accounts.vizing_authority.to_account_info(),
+            },
+            signer,
+        );
+
+        let res = vizing_app::cpi::receive_from_vizing(cpi_ctx);
+
+        if res.is_ok() {
+            return Ok(());
+        } else {
+            return err!(VizingError::CallingFailed);
+        }
     }
 }
 
@@ -131,7 +152,7 @@ pub struct LandingParams {
     pub value: u64,
     #[max_len(256)]
     pub addition_params: Vec<u8>,
-    pub message: Message,
+    pub message: LandingMessage,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]

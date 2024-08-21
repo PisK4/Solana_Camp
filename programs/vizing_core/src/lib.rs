@@ -25,6 +25,7 @@ pub mod vizing_core {
     // **********  channel end ************
 
     // **********  governance start ************
+
     pub fn initialize_vizing_pad(
         mut ctx: Context<InitVizingPad>,
         params: InitVizingPadParams,
@@ -32,13 +33,9 @@ pub mod vizing_core {
         InitVizingPad::execute(&mut ctx, params)
     }
 
-    pub fn initial_relayer(mut ctx: Context<InitialRelayer>, relayer: Pubkey) -> Result<()> {
-        InitialRelayer::execute(&mut ctx, relayer)
-    }
-
     pub fn modify_settings(
         mut ctx: Context<ModifySettings>,
-        params: ModifySettingsParams,
+        params: OwnerManagementParams,
     ) -> Result<()> {
         ModifySettings::execute(&mut ctx, &params)
     }
@@ -51,12 +48,11 @@ pub mod vizing_core {
         PauseEngine::unpause_engine(&mut ctx)
     }
 
-    pub fn grant_relayer(mut ctx: Context<GrantRelayer>, relayer: Pubkey) -> Result<()> {
-        GrantRelayer::grant_relayer(&mut ctx, relayer)
-    }
-
-    pub fn revoke_relayer(mut ctx: Context<GrantRelayer>, relayer: Pubkey) -> Result<()> {
-        GrantRelayer::revoke_relayer(&mut ctx, relayer)
+    pub fn grant_relayer(
+        mut ctx: Context<GrantRelayer>,
+        new_trusted_relayers: Vec<Pubkey>,
+    ) -> Result<()> {
+        GrantRelayer::grant_relayer(&mut ctx, new_trusted_relayers)
     }
 
     pub fn grant_fee_collector(
