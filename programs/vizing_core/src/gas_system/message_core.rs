@@ -9,13 +9,13 @@ use crate::vizing_gas_system::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct ExpertLandingHooks{
-    pub key: u8,
+    pub key: u64,
     pub address: [u16; 20],
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct ExpertLaunchHooks{
-    pub key: u8,
+    pub key: u64,
     pub address: [u16; 20],
 }
 
@@ -56,7 +56,7 @@ impl MappingExpertLandingHooks{
         self.valid = valid;
     }
 
-    pub get(&self, key: u64)-> Option<ExpertLandingHooks> {
+    pub fn get(&self, key: u64)-> Option<ExpertLandingHooks> {
         self.expert_landing_hooks_mappings
             .iter()
             .find(|pair| pair.key == key)
@@ -89,7 +89,7 @@ impl MappingExpertLaunchHooks{
         self.valid = valid;
     }
 
-    pub get(&self, key: u64)-> Option<ExpertLaunchHooks> {
+    pub fn get(&self, key: u64)-> Option<ExpertLaunchHooks> {
         self.expert_launch_hooks_mappings
             .iter()
             .find(|pair| pair.key == key)
@@ -97,12 +97,12 @@ impl MappingExpertLaunchHooks{
     }
 }
 
-
 pub mod message_core {
+    use super::*;
 
     pub fn set_expert_landing_hooks(
-        ctx:Context<SetExpertLandingHooks>,
-        ids: Vec<u8>,
+        ctx: Context<SetExpertLandingHooks>,
+        ids: Vec<u64>,
         hooks: Vec<[u16; 20]>,
     ) -> Result<()>{
         let expert_landing_hooks=&mut ctx.accounts.expert_landing_hooks;
@@ -116,8 +116,8 @@ pub mod message_core {
     }
 
     pub fn set_expert_launch_hooks(
-        ctx:Context<SetExpertLaunchHooks>,
-        ids: Vec<u8>,
+        ctx: Context<SetExpertLaunchHooks>,
+        ids: Vec<u64>,
         hooks: Vec<[u16; 20]>,
     ) -> Result<()>{
         let expert_launch_hooks=&mut ctx.accounts.expert_launch_hooks;
@@ -146,8 +146,11 @@ pub mod message_core {
         let mode = MessageType::fetch_msg_mode(&message);
         let expert_handler; 
         if(mode!=MessageType::Default){
-            let get_expert_launch_hooks=expert_launch_hooks.get(dest_chain_id)?;
-            expert_handler=get_expert_launch_hooks.address;
+            if let Some(get_expert_launch_hooks) = expert_launch_hooks.get(dest_chain_id) {
+                expert_handler = get_expert_launch_hooks.address;
+            } else {
+                return Err(ErrorCode::InvalidMapping.into());
+            }
         }
         Ok(())
     }

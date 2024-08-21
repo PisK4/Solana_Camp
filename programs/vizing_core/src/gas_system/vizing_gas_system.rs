@@ -5,7 +5,7 @@ use crate::message_type_lib::*;
 use crate::state::*;
 use crate::message_monitor_lib::*;
 
-declare_id!("Ga4UfvXHBB4V1FgA5bvvrHT4gg7rraGLG1vshzxndW4i");
+declare_id!("BrBa8Lq9t5kGQkZ1cJaYkyLg17THGjpev6AE8HHMJJ5Q");
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct NativeTokenTradeFeeConfig {
@@ -301,9 +301,9 @@ mod vizing_gas_system {
         gas_system_global.default_gas_limit = default_gas_limit;
         gas_system_global.amount_in_threshold = amount_in_threshold;
 
-        let g = &mut ctx.accounts.global_trade_fee;
-        g.molecular = molecular;
-        g.denominator = denominator;
+        let global_trade_fee = &mut ctx.accounts.global_trade_fee;
+        global_trade_fee.molecular = molecular;
+        global_trade_fee.denominator = denominator;
         Ok(())
     }
 
@@ -614,28 +614,24 @@ mod vizing_gas_system {
     }
 
     pub fn compute_trade_fee1(
-        ctx: Context<ComputeTradeFee1>,
+        fee_config_molecular: u64,
+        fee_config_denominator: u64,
+        global_trade_fee_molecular: u64,
+        global_trade_fee_denominator: u64,
         dest_chain_id: u64,
         amount_out: u64,
     ) -> Option<u64> {
-        let global_trade_fee = &mut ctx.accounts.global_trade_fee;
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let fee;
-        if let Some(fee_config) = mapping_fee_config.get_trade_fee(dest_chain_id) {
-            if fee_config.denominator == 0 {
-                fee = amount_out
-                    .checked_mul(global_trade_fee.molecular)?
-                    .checked_div(global_trade_fee.denominator)?;
-                Some(fee)
-            } else {
-                fee = amount_out
-                    .checked_mul(fee_config.molecular)?
-                    .checked_div(fee_config.denominator)?;
-                Some(fee)
-            }
+        if fee_config_denominator == 0 {
+            fee = amount_out
+                .checked_mul(global_trade_fee_molecular)?
+                .checked_div(global_trade_fee_denominator)?;
         } else {
-            None
+            fee = amount_out
+                .checked_mul(fee_config_molecular)?
+                .checked_div(fee_config_denominator)?;
         }
+        Some(fee)
     }
 
     pub fn compute_trade_fee2(
@@ -757,18 +753,16 @@ mod vizing_gas_system {
     }
 
     pub fn estimate_price1(
-        ctx: Context<EstimatePrice1>,
+        gas_system_global_base_price: u64,
+        dapp_config_value: u64,
         target_contract: [u16; 20],
         dest_chain_id: u64,
     ) -> Option<u64> {
-        let m = &mut ctx.accounts.mapping_fee_config;
-        let g = &mut ctx.accounts.gas_system_global;
-        let dapp_config = m.get_dapp_config(dest_chain_id, target_contract)?;
         let dapp_base_price: u64;
-        if (dapp_config.value > 0) {
-            dapp_base_price = dapp_config.value;
+        if (dapp_config_value > 0) {
+            dapp_base_price = dapp_config_value;
         } else {
-            dapp_base_price = g.global_base_price;
+            dapp_base_price = gas_system_global_base_price;
         }
         Some(dapp_base_price)
     }
@@ -1253,19 +1247,19 @@ pub struct BatchSetExchangeRate<'info> {
 }
 
 //get
-#[derive(Accounts)]
-pub struct ComputeTradeFee1<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"global_trade_fee".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub global_trade_fee: Account<'info, GlobalTradeFee>,
-    #[account(mut)]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
-}
+// #[derive(Accounts)]
+// pub struct ComputeTradeFee1<'info> {
+//     #[account(mut)]
+//     pub save_chain_id: Account<'info,SaveChainId>,
+//     #[account(
+//         mut,
+//         seeds = [b"global_trade_fee".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+//         bump
+//     )]
+//     pub global_trade_fee: Account<'info, GlobalTradeFee>,
+//     #[account(mut)]
+//     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+// }
 
 // #[derive(Accounts)]
 // pub struct GetDappBasePrice<'info> {
@@ -1281,19 +1275,19 @@ pub struct ComputeTradeFee1<'info> {
 //     pub gas_system_global: Account<'info, GasSystemGlobal>,
 // }
 
-#[derive(Accounts)]
-pub struct EstimatePrice1<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(mut)]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
-    #[account(
-        mut,
-        seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub gas_system_global: Account<'info, GasSystemGlobal>,
-}
+// #[derive(Accounts)]
+// pub struct EstimatePrice1<'info> {
+//     #[account(mut)]
+//     pub save_chain_id: Account<'info,SaveChainId>,
+//     #[account(mut)]
+//     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+//     #[account(
+//         mut,
+//         seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+//         bump
+//     )]
+//     pub gas_system_global: Account<'info, GasSystemGlobal>,
+// }
 
 // #[derive(Accounts)]
 // pub struct EstimatePrice2<'info> {
@@ -1380,3 +1374,4 @@ pub struct BatchEstimateTotalFee<'info> {
 //     #[account(mut)]
 //     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
 // }
+

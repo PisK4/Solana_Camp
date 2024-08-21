@@ -8,12 +8,16 @@ pub enum ErrorCode {
     NonEngine,
     #[msg("Insufficient amount.")]
     InsufficientAmount,
+    #[msg("Contract is paused.")]
+    ContractPaused,
     #[msg("Not a gas manager.")]
     NonGasManager,
     #[msg("Invalid length.")]
     InvalidLength,
     #[msg("Invalid mapping.")]
     InvalidMapping,
+    #[msg("Not a swap manager.")]
+    NonSwapManager,
     #[msg("Overflow")]
     Overflow,
     #[msg("Invalid message.")]
