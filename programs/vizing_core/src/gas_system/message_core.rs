@@ -1,215 +1,100 @@
-use anchor_lang::prelude::*;
+// use anchor_lang::prelude::*;
+// use anchor_lang::system_program::{transfer, Transfer as SolTransfer};
+// use anchor_spl::token::{self, Token, TokenAccount, Transfer};
+// use spl_associated_token_account::get_associated_token_address;
 
-use crate::error::ErrorCode;
-use crate::l2_support_lib::*;
-use crate::message_type_lib::*;
-use crate::state::*;
-use crate::message_monitor_lib::*;
-use crate::vizing_gas_system::*;
+// pub mod error;
+// pub mod state;
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct ExpertLandingHooks{
-    pub key: u64,
-    pub address: [u16; 20],
-}
+// declare_id!("Ga4UfvXHBB4V1FgA5bvvrHT4gg7rraGLG1vshzxndW4i");
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct ExpertLaunchHooks{
-    pub key: u64,
-    pub address: [u16; 20],
-}
+// #[program]
+// mod message_core {
 
-#[account]
-pub struct MappingExpertLandingHooks {
-    pub expert_landing_hooks_mappings: Vec<ExpertLandingHooks>,
-    pub valid: bool,
-}
+//     pub fn launch(
+//         ctx: Context<Launch>,
+//         earliest_arrival_timestamp: u64,
+//         latest_arrival_timestamp: u64,
+//         relayer: Pubkey,
+//         sender: Pubkey,
+//         value: u64,
+//         dest_chain_id: u64,
+//         addition_params: Vec<u8>,
+//         message: Vec<u8>,
+//     ) -> Result<()> {
 
-#[account]
-pub struct MappingExpertLaunchHooks {
-    pub expert_launch_hooks_mappings: Vec<ExpertLaunchHooks>,
-    pub valid: bool,
-}
+//     }
 
-impl MappingExpertLandingHooks{
-    pub fn set(
-        &mut self,
-        key: u64,
-        address: [u16; 20]
-    ){
-        if let Some(pair) = self
-            .expert_landing_hooks_mappings
-            .iter_mut()
-            .find(|pair| pair.key == key)
-        {
-            pair.address = address;
-        } else {
-            self.expert_landing_hooks_mappings.push(ExpertLandingHooks {
-                key,
-                address,
-            });
-        }
-        self.valid = true;
-    }
+//     pub fn landing(
+//         ctx: Context<LaunchMultiChain>,
+//         message_id: Vec<u8>,
+//         earliest_arrival_timestamp: u64,
+//         latest_arrival_timestamp: u64,
+//         src_chain_id: u64,
+//         src_tx_hash: Vec<u8>,
+//         src_contract: u64,
+//         src_chain_nonce: u32,
+//         sender: u64,
+//         value: u64,
+//         addition_params: Vec<u8>,
+//         message: Vec<u8>,
+//         proofs: Vec<u8>,
+//     ) -> Result<()> {
+//          Ok(())
+//     }
 
-    pub fn mapping_valid(&mut self, valid: bool) {
-        self.valid = valid;
-    }
+//     pub fn pause_engine(ctx: Context<PauseEngine>, stop: u8) -> Result<()> {
+//         let power_user = &mut ctx.accounts.power_user;
+//         let user_key = &mut ctx.accounts.user.key();
+//         require!(power_user.engine_admin == user_key, ErrorCode::NonEngine);
+//         let chain_state = &mut ctx.accounts.chain_state;
+//         chain_state.engine_state = stop;
+//         Ok(())
+//     }
 
-    pub fn get(&self, key: u64)-> Option<ExpertLandingHooks> {
-        self.expert_landing_hooks_mappings
-            .iter()
-            .find(|pair| pair.key == key)
-            .cloned()
-    }
-}
+//     pub fn estimate_gas(
+//         ctx: Context<EstimateGas>,
+//         valueGroup: Vec<u64>,
+//         dest_chain_id_group: Vec<u64>,
+//         addition_params: Vec<Vec<u8>>,
+//         message: Vec<Vec<u8>>,
+//     ) -> Result<()>{
 
-impl MappingExpertLaunchHooks{
-    pub fn set(
-        &mut self,
-        key: u64,
-        address: [u16; 20]
-    ){
-        if let Some(pair) = self
-            .expert_launch_hooks_mappings
-            .iter_mut()
-            .find(|pair| pair.key == key)
-        {
-            pair.address = address;
-        } else {
-            self.expert_launch_hooks_mappings.push(ExpertLaunchHooks {
-                key,
-                address,
-            });
-        }
-        self.valid = true;
-    }
+//     }
 
-    pub fn mapping_valid(&mut self, valid: bool) {
-        self.valid = valid;
-    }
+//     pub fn estimate_price(
+//         ctx: Context<EstimatePrice>,
+//         sender: Pubkey,
+//         dest_chain_id: u64,
+//     ) -> Result<()>{
 
-    pub fn get(&self, key: u64)-> Option<ExpertLaunchHooks> {
-        self.expert_launch_hooks_mappings
-            .iter()
-            .find(|pair| pair.key == key)
-            .cloned()
-    }
-}
+//     }
 
-pub mod message_core {
-    use super::*;
+// }
 
-    pub fn set_expert_landing_hooks(
-        ctx: Context<SetExpertLandingHooks>,
-        ids: Vec<u64>,
-        hooks: Vec<[u16; 20]>,
-    ) -> Result<()>{
-        let expert_landing_hooks=&mut ctx.accounts.expert_landing_hooks;
-        for (i, &id) in ids.iter().enumerate(){
-            expert_landing_hooks.set(
-                id,
-                hooks[i]
-            );
-        }
-        Ok(())
-    }
+// #[derive(Accounts)]
+// pub struct Launch<'info> {}
 
-    pub fn set_expert_launch_hooks(
-        ctx: Context<SetExpertLaunchHooks>,
-        ids: Vec<u64>,
-        hooks: Vec<[u16; 20]>,
-    ) -> Result<()>{
-        let expert_launch_hooks=&mut ctx.accounts.expert_launch_hooks;
-        for (i, &id) in ids.iter().enumerate(){
-            expert_launch_hooks.set(
-                id,
-                hooks[i]
-            );
-        }
-        Ok(())
-    }
+// #[derive(Accounts)]
+// pub struct PauseEngine<'info> {
+//     #[account(
+//         mut,
+//         seeds = [b"init_power_user".as_ref()],
+//         bump
+//     )]
+//     pub power_user: Account<'info, PowerUser>,
+//     #[account(mut)]
+//     pub chain_state: Account<'info, ChainState>,
+//     #[account(mut)]
+//     pub user: Signer<'info>,
+// }
 
-    pub fn launch(
-        ctx:Context<Launch>,
-        earliestArrivalTimestamp: u64,
-        latestArrivalTimestamp: u64,
-        relayer: Pubkey,
-        sender: Pubkey,
-        value: u64,
-        dest_chain_id: u64,
-        addition_params: &[u16],
-        message: &[u16]
-    ) -> Result<()>{
-        let expert_launch_hooks=&mut ctx.accounts.expert_launch_hooks;
+// #[derive(Accounts)]
+// pub struct EstimateGas<'info> {
 
-        let mode = MessageType::fetch_msg_mode(&message);
-        let expert_handler; 
-        if(mode!=MessageType::Default){
-            if let Some(get_expert_launch_hooks) = expert_launch_hooks.get(dest_chain_id) {
-                expert_handler = get_expert_launch_hooks.address;
-            } else {
-                return Err(ErrorCode::InvalidMapping.into());
-            }
-        }
-        Ok(())
-    }
+// }
 
-    
+// #[derive(Accounts)]
+// pub struct EstimatePrice<'info> {
 
-}
-
-#[derive(Accounts)]
-pub struct SetExpertLandingHooks<'info>{
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(
-        init,
-        payer = user, 
-        space = 8 + 32,
-        seeds = [b"init_expert_landing_hooks".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub expert_landing_hooks: Account<'info, MappingExpertLandingHooks>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct SetExpertLaunchHooks<'info>{
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(
-        init,
-        payer = user, 
-        space = 8 + 32,
-        seeds = [b"init_expert_launch_hooks".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub expert_launch_hooks: Account<'info, MappingExpertLaunchHooks>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct Launch<'info>{
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_expert_landing_hooks".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub expert_landing_hooks: Account<'info, MappingExpertLandingHooks>,
-    #[account(
-        mut,
-        seeds = [b"init_expert_launch_hooks".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub expert_launch_hooks: Account<'info, MappingExpertLaunchHooks>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
+// }
