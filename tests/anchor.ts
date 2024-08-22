@@ -89,7 +89,6 @@ describe("Test", () => {
       return result;
     }
 
-<<<<<<< HEAD
     let id = new anchor.BN(16);
     let chainId = new Buffer(`${id}`);
     console.log("chainId buffer:", chainId);
@@ -129,38 +128,10 @@ describe("Test", () => {
         [Buffer.from("global_trade_fee"), chainId],
         program.programId
       );
-=======
-    let id=new anchor.BN(16);
-    let chainId = new Buffer(`${id}`);
-    console.log("chainId buffer:",chainId);
-
-    //pda
-    let [powerUserAuthority, powerUserBump] = await PublicKey.findProgramAddress(
-      [Buffer.from("init_power_user"),chainId],
-      program.programId
-    );
-    console.log("powerUserAuthority:", powerUserAuthority.toString());
-    console.log("powerUserBump:", powerUserBump);
-
-    //gas_global
-    let [gasSystemGlobalAuthority, gasSystemGlobalBump] = await PublicKey.findProgramAddress(
-      [Buffer.from("gas_global"),chainId],
-      program.programId
-    );
-    console.log("gasSystemGlobalAuthority:", gasSystemGlobalAuthority.toString());
-    console.log("gasSystemGlobalBump:", gasSystemGlobalBump);
-
-    //global_trade_fee
-    let [globalTradeFeeAuthority, globalTradeFeeBump] = await PublicKey.findProgramAddress(
-      [Buffer.from("global_trade_fee"),chainId],
-      program.programId
-    );
->>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
     console.log("globalTradeFeeAuthority:", globalTradeFeeAuthority.toString());
     console.log("globalTradeFeeBump:", globalTradeFeeBump);
 
     //init_mapping_fee_config
-<<<<<<< HEAD
     let [mappingFeeConfigAuthority, mappingFeeConfigBump] =
       await PublicKey.findProgramAddress(
         [Buffer.from("init_mapping_fee_config"), chainId],
@@ -198,30 +169,6 @@ describe("Test", () => {
       "nativeTokenTradeFeeConfigBump:",
       nativeTokenTradeFeeConfigBump
     );
-=======
-    let [mappingFeeConfigAuthority, mappingFeeConfigBump] = await PublicKey.findProgramAddress(
-      [Buffer.from("init_mapping_fee_config"),chainId],
-      program.programId
-    );
-    console.log("mappingFeeConfigAuthority:", mappingFeeConfigAuthority.toString());
-    console.log("mappingFeeConfigBump:", mappingFeeConfigBump);
-
-    //amount_in_thresholds
-    let [amountInThresholdsAuthority, amountInThresholdsBump] = await PublicKey.findProgramAddress(
-      [Buffer.from("amount_in_thresholds"),chainId],
-      program.programId
-    );
-    console.log("amountInThresholdsAuthority:", amountInThresholdsAuthority.toString());
-    console.log("amountInThresholdsBump:", amountInThresholdsBump);
-
-    //native_token_trade_fee_config
-    let [nativeTokenTradeFeeConfigAuthority, nativeTokenTradeFeeConfigBump] = await PublicKey.findProgramAddress(
-      [Buffer.from("native_token_trade_fee_config"),chainId],
-      program.programId
-    );
-    console.log("nativeTokenTradeFeeConfigAuthority:", nativeTokenTradeFeeConfigAuthority.toString());
-    console.log("nativeTokenTradeFeeConfigBump:", nativeTokenTradeFeeConfigBump);
->>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
 
     //save_dest_chain_Id
     let saveDestChainIdAccount = new web3.Keypair();
@@ -231,7 +178,6 @@ describe("Test", () => {
     );
 
     async function SaveChainId() {
-<<<<<<< HEAD
       try {
         const saveDestChainId = await program.methods
           .saveChainId(chainId)
@@ -252,49 +198,20 @@ describe("Test", () => {
         console.log("getChainId:", getChainId);
       } catch (e) {
         console.log("saveDestChainId error:", e);
-=======
-      try{
-      const saveDestChainId = await program.methods
-        .saveChainId(chainId)
-        .accounts({
-          saveChainId: saveDestChainIdAccount.publicKey,
-          user: user,
-          systemProgram: systemId,
-        })
-        .signers([signer, saveDestChainIdAccount])
-        .rpc();
-      console.log(`saveDestChainId:${saveDestChainId}'`);
-      // Confirm transaction
-      await program.provider.connection.confirmTransaction(saveDestChainId);
-
-      const getChainId = await program.account.saveChainId.fetch(
-        saveDestChainIdAccount.publicKey
-      );
-      console.log("getChainId:", getChainId);
-      }catch(e){
-        console.log("saveDestChainId error:",e);
->>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
       }
     }
     await SaveChainId();
 
     //init_this_power_user
     let gas_managers = [user];
-<<<<<<< HEAD
     let swap_managers = [user];
     let token_managers = [user];
     async function InitPowerUser() {
       try {
-=======
-    let swap_manager = [user];
-    async function InitPowerUser() {
-      try{
->>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
         const powerUser = await program.account.powerUser.fetch(
           powerUserAuthority
         );
         console.log("powerUser:", powerUser);
-<<<<<<< HEAD
       } catch (e) {
         const initPowerUser = await program.methods
           .initPowerUser(
@@ -312,14 +229,6 @@ describe("Test", () => {
             saveChainId: saveDestChainIdAccount.publicKey,
             powerUser: powerUserAuthority,
             vizingVault: vizingVaultAuthority,
-=======
-      }catch(e){
-        const initPowerUser = await program.methods
-          .initPowerUser(user,user,user,user,user,user,gas_managers,swap_manager)
-          .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
->>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
             user: user,
             systemProgram: systemId,
           })
@@ -332,22 +241,14 @@ describe("Test", () => {
     }
     await InitPowerUser();
 
-<<<<<<< HEAD
     let base_price = new anchor.BN(1000000);
     let reserve = new anchor.BN(100000000);
     let molecular = new anchor.BN(6666);
     let denominator = new anchor.BN(222);
-=======
-    let base_price = new anchor.BN(1000000); 
-    let reserve = new anchor.BN(100000000); 
-    let molecular = new anchor.BN(6666); 
-    let denominator = new anchor.BN(222); 
->>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
     let molecular_decimal = 8;
     let denominator_decimal = 6;
     //init_fee_config
     async function InitFeeConfig() {
-<<<<<<< HEAD
       try {
         const mappingFeeConfig =
           await program.account.mappingFeeConfig.fetch(
@@ -365,16 +266,6 @@ describe("Test", () => {
             molecular_decimal,
             denominator_decimal
           )
-=======
-      try{
-        const mappingFeeConfig = await program.account.mappingFeeConfig.fetch(
-          mappingFeeConfigAuthority
-        );
-        console.log("mappingFeeConfig:", mappingFeeConfig);
-      }catch(e){
-        const initFeeConfig = await program.methods
-          .initFeeConfig(id,base_price,reserve,molecular,denominator,molecular_decimal,denominator_decimal)
->>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             powerUser: powerUserAuthority,
@@ -396,11 +287,7 @@ describe("Test", () => {
     let default_gas_limit = new anchor.BN(100000000);
     let amount_in_threshold = new anchor.BN(10000000000000);
     async function InitGasGlobal() {
-<<<<<<< HEAD
       try {
-=======
-      try{
->>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
         const globalTradeFee = await program.account.globalTradeFee.fetch(
           globalTradeFeeAuthority
         );
@@ -409,7 +296,6 @@ describe("Test", () => {
           gasSystemGlobalAuthority
         );
         console.log("gasSystemGlobal:", gasSystemGlobal);
-<<<<<<< HEAD
       } catch (e) {
         const initGasGlobal = await program.methods
           .initGasGlobal(
@@ -419,11 +305,6 @@ describe("Test", () => {
             molecular,
             denominator
           )
-=======
-      }catch(e){
-        const initGasGlobal = await program.methods
-          .initGasGlobal(global_base_price,default_gas_limit,amount_in_threshold,molecular,denominator)
->>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             gasSystemGlobal: gasSystemGlobalAuthority,
@@ -451,7 +332,6 @@ describe("Test", () => {
 
     //init_amount_in_thresholds
     async function InitAmountInThresholds() {
-<<<<<<< HEAD
       try {
         const mappingAmountInThresholds =
           await program.account.mappingAmountInThresholds.fetch(
@@ -461,16 +341,6 @@ describe("Test", () => {
       } catch (e) {
         const initAmountInThresholds = await program.methods
           .initAmountInThresholds(id, amount_in_threshold)
-=======
-      try{
-        const mappingAmountInThresholds = await program.account.mappingAmountInThresholds.fetch(
-          amountInThresholdsAuthority
-        );
-        console.log("mappingAmountInThresholds:", mappingAmountInThresholds);
-      }catch(e){
-        const initAmountInThresholds = await program.methods
-          .initAmountInThresholds(id,amount_in_threshold)
->>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             powerUser: powerUserAuthority,
@@ -483,16 +353,10 @@ describe("Test", () => {
         console.log(`initAmountInThresholds:${initAmountInThresholds}'`);
         // Confirm transaction
         await program.provider.connection.confirmTransaction(initAmountInThresholds);
-<<<<<<< HEAD
         const mappingAmountInThresholds =
           await program.account.mappingAmountInThresholds.fetch(
             amountInThresholdsAuthority
           );
-=======
-        const mappingAmountInThresholds = await program.account.mappingAmountInThresholds.fetch(
-          amountInThresholdsAuthority
-        );
->>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
         console.log("mappingAmountInThresholds:", mappingAmountInThresholds);
       }
     }
@@ -500,7 +364,6 @@ describe("Test", () => {
 
     //init_native_token_trade_fee_config
     async function InitNativeTokenTradeFeeConfig() {
-<<<<<<< HEAD
       try {
         const mappingNativeTokenTradeFeeConfig =
           await program.account.mappingNativeTokenTradeFeeConfig.fetch(
@@ -513,16 +376,6 @@ describe("Test", () => {
       } catch (e) {
         const initNativeTokenTradeFeeConfig = await program.methods
           .initNativeTokenTradeFeeConfig(id, molecular, denominator)
-=======
-      try{
-        const mappingNativeTokenTradeFeeConfig = await program.account.mappingNativeTokenTradeFeeConfig.fetch(
-          nativeTokenTradeFeeConfigAuthority
-        );
-        console.log("mappingNativeTokenTradeFeeConfig:", mappingNativeTokenTradeFeeConfig);
-      }catch(e){
-        const initNativeTokenTradeFeeConfig = await program.methods
-          .initNativeTokenTradeFeeConfig(id,molecular,denominator)
->>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             powerUser: powerUserAuthority,
@@ -532,7 +385,6 @@ describe("Test", () => {
           })
           .signers([signer])
           .rpc();
-<<<<<<< HEAD
         console.log(
           `initNativeTokenTradeFeeConfig:${initNativeTokenTradeFeeConfig}'`
         );
@@ -547,16 +399,6 @@ describe("Test", () => {
           "mappingNativeTokenTradeFeeConfig:",
           mappingNativeTokenTradeFeeConfig, "\n"
         );
-=======
-        console.log(`initNativeTokenTradeFeeConfig:${initNativeTokenTradeFeeConfig}'`);
-        // Confirm transaction
-        await program.provider.connection.confirmTransaction(initNativeTokenTradeFeeConfig);
-
-        const mappingNativeTokenTradeFeeConfig = await program.account.mappingNativeTokenTradeFeeConfig.fetch(
-          nativeTokenTradeFeeConfigAuthority
-        );
-        console.log("mappingNativeTokenTradeFeeConfig:", mappingNativeTokenTradeFeeConfig);
->>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
       }
     }
     await InitNativeTokenTradeFeeConfig();
@@ -566,7 +408,6 @@ describe("Test", () => {
     let new_default_gas_limit = new anchor.BN(200000000);
     let new_amount_in_threshold = new anchor.BN(30000000000000);
     async function SetThisGasGlobal() {
-<<<<<<< HEAD
       try {
         const setThisGasGlobal = await program.methods
           .setThisGasGlobal(
@@ -576,11 +417,6 @@ describe("Test", () => {
             molecular,
             denominator
           )
-=======
-      try{
-        const setThisGasGlobal = await program.methods
-          .setThisGasGlobal(new_global_base_price,new_default_gas_limit,new_amount_in_threshold,molecular,denominator)
->>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             gasSystemGlobal: gasSystemGlobalAuthority,
@@ -598,16 +434,11 @@ describe("Test", () => {
         const globalTradeFee = await program.account.globalTradeFee.fetch(
           globalTradeFeeAuthority
         );
-<<<<<<< HEAD
         console.log("globalTradeFee:", globalTradeFee, "\n");
-=======
-        console.log("globalTradeFee:", globalTradeFee);
->>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
         const gasSystemGlobal = await program.account.gasSystemGlobal.fetch(
           gasSystemGlobalAuthority
         );
         console.log("gasSystemGlobal:", gasSystemGlobal);
-<<<<<<< HEAD
       } catch (e) {
         console.log("SetThisGasGlobal error:", e);
       }
@@ -875,14 +706,5 @@ describe("Test", () => {
       }
     }
     await BatchSetThisExchangeRate();
-=======
-      }catch(e){
-        console.log("SetThisGasGlobal error:",e);
-      }
-    }
-    await SetThisGasGlobal();
-    
-
->>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
   });
 });
