@@ -380,7 +380,7 @@ describe("Vizing Test", () => {
     await vizingAppProgram.methods.initialize().rpc();
     await vizingAppMockProgram.methods.initialize().rpc();
 
-    const targetContract = vizingAppMockProgram.programId;
+    const targetContract = vizingAppProgram.programId;
 
     const message = {
       mode: 5,
@@ -424,12 +424,7 @@ describe("Vizing Test", () => {
           {
             pubkey: vizingAuthority,
             isSigner: false,
-            isWritable: true,
-          },
-          {
-            pubkey: targetContract,
-            isSigner: false,
-            isWritable: true,
+            isWritable: false,
           },
         ])
         .signers([trustedRelayerKeyPairs[0]])

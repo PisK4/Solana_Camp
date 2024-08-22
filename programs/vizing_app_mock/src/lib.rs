@@ -30,7 +30,7 @@ pub mod vizing_app_mock {
 #[derive(Accounts)]
 pub struct LandingAppOp<'info> {
     /// CHECK: We need signer to claim ownership
-    // #[account(signer)]
+    #[account(signer)]
     pub vizing_authority: AccountInfo<'info>,
 }
 

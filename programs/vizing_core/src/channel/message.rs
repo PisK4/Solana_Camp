@@ -114,30 +114,30 @@ pub struct LandingOp<'info> {
 
 impl LandingOp<'_> {
     pub fn execute(ctx: &mut Context<LandingOp>, params: LandingParams) -> Result<()> {
-        let seeds = &[VIZING_AUTHORITY_SEED, &[ctx.accounts.vizing_authority.bump]];
-        let signer = &[&seeds[..]];
-        let program_id = ctx.accounts.target_contract.key();
-        let accounts = ctx
+        let account_info = ctx
             .remaining_accounts
             .iter()
-            .map(|acc| acc.to_account_metas(None)[0].clone())
+            .map(|acc| {
+                let mut account = acc.to_account_metas(None)[0].clone();
+                account.is_signer = account.pubkey == ctx.accounts.vizing_authority.key();
+                account
+            })
             .collect::<Vec<_>>();
-        let data = build_landing_ix_data(&params).unwrap();
-        let result = invoke_signed(
-            &Instruction {
-                program_id,
-                accounts,
-                data,
-            },
-            ctx.remaining_accounts,
-            signer,
-        );
 
-        if result.is_ok() {
-            return Ok(());
-        } else {
-            return err!(VizingError::CallingFailed);
-        }
+        let ix = Instruction {
+            program_id: ctx.accounts.target_contract.key(),
+            accounts: account_info,
+            data: build_landing_ix_data(&params)?,
+        };
+
+        invoke_signed(
+            &ix,
+            &[ctx.remaining_accounts].concat(),
+            &[&[VIZING_AUTHORITY_SEED, &[ctx.accounts.vizing_authority.bump]]],
+        )
+        .map_err(|_| VizingError::CallingFailed)?;
+
+        Ok(())
     }
 }
 
