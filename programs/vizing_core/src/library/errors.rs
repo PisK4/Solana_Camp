@@ -26,4 +26,6 @@ pub enum VizingError {
     TargetContractInvalid,
     #[msg("target program calling failed")]
     CallingFailed,
+    #[msg("Insufficient Balance")]
+    InsufficientBalance,
 }

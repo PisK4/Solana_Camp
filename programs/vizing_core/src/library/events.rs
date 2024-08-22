@@ -1,4 +1,5 @@
-use crate::*;
+use crate::vizing_channel::*;
+use anchor_lang::prelude::*;
 
 #[event]
 pub struct OAppRegisteredEvent {
@@ -18,4 +19,9 @@ pub struct SuccessfulLaunchMessage {
     pub dest_chainid: u64,
     pub addition_params: Vec<u8>,
     pub message: Message,
+}
+
+#[event]
+pub struct SuccessfulLanding {
+    pub landing_params: LandingParams,
 }

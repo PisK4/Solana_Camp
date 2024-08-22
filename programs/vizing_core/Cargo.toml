@@ -17,4 +17,3 @@ default = []
 
 [dependencies]
 anchor-lang = "0.28.0"
-vizing_app = {path = "../vizing_app", features = ["cpi"]}

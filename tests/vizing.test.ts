@@ -426,6 +426,11 @@ describe("Vizing Test", () => {
             isSigner: false,
             isWritable: false,
           },
+          {
+            pubkey: trustedRelayerKeyPairs[0].publicKey,
+            isSigner: true,
+            isWritable: false,
+          },
         ])
         .signers([trustedRelayerKeyPairs[0]])
         .rpc();

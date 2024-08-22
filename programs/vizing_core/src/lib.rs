@@ -1,9 +1,9 @@
-pub mod channel;
 pub mod governance;
 pub mod library;
+pub mod vizing_channel;
 use anchor_lang::prelude::*;
-use channel::*;
 use governance::*;
+use vizing_channel::*;
 
 declare_id!("VzgnUvjAQD9oXjHLsVGrS67GCMVdzKpwHGj3QanJhk3");
 

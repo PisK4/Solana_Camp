@@ -94,15 +94,16 @@ pub struct LandingOp<'info> {
     #[account(signer)]
     pub relayer: AccountInfo<'info>,
 
-    #[account(mut, seeds = [contants::VIZING_PAD_SETTINGS_SEED], bump = vizing.bump,
-    constraint = vizing.trusted_relayers.contains(&relayer.key()) @VizingError::NotRelayer)]
+    #[account(mut, 
+        seeds = [contants::VIZING_PAD_SETTINGS_SEED], 
+        bump = vizing.bump,
+        constraint = vizing.trusted_relayers.contains(&relayer.key()) @VizingError::NotRelayer, 
+        constraint = vizing.is_paused != true @VizingError::VizingNotActivated
+    )]
     pub vizing: Account<'info, VizingPadSettings>,
 
     /// CHECK: We need this PDA as a signer
-    #[account(
-            seeds = [contants::VIZING_AUTHORITY_SEED],
-            bump = vizing_authority.bump
-        )]
+    #[account(seeds = [contants::VIZING_AUTHORITY_SEED],bump = vizing_authority.bump)]
     pub vizing_authority: Account<'info, message::VizingAuthorityParams>,
 
     /// CHECK: target contract
@@ -114,6 +115,7 @@ pub struct LandingOp<'info> {
 
 impl LandingOp<'_> {
     pub fn execute(ctx: &mut Context<LandingOp>, params: LandingParams) -> Result<()> {
+        let balance_before = ctx.accounts.relayer.lamports();
         let account_info = ctx
             .remaining_accounts
             .iter()
@@ -137,35 +139,15 @@ impl LandingOp<'_> {
         )
         .map_err(|_| VizingError::CallingFailed)?;
 
+        require!(
+            ctx.accounts.relayer.lamports() <= balance_before + params.value,
+            VizingError::InsufficientBalance
+        );
+
+        // emit!(SuccessfulLanding {landing_params:params});
+
         Ok(())
     }
-}
-
-#[account]
-#[derive(InitSpace)]
-pub struct LandingParams {
-    pub message_id: [u8; 32],
-    pub erliest_arrival_timestamp: u64,
-    pub latest_arrival_timestamp: u64,
-    pub src_chainid: u64,
-    pub src_tx_hash: [u8; 32],
-    pub src_contract: Pubkey,
-    pub src_chain_nonce: u32,
-    pub sender: Pubkey,
-    pub value: u64,
-    #[max_len(256)]
-    pub addition_params: Vec<u8>,
-    pub message: LandingMessage,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
-pub struct LandingMessage {
-    pub mode: u8,
-    pub target_contract: Pubkey,
-    pub execute_gas_limit: u64,
-    pub max_fee_per_gas: u64,
-    #[max_len(256)]
-    pub signature: Vec<u8>,
 }
 
 fn build_landing_ix_data(params: &LandingParams) -> Result<Vec<u8>> {
