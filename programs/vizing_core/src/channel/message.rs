@@ -2,8 +2,8 @@ use super::*;
 use crate::governance::*;
 use crate::library::*;
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::{instruction::Instruction, program::invoke_signed};
 use anchor_lang::system_program::{transfer, Transfer};
-use vizing_app::{self, cpi::accounts::LandingAppOp};
 
 #[derive(Accounts)]
 pub struct LaunchOp<'info> {
@@ -15,7 +15,7 @@ pub struct LaunchOp<'info> {
     #[account(signer)]
     pub message_authority: AccountInfo<'info>,
 
-    #[account(seeds = [contants::VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
         , constraint = vizing.is_paused != true @VizingError::VizingNotActivated)]
     pub vizing: Account<'info, VizingPadSettings>,
 
@@ -113,24 +113,27 @@ pub struct LandingOp<'info> {
 }
 
 impl LandingOp<'_> {
-    pub fn execute(ctx: &mut Context<LandingOp>, _params: LandingParams) -> Result<()> {
-        let seeds = &[
-            contants::VIZING_AUTHORITY_SEED,
-            &[ctx.accounts.vizing_authority.bump],
-        ];
+    pub fn execute(ctx: &mut Context<LandingOp>, params: LandingParams) -> Result<()> {
+        let seeds = &[VIZING_AUTHORITY_SEED, &[ctx.accounts.vizing_authority.bump]];
         let signer = &[&seeds[..]];
-
-        let cpi_ctx = CpiContext::new_with_signer(
-            ctx.accounts.target_contract.to_account_info(),
-            LandingAppOp {
-                vizing_authority: ctx.accounts.vizing_authority.to_account_info(),
+        let program_id = ctx.accounts.target_contract.key();
+        let accounts = ctx
+            .remaining_accounts
+            .iter()
+            .map(|acc| acc.to_account_metas(None)[0].clone())
+            .collect::<Vec<_>>();
+        let data = build_landing_ix_data(&params).unwrap();
+        let result = invoke_signed(
+            &Instruction {
+                program_id,
+                accounts,
+                data,
             },
+            ctx.remaining_accounts,
             signer,
         );
 
-        let res = vizing_app::cpi::receive_from_vizing(cpi_ctx);
-
-        if res.is_ok() {
+        if result.is_ok() {
             return Ok(());
         } else {
             return err!(VizingError::CallingFailed);
@@ -163,4 +166,11 @@ pub struct LandingMessage {
     pub max_fee_per_gas: u64,
     #[max_len(256)]
     pub signature: Vec<u8>,
+}
+
+fn build_landing_ix_data(params: &LandingParams) -> Result<Vec<u8>> {
+    let mut data = Vec::with_capacity(LandingParams::INIT_SPACE);
+    data.extend(RECEIVE_FROM_VIZING_DISCRIMINATOR);
+    params.serialize(&mut data)?;
+    Ok(data)
 }

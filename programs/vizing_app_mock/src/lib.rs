@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 
-declare_id!("C17xMdoPdgPSYd7oGEjYf5LQ1mg6k6P3eavCBdMfaF1X");
+declare_id!("2xiuj4ozxygvkmC1WKJTGZyJXSD8dtbFxWkuJiMLzrTg");
 
 #[program]
-pub mod vizing_app {
+pub mod vizing_app_mock {
 
     use super::*;
 
@@ -13,10 +13,15 @@ pub mod vizing_app {
 
     pub fn receive_from_vizing(ctx: Context<LandingAppOp>) -> Result<()> {
         msg!(
-            "@@authority from vizing: {}",
+            "authority from vizing: {}",
             ctx.accounts.vizing_authority.key()
         );
-        msg!("Hello world from vizing");
+
+        let a = 10;
+        let b = 20;
+        let c = a + b;
+
+        msg!("{} + {} = {}", a, b, c);
 
         Ok(())
     }
@@ -25,7 +30,7 @@ pub mod vizing_app {
 #[derive(Accounts)]
 pub struct LandingAppOp<'info> {
     /// CHECK: We need signer to claim ownership
-    #[account(signer)]
+    // #[account(signer)]
     pub vizing_authority: AccountInfo<'info>,
 }
 

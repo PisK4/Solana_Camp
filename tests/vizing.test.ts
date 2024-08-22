@@ -4,6 +4,8 @@ import { expect } from "chai";
 
 import { VizingCore } from "../target/types/vizing_core";
 import { VizingApp } from "../target/types/vizing_app";
+import { VizingAppMock } from "../target/types/vizing_app_mock";
+import { sha256 } from "@coral-xyz/anchor/dist/cjs/utils";
 
 function padStringTo32Bytes(str: string): Buffer {
   const buffer = Buffer.alloc(32);
@@ -18,6 +20,8 @@ describe("Vizing Test", () => {
   anchor.setProvider(provider);
   const vizingProgram = anchor.workspace.VizingCore as Program<VizingCore>;
   const vizingAppProgram = anchor.workspace.VizingApp as Program<VizingApp>;
+  const vizingAppMockProgram = anchor.workspace
+    .VizingAppMock as Program<VizingAppMock>;
   const vizingPadSettingsSeed = Buffer.from("Vizing_Pad_Settings_Seed");
   // const relayerSettingsSeed = Buffer.from("Relayer_Settings_Seed");
   const vizingAuthoritySeed = Buffer.from("Vizing_Authority_Seed");
@@ -374,10 +378,13 @@ describe("Vizing Test", () => {
 
   it("Landing", async () => {
     await vizingAppProgram.methods.initialize().rpc();
+    await vizingAppMockProgram.methods.initialize().rpc();
+
+    const targetContract = vizingAppMockProgram.programId;
 
     const message = {
       mode: 5,
-      targetContract: vizingAppProgram.programId,
+      targetContract: targetContract,
       executeGasLimit: new anchor.BN(6),
       maxFeePerGas: new anchor.BN(7),
       signature: Buffer.alloc(0),
@@ -410,9 +417,21 @@ describe("Vizing Test", () => {
           relayer: trustedRelayerKeyPairs[0].publicKey,
           vizing: vizingPadSettings,
           vizingAuthority: vizingAuthority,
-          targetContract: vizingAppProgram.programId,
+          targetContract: targetContract,
           systemProgram: anchor.web3.SystemProgram.programId,
         })
+        .remainingAccounts([
+          {
+            pubkey: vizingAuthority,
+            isSigner: false,
+            isWritable: true,
+          },
+          {
+            pubkey: targetContract,
+            isSigner: false,
+            isWritable: true,
+          },
+        ])
         .signers([trustedRelayerKeyPairs[0]])
         .rpc();
       console.log(`landing tx: ${tx}`);
