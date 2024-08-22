@@ -20,6 +20,7 @@ pub enum VizingError {
     AlreadyInitialized,
     #[msg("Unauthorized: Fee Collector Invalid")]
     FeeCollectorInvalid,
+<<<<<<< HEAD
     #[msg("Vizing Not Activated")]
     VizingNotActivated,
     #[msg("Target Program Invalid")]
@@ -27,3 +28,8 @@ pub enum VizingError {
     #[msg("target program calling failed")]
     CallingFailed,
 }
+=======
+    #[msg("Vizing Not Active")]
+    VizingNotActive,
+}
+>>>>>>> 55ad0df065f670e385ba1247c1b2bfdbd863c3a2
