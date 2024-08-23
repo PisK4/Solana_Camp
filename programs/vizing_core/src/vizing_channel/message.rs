@@ -1,4 +1,4 @@
-use super::*;
+use crate::vizing_omni::*;
 use crate::governance::*;
 use crate::library::*;
 use anchor_lang::prelude::*;
@@ -27,7 +27,7 @@ pub struct LaunchOp<'info> {
 }
 
 impl LaunchOp<'_> {
-    pub fn execute(ctx: &mut Context<LaunchOp>, params: LaunchParams) -> Result<()> {
+    pub fn vizing_launch(ctx: &mut Context<LaunchOp>, params: LaunchParams) -> Result<()> {
         msg!(
             "message_authority: {}",
             ctx.accounts.message_authority.key()
@@ -104,7 +104,7 @@ pub struct LandingOp<'info> {
 
     /// CHECK: We need this PDA as a signer
     #[account(seeds = [contants::VIZING_AUTHORITY_SEED],bump = vizing_authority.bump)]
-    pub vizing_authority: Account<'info, message::VizingAuthorityParams>,
+    pub vizing_authority: Account<'info, VizingAuthorityParams>,
 
     /// CHECK: target contract
     #[account(mut, constraint = target_contract.key() == params.message.target_contract @VizingError::TargetContractInvalid)]
@@ -114,8 +114,9 @@ pub struct LandingOp<'info> {
 }
 
 impl LandingOp<'_> {
-    pub fn execute(ctx: &mut Context<LandingOp>, params: LandingParams) -> Result<()> {
+    pub fn vizing_landing(ctx: &mut Context<LandingOp>, params: LandingParams) -> Result<()> {
         let balance_before = ctx.accounts.relayer.lamports();
+
         let account_info = ctx
             .remaining_accounts
             .iter()
@@ -144,7 +145,19 @@ impl LandingOp<'_> {
             VizingError::InsufficientBalance
         );
 
-        // emit!(SuccessfulLanding {landing_params:params});
+        emit!(SuccessfulLanding {
+            message_id: params.message_id,
+            erliest_arrival_timestamp: params.erliest_arrival_timestamp,
+            latest_arrival_timestamp: params.latest_arrival_timestamp,
+            src_chainid: params.src_chainid,
+            src_tx_hash: params.src_tx_hash,
+            src_contract: params.src_contract,
+            src_chain_nonce: params.src_chain_nonce,
+            sender: params.sender,
+            value: params.value,
+            addition_params: params.addition_params,
+            message: params.message,
+        });
 
         Ok(())
     }

@@ -1,6 +1,6 @@
-pub mod vizing_channel;
+pub mod vizing_omni;
 use anchor_lang::prelude::*;
-use vizing_channel::*;
+use vizing_omni::*;
 
 declare_id!("C17xMdoPdgPSYd7oGEjYf5LQ1mg6k6P3eavCBdMfaF1X");
 

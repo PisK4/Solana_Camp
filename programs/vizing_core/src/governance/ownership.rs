@@ -8,7 +8,7 @@ pub struct InitVizingPad<'info> {
         init,
         payer = payer,
         space = 8 + VizingPadSettings::INIT_SPACE,
-        seeds = [contants::VIZING_PAD_SETTINGS_SEED],
+        seeds = [VIZING_PAD_SETTINGS_SEED],
         bump,
     )]
     pub vizing: Account<'info, VizingPadSettings>,
@@ -18,7 +18,7 @@ pub struct InitVizingPad<'info> {
         init,
         payer = payer,
         space = 8 + VizingAuthorityParams::INIT_SPACE,
-        seeds = [contants::VIZING_AUTHORITY_SEED],
+        seeds = [VIZING_AUTHORITY_SEED],
         bump,
     )]
     pub vizing_authority: Account<'info, VizingAuthorityParams>,
@@ -30,7 +30,7 @@ pub struct InitVizingPad<'info> {
 }
 
 impl InitVizingPad<'_> {
-    pub fn execute(ctx: &mut Context<InitVizingPad>, params: InitVizingPadParams) -> Result<()> {
+    pub fn initialize_vizing_pad(ctx: &mut Context<InitVizingPad>, params: InitVizingPadParams) -> Result<()> {
         // init vizing settings
         let (_, bump) = Pubkey::find_program_address(
             &[contants::VIZING_PAD_SETTINGS_SEED],
@@ -104,7 +104,7 @@ pub struct ModifySettings<'info> {
 }
 
 impl ModifySettings<'_> {
-    pub fn execute(ctx: &mut Context<ModifySettings>, params: &OwnerManagementParams) -> Result<()> {
+    pub fn owner_management(ctx: &mut Context<ModifySettings>, params: &OwnerManagementParams) -> Result<()> {
         ctx.accounts.vizing.owner = params.owner;
         ctx.accounts.vizing.fee_receiver = params.fee_receiver;
         ctx.accounts.vizing.engine_admin = params.engine_admin;

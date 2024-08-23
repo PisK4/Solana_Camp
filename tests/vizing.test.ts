@@ -377,10 +377,24 @@ describe("Vizing Test", () => {
   });
 
   it("Landing", async () => {
-    await vizingAppProgram.methods.initialize().rpc();
-    await vizingAppMockProgram.methods.initialize().rpc();
+    const resultDataSeed = "result_data_seed";
 
-    const targetContract = vizingAppProgram.programId;
+    const [resultDataAccount, resultDataBump] =
+      anchor.web3.PublicKey.findProgramAddressSync(
+        [Buffer.from(resultDataSeed)],
+        vizingAppMockProgram.programId
+      );
+
+    await vizingAppProgram.methods.initialize().rpc();
+    await vizingAppMockProgram.methods
+      .initialize()
+      .accounts({
+        resultAccount: resultDataAccount,
+        payer: provider.wallet.publicKey,
+      })
+      .rpc();
+
+    const targetContract = vizingAppMockProgram.programId;
 
     const message = {
       mode: 5,
@@ -411,6 +425,43 @@ describe("Vizing Test", () => {
     };
 
     {
+      try {
+        const mockRelayer = anchor.web3.Keypair.generate();
+        await vizingProgram.methods
+          .landing(landingParams)
+          .accounts({
+            relayer: mockRelayer.publicKey,
+            vizing: vizingPadSettings,
+            vizingAuthority: vizingAuthority,
+            targetContract: targetContract,
+            systemProgram: anchor.web3.SystemProgram.programId,
+          })
+          .remainingAccounts([
+            {
+              pubkey: vizingAuthority,
+              isSigner: false,
+              isWritable: false,
+            },
+            {
+              pubkey: mockRelayer.publicKey,
+              isSigner: true,
+              isWritable: false,
+            },
+            {
+              pubkey: resultDataAccount,
+              isSigner: false,
+              isWritable: false,
+            },
+          ])
+          .signers([mockRelayer])
+          .rpc();
+        throw new Error("should not come here");
+      } catch (error) {
+        expect(error.error.errorMessage).to.equal("Unauthorized: Not Relayer");
+      }
+    }
+
+    {
       const tx = await vizingProgram.methods
         .landing(landingParams)
         .accounts({
@@ -429,6 +480,11 @@ describe("Vizing Test", () => {
           {
             pubkey: trustedRelayerKeyPairs[0].publicKey,
             isSigner: true,
+            isWritable: false,
+          },
+          {
+            pubkey: resultDataAccount,
+            isSigner: false,
             isWritable: false,
           },
         ])
