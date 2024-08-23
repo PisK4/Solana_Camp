@@ -7,6 +7,9 @@ use governance::*;
 use anchor_lang::prelude::*;
 use anchor_lang::system_program::{transfer, Transfer};
 
+//change add
+pub mod gas_system;
+use gas_system::*;
 // pub mod state;
 // pub mod error;
 // pub mod message_monitor_lib;
@@ -80,15 +83,7 @@ pub mod vizing_core {
     // ***********  governance end ************
 
     //init
-    pub fn save_chain_id(
-        ctx: Context<SaveDestChainId>,
-        dest_chain_id: Vec<u8>,
-    ) -> Result<()>{
-        let save=&mut ctx.accounts.save_chain_id;
-        save.dest_chain_id=dest_chain_id;
-        Ok(())
-    }
-    
+
     pub fn init_power_user(
         ctx: Context<InitPowerUser>,
         new_admin: Pubkey,
@@ -102,7 +97,7 @@ pub mod vizing_core {
         new_token_managers: Vec<Pubkey>,
     ) -> Result<()> {
         let power_user = &mut ctx.accounts.power_user;
-        let vizing_vault = &mut ctx.accounts.vizing_vault;
+
         power_user.admin_role = new_admin;
         power_user.engine_admin = new_engine_admin;
         power_user.station_admin = new_station_admin;
@@ -112,8 +107,22 @@ pub mod vizing_core {
         power_user.gas_managers = new_gas_managers;
         power_user.swap_managers = new_swap_managers;
         power_user.token_managers = new_token_managers;
+        Ok(())
+    }
 
-        vizing_vault.current_pragma_id=*ctx.program_id;
+    pub fn save_chain_id(ctx: Context<SaveDestChainId>, dest_chain_id: Vec<u8>) -> Result<()> {
+        let save = &mut ctx.accounts.save_chain_id;
+        let power_user = &mut ctx.accounts.power_user;
+        let user_key = ctx.accounts.user.key();
+        require!(user_key==power_user.admin_role, ErrorCode::NonAdmin);
+
+        save.dest_chain_id = dest_chain_id;
+        Ok(())
+    }
+
+    pub fn init_vizing_vault(ctx: Context<InitVizingVault>) -> Result<()> {
+        let vizing_vault = &mut ctx.accounts.vizing_vault;
+        vizing_vault.current_pragma_id = *ctx.program_id;
         Ok(())
     }
 
@@ -173,17 +182,14 @@ pub mod vizing_core {
         ctx: Context<AmountInThresholds>,
         key: u64,
         value: u64,
-    ) ->Result<()>{
+    ) -> Result<()> {
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
         require!(if_power_user, ErrorCode::NonGasManager);
 
         let a = &mut ctx.accounts.amount_in_thresholds;
-        a.set_amount_in_thresholds(
-            key,
-            value
-        );
+        a.set_amount_in_thresholds(key, value);
         Ok(())
     }
 
@@ -203,6 +209,26 @@ pub mod vizing_core {
         Ok(())
     }
 
+    pub fn init_token_info_base(
+        ctx: Context<InitTokenInfoBase>,
+        symbol: Vec<u8>,
+        token_address: [u16; 20],
+        decimals: u8,
+        max_price: u64,
+    ) -> Result<()> {
+        let power_user = &mut ctx.accounts.power_user;
+        let user_key = &ctx.accounts.user.key();
+        let if_power_user = power_user.token_managers.contains(user_key);
+        require!(if_power_user, ErrorCode::NonTokenManager);
+
+        let token_config = &mut ctx.accounts.token_config;
+        let symbol_config = &mut ctx.accounts.symbol_config;
+        let symbol_clone: Vec<u8> = symbol.clone();
+        token_config.set_token_base(token_address, symbol, decimals, max_price);
+        symbol_config.set(symbol_clone, token_address);
+        Ok(())
+    }
+
     //set
     //set_gas_global
     pub fn set_this_gas_global(
@@ -212,18 +238,18 @@ pub mod vizing_core {
         amount_in_threshold: u64,
         molecular: u64,
         denominator: u64,
-    )-> Result<()> {
+    ) -> Result<()> {
         SetGasGlobal::set_gas_global(
             ctx,
             global_base_price,
             default_gas_limit,
             amount_in_threshold,
             molecular,
-            denominator
+            denominator,
         )
     }
 
-    //set_fee_config    
+    //set_fee_config
     pub fn set_this_fee_config(
         ctx: Context<SetFeeConfig>,
         key: u64,
@@ -233,7 +259,7 @@ pub mod vizing_core {
         denominator: u64,
         molecular_decimal: u8,
         denominator_decimal: u8,
-    )-> Result<()> {
+    ) -> Result<()> {
         SetFeeConfig::set_fee_config(
             ctx,
             key,
@@ -252,29 +278,18 @@ pub mod vizing_core {
         key: u64,
         molecular: u64,
         denominator: u64,
-    )-> Result<()> {
-        SetTokenFeeConfig::set_token_fee_config(
-            ctx,
-            key,
-            molecular,
-            denominator
-        )
+    ) -> Result<()> {
+        SetTokenFeeConfig::set_token_fee_config(ctx, key, molecular, denominator)
     }
 
-    
     //set_dapp_price_config
     pub fn set_this_dapp_price_config(
         ctx: Context<SetDappPriceConfig>,
         chain_id: u64,
         dapp: [u16; 20],
         base_price: u64,
-    )-> Result<()> {
-        SetDappPriceConfig::set_dapp_price_config(
-            ctx,
-            chain_id,
-            dapp,
-            base_price
-        )
+    ) -> Result<()> {
+        SetDappPriceConfig::set_dapp_price_config(ctx, chain_id, dapp, base_price)
     }
 
     //set_exchange_rate
@@ -285,14 +300,14 @@ pub mod vizing_core {
         denominator: u64,
         molecular_decimal: u8,
         denominator_decimal: u8,
-    )-> Result<()> {
+    ) -> Result<()> {
         SetExchangeRate::set_exchange_rate(
             ctx,
             chain_id,
             molecular,
             denominator,
             molecular_decimal,
-            denominator_decimal
+            denominator_decimal,
         )
     }
 
@@ -302,12 +317,12 @@ pub mod vizing_core {
         dest_chain_ids: Vec<u64>,
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
-    )-> Result<()> {
+    ) -> Result<()> {
         BatchSetTokenFeeConfig::batch_set_token_fee_config(
             ctx,
             dest_chain_ids,
             moleculars,
-            denominators
+            denominators,
         )
     }
 
@@ -318,13 +333,13 @@ pub mod vizing_core {
         dest_chain_ids: Vec<u64>,
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
-    )-> Result<()> {
+    ) -> Result<()> {
         BatchSetTradeFeeConfigMap::batch_set_trade_fee_config_map(
             ctx,
             dapps,
             dest_chain_ids,
             moleculars,
-            denominators
+            denominators,
         )
     }
 
@@ -333,12 +348,8 @@ pub mod vizing_core {
         ctx: Context<BatchSetAmountInThreshold>,
         chain_ids: Vec<u64>,
         new_values: Vec<u64>,
-    )-> Result<()> {
-        BatchSetAmountInThreshold::batch_set_amount_in_threshold(
-            ctx,
-            chain_ids,
-            new_values
-        )
+    ) -> Result<()> {
+        BatchSetAmountInThreshold::batch_set_amount_in_threshold(ctx, chain_ids, new_values)
     }
 
     //batch_set_dapp_price_config_in_diff_chain
@@ -347,12 +358,12 @@ pub mod vizing_core {
         chain_ids: Vec<u64>,
         dapps: Vec<[u16; 20]>,
         base_prices: Vec<u64>,
-    )-> Result<()> {
+    ) -> Result<()> {
         BatchSetDappPriceConfigInDiffChain::batch_set_dapp_price_config_in_diff_chain(
             ctx,
             chain_ids,
             dapps,
-            base_prices
+            base_prices,
         )
     }
 
@@ -362,12 +373,12 @@ pub mod vizing_core {
         chain_id: u64,
         dapps: Vec<[u16; 20]>,
         base_prices: Vec<u64>,
-    )-> Result<()> {
+    ) -> Result<()> {
         BatchSetDappPriceConfigInSameChain::batch_set_dapp_price_config_in_same_chain(
             ctx,
             chain_id,
             dapps,
-        base_prices
+            base_prices,
         )
     }
 
@@ -379,14 +390,14 @@ pub mod vizing_core {
         denominators: Vec<u64>,
         molecular_decimals: Vec<u8>,
         denominator_decimals: Vec<u8>,
-    )-> Result<()> {
+    ) -> Result<()> {
         BatchSetExchangeRate::batch_set_exchange_rate(
             ctx,
             chain_ids,
             moleculars,
             denominators,
             molecular_decimals,
-            denominator_decimals
+            denominator_decimals,
         )
     }
 
@@ -416,7 +427,7 @@ pub mod vizing_core {
             new_token_managers,
         )
     }
-    
+
     //user=>vizing_vault
     pub fn sol_transfer(ctx: Context<SolTransfer>, amount: u64) -> Result<()> {
         let from_pubkey = ctx.accounts.sender.to_account_info();
@@ -440,23 +451,13 @@ pub mod vizing_core {
         ctx: Context<WithdrawSplToken>,
         withdraw_amount: u64,
         this_bump: u8,
-    )-> Result<()> {
-        WithdrawSplToken::withdraw_spl_token(
-            ctx,
-            withdraw_amount,
-            this_bump
-        )
+    ) -> Result<()> {
+        WithdrawSplToken::withdraw_spl_token(ctx, withdraw_amount, this_bump)
     }
 
     //withdraw_sol
-    pub fn withdraw_vault_sol(
-        ctx: Context<WithdrawSol>, 
-        withdraw_amount: u64,
-    )-> Result<()> {
-        WithdrawSol::withdraw_sol(
-            ctx,
-            withdraw_amount
-        )
+    pub fn withdraw_vault_sol(ctx: Context<WithdrawSol>, withdraw_amount: u64) -> Result<()> {
+        WithdrawSol::withdraw_sol(ctx, withdraw_amount)
     }
 
     //set_token_info_base
@@ -466,14 +467,8 @@ pub mod vizing_core {
         token_address: [u16; 20],
         decimals: u8,
         max_price: u64,
-    )-> Result<()> {
-        SetTokenInfoBase::set_token_info_base(
-            ctx,
-            symbol,
-            token_address,
-            decimals,
-            max_price
-        )
+    ) -> Result<()> {
+        SetTokenInfoBase::set_token_info_base(ctx, symbol, token_address, decimals, max_price)
     }
 
     //set_token_trade_fee_map
@@ -483,19 +478,32 @@ pub mod vizing_core {
         chain_ids: Vec<u64>,
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
-    )-> Result<()> {
+    ) -> Result<()> {
         SetTokenTradeFeeMap::set_token_trade_fee_map(
             ctx,
             token_address,
             chain_ids,
             moleculars,
-            denominators
+            denominators,
         )
     }
 }
 
+#[derive(Accounts)]
+pub struct InitPowerUser<'info> {
+    #[account(
+        init, 
+        payer = user, 
+        space = 8 + 512,
+        seeds = [b"init_power_user".as_ref()],
+        bump
+    )]
+    pub power_user: Account<'info, PowerUser>,
+    #[account(mut)]
+    pub user: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
 
-// !!!!!need limit SaveDestChainId
 #[derive(Accounts)]
 pub struct SaveDestChainId<'info> {
     #[account(
@@ -504,23 +512,19 @@ pub struct SaveDestChainId<'info> {
         space = 8 + 128,
     )]
     pub save_chain_id: Account<'info, SaveChainId>,
+    #[account(
+        mut,
+        seeds = [b"init_power_user".as_ref()],
+        bump
+    )]
+    pub power_user: Account<'info, PowerUser>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
-pub struct InitPowerUser<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        init, 
-        payer = user, 
-        space = 8 + 512,
-        seeds = [b"init_power_user".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+pub struct InitVizingVault<'info> {
     #[account(
         init, 
         payer = user, 
@@ -537,7 +541,7 @@ pub struct InitPowerUser<'info> {
 #[derive(Accounts)]
 pub struct InitGasGlobal<'info> {
     #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
+    pub save_chain_id: Account<'info, SaveChainId>,
     #[account(
         init,
         payer = user, 
@@ -556,7 +560,7 @@ pub struct InitGasGlobal<'info> {
     pub global_trade_fee: Account<'info, GlobalTradeFee>,
     #[account(
         mut,
-        seeds = [b"init_power_user".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_power_user".as_ref()],
         bump
     )]
     pub power_user: Account<'info, PowerUser>,
@@ -568,10 +572,10 @@ pub struct InitGasGlobal<'info> {
 #[derive(Accounts)]
 pub struct InitFeeConfig<'info> {
     #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
+    pub save_chain_id: Account<'info, SaveChainId>,
     #[account(
         mut,
-        seeds = [b"init_power_user".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_power_user".as_ref()],
         bump
     )]
     pub power_user: Account<'info, PowerUser>,
@@ -591,10 +595,10 @@ pub struct InitFeeConfig<'info> {
 #[derive(Accounts)]
 pub struct AmountInThresholds<'info> {
     #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
+    pub save_chain_id: Account<'info, SaveChainId>,
     #[account(
         mut,
-        seeds = [b"init_power_user".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_power_user".as_ref()],
         bump
     )]
     pub power_user: Account<'info, PowerUser>,
@@ -614,10 +618,10 @@ pub struct AmountInThresholds<'info> {
 #[derive(Accounts)]
 pub struct InitNativeTokenTradeFeeConfig<'info> {
     #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
+    pub save_chain_id: Account<'info, SaveChainId>,
     #[account(
         mut,
-        seeds = [b"init_power_user".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_power_user".as_ref()],
         bump
     )]
     pub power_user: Account<'info, PowerUser>,
@@ -642,3 +646,35 @@ pub struct SolTransfer<'info> {
     recipient: AccountInfo<'info>,
     system_program: Program<'info, System>,
 }
+
+#[derive(Accounts)]
+pub struct InitTokenInfoBase<'info> {
+    #[account(mut)]
+    pub save_chain_id: Account<'info, SaveChainId>,
+    #[account(
+        mut,
+        seeds = [b"init_power_user".as_ref()],
+        bump
+    )]
+    pub power_user: Account<'info, PowerUser>,
+    #[account(mut)]
+    pub user: Signer<'info>,
+    #[account(
+        init, 
+        payer = user, 
+        space = 8 + 128,
+        seeds = [b"init_token_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub token_config: Account<'info, MappingTokenConfig>,
+    #[account(
+        init, 
+        payer = user, 
+        space = 8 + 128,
+        seeds = [b"init_symbol_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub symbol_config: Account<'info, MappingSymbolConfig>,
+    pub system_program: Program<'info, System>,
+}
+

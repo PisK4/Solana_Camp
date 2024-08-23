@@ -355,7 +355,7 @@ pub struct ChangePowerUser<'info> {
     pub save_chain_id: Account<'info, SaveChainId>,
     #[account(
         mut,
-        seeds = [b"init_power_user".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_power_user".as_ref()],
         bump
     )]
     pub power_user: Account<'info, PowerUser>,
@@ -370,7 +370,7 @@ pub struct WithdrawSplToken<'info> {
     pub save_chain_id: Account<'info, SaveChainId>,
     #[account(
         mut,
-        seeds = [b"init_power_user".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_power_user".as_ref()],
         bump
     )]
     pub power_user: Account<'info, PowerUser>,
@@ -395,7 +395,7 @@ pub struct WithdrawSol<'info> {
     pub save_chain_id: Account<'info, SaveChainId>,
     #[account(
         mut,
-        seeds = [b"init_power_user".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_power_user".as_ref()],
         bump
     )]
     pub power_user: Account<'info, PowerUser>,
@@ -414,24 +414,20 @@ pub struct SetTokenInfoBase<'info> {
     pub save_chain_id: Account<'info, SaveChainId>,
     #[account(
         mut,
-        seeds = [b"init_power_user".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_power_user".as_ref()],
         bump
     )]
     pub power_user: Account<'info, PowerUser>,
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(
-        init, 
-        payer = user, 
-        space = 8 + 128,
+        mut,
         seeds = [b"init_token_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
         bump
     )]
     pub token_config: Account<'info, MappingTokenConfig>,
     #[account(
-        init, 
-        payer = user, 
-        space = 8 + 128,
+        mut,
         seeds = [b"init_symbol_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
         bump
     )]
@@ -445,7 +441,7 @@ pub struct SetTokenTradeFeeMap<'info> {
     pub save_chain_id: Account<'info, SaveChainId>,
     #[account(
         mut,
-        seeds = [b"init_power_user".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_power_user".as_ref()],
         bump
     )]
     pub power_user: Account<'info, PowerUser>,

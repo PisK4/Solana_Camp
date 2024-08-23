@@ -22,7 +22,7 @@ import {
   sendAndConfirmTransaction,
 } from "@solana/web3.js";
 import { web3 } from "@project-serum/anchor";
-import type { State } from "../target/types/state";
+import type { Error } from "../target/types/error";
 
 const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
 let token_programId = TOKEN_PROGRAM_ID;
@@ -230,7 +230,7 @@ describe("Test", () => {
   // Configure the client to use the local cluster
   anchor.setProvider(anchor.AnchorProvider.env());
 
-  const program = anchor.workspace.State as anchor.Program<State>;
+  const program = anchor.workspace.Error as anchor.Program<Error>;
   
   it("initialize", async () => {
     console.log("current user:", user.toBase58());
@@ -304,14 +304,14 @@ describe("Test", () => {
       return result;
     }
 
-    let id = new anchor.BN(16);
+    let id = new anchor.BN(8);
     let chainId = new Buffer(`${id}`);
     console.log("chainId buffer:", chainId);
 
     //pda
     let [powerUserAuthority, powerUserBump] =
       await PublicKey.findProgramAddress(
-        [Buffer.from("init_power_user"), chainId],
+        [Buffer.from("init_power_user")],
         program.programId
       );
     console.log("powerUserAuthority:", powerUserAuthority.toString());
@@ -422,31 +422,6 @@ describe("Test", () => {
       saveDestChainIdAccount.publicKey.toBase58()
     );
 
-    async function SaveChainId() {
-      try {
-        const saveDestChainId = await program.methods
-          .saveChainId(chainId)
-          .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
-            user: user,
-            systemProgram: systemId,
-          })
-          .signers([signer, saveDestChainIdAccount])
-          .rpc();
-        console.log(`saveDestChainId:${saveDestChainId}'`);
-        // Confirm transaction
-        await program.provider.connection.confirmTransaction(saveDestChainId);
-
-        const getChainId = await program.account.saveChainId.fetch(
-          saveDestChainIdAccount.publicKey
-        );
-        console.log("getChainId:", getChainId);
-      } catch (e) {
-        console.log("saveDestChainId error:", e);
-      }
-    }
-    await SaveChainId();
-
     //init_this_power_user
     let gas_managers = [user];
     let swap_managers = [user];
@@ -471,9 +446,7 @@ describe("Test", () => {
             token_managers
           )
           .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
             powerUser: powerUserAuthority,
-            vizingVault: vizingVaultAuthority,
             user: user,
             systemProgram: systemId,
           })
@@ -485,6 +458,61 @@ describe("Test", () => {
       }
     }
     await InitPowerUser();
+
+    //saveChainId
+    async function SaveChainId() {
+      try {
+        const saveDestChainId = await program.methods
+          .saveChainId(chainId)
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer, saveDestChainIdAccount])
+          .rpc();
+        console.log(`saveDestChainId:${saveDestChainId}'`);
+        // Confirm transaction
+        await program.provider.connection.confirmTransaction(saveDestChainId);
+
+        const getChainId = await program.account.saveChainId.fetch(
+          saveDestChainIdAccount.publicKey
+        );
+        console.log("getChainId:", getChainId);
+      } catch (e) {
+        console.log("saveDestChainId error:", e);
+      }
+    }
+    await SaveChainId();
+
+    //initVizingVault
+    async function InitVizingVault(){
+      try {
+        const vaultMes = await program.account.vaultMes.fetch(
+          vizingVaultAuthority
+        );
+        console.log("InitVizingVault:", vaultMes);
+      } catch (e) {
+        const initVizingVault = await program.methods
+          .initVizingVault()
+          .accounts({
+            vizingVault: vizingVaultAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`initVizingVault:${initVizingVault}'`);
+        // Confirm transaction
+        await program.provider.connection.confirmTransaction(initVizingVault);
+        const vaultMes = await program.account.vaultMes.fetch(
+          vizingVaultAuthority
+        );
+        console.log("InitVizingVault:", vaultMes);
+      }
+    }
+    await InitVizingVault();
 
     let base_price = new anchor.BN(1000000);
     let reserve = new anchor.BN(100000000);
@@ -650,6 +678,50 @@ describe("Test", () => {
     }
     await InitNativeTokenTradeFeeConfig();
 
+    let symbol=Buffer.from("eth");
+    let tokenAddress = encodeEthereumAddressToU16Array(
+      "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+    );
+    const init_tokenAddressArray: number[] = Array.from(tokenAddress);
+    let init_decimals=6;
+    let init_max_price=new anchor.BN(666866666);
+    async function InitTokenInfoBase() {
+      try {
+        const mappingSymbolConfig = await program.account.mappingSymbolConfig.fetch(
+          initSymbolConfigAuthority
+        );
+        console.log("mappingSymbolConfig:", mappingSymbolConfig);
+        const mappingTokenConfig = await program.account.mappingTokenConfig.fetch(
+          initTokenConfigAuthority
+        );
+        console.log("mappingTokenConfig:", mappingTokenConfig);
+      } catch (e) {
+        const initTokenInfoBase = await program.methods
+          .initTokenInfoBase(
+            symbol,
+            init_tokenAddressArray,
+            init_decimals,
+            init_max_price
+          )
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            user: user,
+            tokenConfig: initTokenConfigAuthority,
+            symbolConfig: initSymbolConfigAuthority,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(
+          `initTokenInfoBase:${initTokenInfoBase}'`
+        );
+        // Confirm transaction
+        await program.provider.connection.confirmTransaction(initTokenInfoBase);
+      }
+    }
+    await InitTokenInfoBase();
+
     //setThisGasGlobal
     let new_global_base_price = new anchor.BN(500000);
     let new_default_gas_limit = new anchor.BN(200000000);
@@ -756,7 +828,6 @@ describe("Test", () => {
       "0xaE67336f06B10fbbb26F31d31AbEA897290109B9"
     );
     const dappNumberArray: number[] = Array.from(dapp);
-
     async function SetThisDappPriceConfig() {
       try {
         const setThisDappPriceConfig = await program.methods
@@ -1030,7 +1101,7 @@ describe("Test", () => {
     }
     await ChangeThisPowerUser();
 
-    //
+    //vizingVaultAssociatedToken
     let vizingVaultAssociatedToken = await GetOrcreateAssociatedToken(
       vizingVaultAuthority,
       newTokenMes.publicKey,
@@ -1114,13 +1185,9 @@ describe("Test", () => {
       }
     }
     let amount2 = new anchor.BN(55555);
-    await WithdrawVaultSol(vizingVaultAuthority, user, amount2);\
+    await WithdrawVaultSol(vizingVaultAuthority, user, amount2);
 
     //set_this_token_info_base
-    let symbol=Buffer.from("btc");
-    let tokenAddress = encodeEthereumAddressToU16Array(
-      "0xdAC17F958D2ee523a2206206994597C13D831ec7"
-    );
     const tokenAddressArray: number[] = Array.from(tokenAddress);
     let decimals=8;
     let max_price=new anchor.BN(66666666);

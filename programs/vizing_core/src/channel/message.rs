@@ -124,22 +124,16 @@ impl LaunchOp<'_> {
         // mock fee
         // let fee: u64 = 1000000000;
 
-        let source = ctx.accounts.fee_payer.to_account_info();
-        let destination = ctx.accounts.fee_collector.to_account_info();
-
-        **source.try_borrow_mut_lamports()? -= fee;
-        **destination.try_borrow_mut_lamports()? += fee;
-
-        // transfer(
-        //     CpiContext::new(
-        //         ctx.accounts.system_program.to_account_info(),
-        //         Transfer {
-        //             from: ctx.accounts.fee_payer.to_account_info(),
-        //             to: ctx.accounts.fee_collector.to_account_info(),
-        //         },
-        //     ),
-        //     fee,
-        // )?;
+        transfer(
+            CpiContext::new(
+                ctx.accounts.system_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.fee_payer.to_account_info(),
+                    to: ctx.accounts.fee_collector.to_account_info(),
+                },
+            ),
+            fee,
+        )?;
 
         emit!(SuccessfulLaunchMessage {
             erliest_arrival_timestamp: params.erliest_arrival_timestamp,
