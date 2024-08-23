@@ -1,12 +1,19 @@
 use super::*;
 use crate::governance::*;
 use crate::library::*;
+
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{instruction::Instruction, program::invoke_signed};
 use anchor_lang::system_program::{transfer, Transfer};
 
+use crate::vizing_gas_system::*;
+use crate::state::*;
+
 #[derive(Accounts)]
 pub struct LaunchOp<'info> {
+    #[account(mut)]
+    pub save_chain_id: Account<'info,SaveChainId>,
+
     /// CHECK: We need signer to claim ownership
     #[account(signer)]
     pub fee_payer: AccountInfo<'info>,
@@ -22,6 +29,25 @@ pub struct LaunchOp<'info> {
     /// CHECK: We need this account as to receive the fee
     #[account(mut, constraint = fee_collector.key() == vizing.fee_receiver @VizingError::FeeCollectorInvalid)]
     pub fee_collector: AccountInfo<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub gas_system_global: Account<'info, GasSystemGlobal>,
+    #[account(
+        mut,
+        seeds = [b"global_trade_fee".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub global_trade_fee: Account<'info, GlobalTradeFee>,
 
     pub system_program: Program<'info, System>,
 }
@@ -57,8 +83,46 @@ impl LaunchOp<'_> {
 
         msg!("signature: {:?}", params.message.signature);
 
+        let mapping_fee_config=&mut ctx.accounts.mapping_fee_config;
+        let gas_system_global=&mut ctx.accounts.gas_system_global;
+        let global_trade_fee=&mut ctx.accounts.global_trade_fee;
+
+        let get_fee_config=mapping_fee_config.get_fee_config(dest_chain_id)?;
+        let get_trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id)?;
+        //this_dapp [u16 ;20] =>message decode
+        let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id, this_dapp)?;
+        let get_dapp_config = mapping_fee_config.get_dapp_config(dest_chain_id,this_dapp)?;
+        
+        let fee_config_base_price= get_fee_config.base_price;
+        let global_base_price= gas_system_global.global_base_price;
+        let default_gas_limit = gas_system_global.default_gas_limit;
+        let fee_config_molecular_decimal = get_fee_config.molecular_decimal;
+        let fee_config_denominator_decimal = get_fee_config.denominator_decimal;
+        let global_trade_fee_molecular = global_trade_fee.molecular;
+        let global_trade_fee_denominator = global_trade_fee.denominator;
+        let trade_fee_config_molecular=  get_trade_fee_config.molecular;
+        let trade_fee_config_denominator=get_trade_fee_config.denominator;
+        let dapp_config_value=get_dapp_config.value;
+
+
+        let fee=estimate_total_fee(
+            global_base_price,
+            fee_config_base_price,
+            dapp_config_value,
+            fee_config_molecular_decimal,
+            fee_config_denominator_decimal,
+            trade_fee_config_molecular,
+            trade_fee_config_denominator,
+            global_trade_fee_molecular,
+            global_trade_fee_denominator,
+            default_gas_limit,
+            // amount_out: u64,
+    //     dest_chain_id: u64,
+    //     message: &[u16]
+        )?;
+
         // mock fee
-        let fee: u64 = 1000000000;
+        // let fee: u64 = 1000000000;
 
         let source = ctx.accounts.fee_payer.to_account_info();
         let destination = ctx.accounts.fee_collector.to_account_info();

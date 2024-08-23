@@ -1,6 +1,21 @@
 import BN from "bn.js";
 import * as web3 from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
+import * as anchor from "@project-serum/anchor";
+import {
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  createMint,
+  mintTo,
+  getOrCreateAssociatedTokenAccount,
+  getAccount,
+  transfer,
+} from "@solana/spl-token";
+// import { Opool } from "../target/types/opool";
+
+import { clusterApiUrl, Connection } from "@solana/web3.js";
+
+import { createCreateMetadataAccountV3Instruction } from "@metaplex-foundation/mpl-token-metadata";
 import {
   PublicKey,
   Transaction,
@@ -9,6 +24,208 @@ import {
 import { web3 } from "@project-serum/anchor";
 import type { State } from "../target/types/state";
 
+const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+let token_programId = TOKEN_PROGRAM_ID;
+let associated_token_programId = ASSOCIATED_TOKEN_PROGRAM_ID;
+
+let user = program.provider.publicKey;
+let signer = program.provider.wallet.payer;
+
+let newTokenMes = new web3.Keypair();
+
+let testReceiver = new web3.Keypair();
+console.log("testReceiver:", testReceiver.publicKey.toBase58());
+
+const metadataData = {
+  name: "Jump Sea Token",
+  symbol: "JST",
+  uri: "https://arweave.net/1234",
+  sellerFeeBasisPoints: 0,
+  creators: null,
+  collection: null,
+  uses: null,
+};
+
+//createMint
+async function create_mint() {
+  const tokenMint = await createMint(
+    connection,
+    signer,
+    user,
+    null,
+    6,
+    newTokenMes,
+    null,
+    token_programId
+  );
+  console.log("tokenMint:", tokenMint.toString());
+}
+await create_mint();
+
+//Make some token metadata
+// Generate a new keypair for the mint
+async function make_metadata() {
+  const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
+    "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+  );
+
+  const metadataPDAAndBump = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("metadata"),
+      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      newTokenMes.publicKey.toBuffer(),
+    ],
+    TOKEN_METADATA_PROGRAM_ID
+  );
+
+  const metadataPDA = metadataPDAAndBump[0];
+  console.log("metadataPDA success");
+  const transaction = new Transaction();
+
+  const createMetadataAccountInstruction =
+    createCreateMetadataAccountV3Instruction(
+      {
+        metadata: metadataPDA,
+        mint: newTokenMes.publicKey,
+        mintAuthority: user,
+        payer: user,
+        updateAuthority: user,
+      },
+      {
+        createMetadataAccountArgsV3: {
+          collectionDetails: null,
+          data: metadataData,
+          isMutable: true,
+        },
+      }
+    );
+
+  transaction.add(createMetadataAccountInstruction);
+
+  // send
+  try {
+    const metadataTxHash = await program.provider.connection.sendTransaction(transaction, [
+      signer,
+    ]);
+    console.log(`Transaction sent`);
+    // confirm
+    const metadataConfirmation = await program.provider.connection.confirmTransaction(
+      metadataTxHash
+    );
+    console.log(
+      `Transaction confirmed: ${metadataTxHash}`,
+      metadataConfirmation
+    );
+  } catch (error) {
+    console.error("Error sending transaction:", error);
+  }
+}
+await make_metadata();
+
+let userAssociatedAccount: PublicKey;
+let destinationTokenAccount: PublicKey;
+
+async function GetOrcreateAssociatedToken(
+  createAssociateAccount: PublicKey,
+  newToken: PublicKey,
+  this_signer
+) {
+  try {
+    const userAssociatedTokenAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      this_signer,
+      newToken,
+      createAssociateAccount,
+      true,
+      null,
+      null,
+      token_programId,
+      associated_token_programId
+    );
+    return userAssociatedTokenAccount.address;
+  } catch (e) {
+    console.log("GetOrcreateAssociatedToken:", e);
+  }
+}
+userAssociatedAccount = await GetOrcreateAssociatedToken(
+  user,
+  newTokenMes.publicKey,
+  signer
+);
+console.log(
+  "userAssociatedAccount:",
+  userAssociatedAccount.toString(),
+  "owner:",
+  user.toString()
+);
+
+//
+destinationTokenAccount = await GetOrcreateAssociatedToken(
+  testReceiver.publicKey,
+  newTokenMes.publicKey,
+  signer
+);
+console.log(
+  "destinationTokenAccountInfo:",
+  destinationTokenAccount.toString(),
+  "owner:",
+  testReceiver.publicKey.toString()
+);
+
+//mint to
+async function mint_to(newToken: PublicKey, receiver: PublicKey) {
+  const init_amount = 10000000000;
+  try {
+    const mintToTx = await mintTo(
+      connection,
+      signer,
+      newToken,
+      receiver,
+      user,
+      init_amount,
+      [signer],
+      null,
+      token_programId
+    );
+    console.log("mintToTx:", mintToTx);
+  } catch (e) {
+    console.log("Mint to error:", e);
+  }
+}
+await mint_to(newTokenMes.publicKey, userAssociatedAccount);
+
+//token balance
+async function getTokenBalance(checkAddress: PublicKey) {
+  try {
+    const tokenAccountInfo = await getAccount(connection, checkAddress);
+    console.log(`This Account Token balance: ${tokenAccountInfo.amount}`);
+  } catch (err) {
+    console.error("Failed to get token balance:", err);
+  }
+}
+await getTokenBalance(userAssociatedAccount);
+
+//Transfer token to user
+async function transfer_to(receiverAssociatedAccount: PublicKey) {
+  try {
+    const TransferTokenSignature = await transfer(
+      connection,
+      signer,
+      userAssociatedAccount,
+      receiverAssociatedAccount,
+      user,
+      10000,
+      [signer],
+      null,
+      token_programId
+    );
+    console.log("transfer_to:", TransferTokenSignature);
+  } catch (e) {
+    console.log("Transfer error:", e);
+  }
+}
+await transfer_to(destinationTokenAccount);
+
 describe("Test", () => {
   // Configure the client to use the local cluster
   anchor.setProvider(anchor.AnchorProvider.env());
@@ -16,8 +233,6 @@ describe("Test", () => {
   const program = anchor.workspace.State as anchor.Program<State>;
   
   it("initialize", async () => {
-    let user = program.provider.publicKey;
-    let signer = program.provider.wallet.payer;
     console.log("current user:", user.toBase58());
 
     let systemId = web3.SystemProgram.programId;
@@ -168,6 +383,36 @@ describe("Test", () => {
     console.log(
       "nativeTokenTradeFeeConfigBump:",
       nativeTokenTradeFeeConfigBump
+    );
+
+    //init_token_config
+    let [initTokenConfigAuthority, initTokenConfigBump] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("init_token_config"), chainId],
+        program.programId
+      );
+    console.log(
+      "initTokenConfigAuthority:",
+      initTokenConfigAuthority.toString()
+    );
+    console.log(
+      "initTokenConfigBump:",
+      initTokenConfigBump
+    );
+
+    //init_symbol_config
+    let [initSymbolConfigAuthority, initSymbolConfigBump] =
+      await PublicKey.findProgramAddress(
+        [Buffer.from("init_symbol_config"), chainId],
+        program.programId
+      );
+    console.log(
+      "initSymbolConfigAuthority:",
+      initSymbolConfigAuthority.toString()
+    );
+    console.log(
+      "initSymbolConfigBump:",
+      initSymbolConfigBump
     );
 
     //save_dest_chain_Id
@@ -371,7 +616,8 @@ describe("Test", () => {
           );
         console.log(
           "mappingNativeTokenTradeFeeConfig:",
-          mappingNativeTokenTradeFeeConfig, "\n"
+          mappingNativeTokenTradeFeeConfig,
+          "\n"
         );
       } catch (e) {
         const initNativeTokenTradeFeeConfig = await program.methods
@@ -397,7 +643,8 @@ describe("Test", () => {
           );
         console.log(
           "mappingNativeTokenTradeFeeConfig:",
-          mappingNativeTokenTradeFeeConfig, "\n"
+          mappingNativeTokenTradeFeeConfig,
+          "\n"
         );
       }
     }
@@ -449,7 +696,15 @@ describe("Test", () => {
     async function SetThisFeeConfig() {
       try {
         const setThisFeeConfig = await program.methods
-          .setThisFeeConfig(id, base_price, reserve, molecular, denominator, molecular_decimal, denominator_decimal)
+          .setThisFeeConfig(
+            id,
+            base_price,
+            reserve,
+            molecular,
+            denominator,
+            molecular_decimal,
+            denominator_decimal
+          )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             powerUser: powerUserAuthority,
@@ -462,7 +717,6 @@ describe("Test", () => {
         console.log(`setThisFeeConfig:${setThisFeeConfig}'`);
         // Confirm transaction
         await program.provider.connection.confirmTransaction(setThisFeeConfig);
-
       } catch (e) {
         console.log("SetThisFeeConfig error:", e);
       }
@@ -491,14 +745,16 @@ describe("Test", () => {
         const globalTradeFee = await program.account.globalTradeFee.fetch(
           globalTradeFeeAuthority
         );
-        console.log("globalTradeFee:", globalTradeFee,"\n");
+        console.log("globalTradeFee:", globalTradeFee, "\n");
       } catch (e) {
         console.log("SetThisTokenFeeConfig error:", e);
       }
     }
     await SetThisTokenFeeConfig();
 
-    let dapp=encodeEthereumAddressToU16Array("0xaE67336f06B10fbbb26F31d31AbEA897290109B9");
+    let dapp = encodeEthereumAddressToU16Array(
+      "0xaE67336f06B10fbbb26F31d31AbEA897290109B9"
+    );
     const dappNumberArray: number[] = Array.from(dapp);
 
     async function SetThisDappPriceConfig() {
@@ -521,7 +777,7 @@ describe("Test", () => {
         const globalTradeFee = await program.account.globalTradeFee.fetch(
           globalTradeFeeAuthority
         );
-        console.log("globalTradeFee:", globalTradeFee ,"\n");
+        console.log("globalTradeFee:", globalTradeFee, "\n");
       } catch (e) {
         console.log("SetThisDappPriceConfig error:", e);
       }
@@ -532,7 +788,13 @@ describe("Test", () => {
     async function SetThisExchangeRate() {
       try {
         const setThisExchangeRate = await program.methods
-          .setThisExchangeRate(id, molecular, denominator, molecular_decimal, denominator_decimal)
+          .setThisExchangeRate(
+            id,
+            molecular,
+            denominator,
+            molecular_decimal,
+            denominator_decimal
+          )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             powerUser: powerUserAuthority,
@@ -545,7 +807,6 @@ describe("Test", () => {
         console.log(`setThisExchangeRate:${setThisExchangeRate}'`);
         // Confirm transaction
         await program.provider.connection.confirmTransaction(setThisExchangeRate);
-
       } catch (e) {
         console.log("SetThisExchangeRate error:", e);
       }
@@ -553,13 +814,13 @@ describe("Test", () => {
     await SetThisExchangeRate();
 
     //batch_set_token_fee_config
-    let destChainIds=[new anchor.BN(id)];
-    let moleculars=[new anchor.BN(68886)];
-    let denominators=[new anchor.BN(222)]
+    let destChainIds = [new anchor.BN(id)];
+    let moleculars = [new anchor.BN(68886)];
+    let denominators = [new anchor.BN(222)];
     async function BatchSetThisTokenFeeConfig() {
       try {
         const batchSetThisTokenFeeConfig = await program.methods
-          .batchSetThisTokenFeeConfig(destChainIds,moleculars,denominators)
+          .batchSetThisTokenFeeConfig(destChainIds, moleculars, denominators)
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             powerUser: powerUserAuthority,
@@ -570,10 +831,11 @@ describe("Test", () => {
           })
           .signers([signer])
           .rpc();
-        console.log(`batchSetThisTokenFeeConfig:${batchSetThisTokenFeeConfig}'`);
+        console.log(
+          `batchSetThisTokenFeeConfig:${batchSetThisTokenFeeConfig}'`
+        );
         // Confirm transaction
         await program.provider.connection.confirmTransaction(batchSetThisTokenFeeConfig);
-
       } catch (e) {
         console.log("BatchSetThisTokenFeeConfig error:", e);
       }
@@ -581,11 +843,16 @@ describe("Test", () => {
     await BatchSetThisTokenFeeConfig();
 
     //batch_set_this_trade_fee_config_map
-    let dapps=[dappNumberArray];
+    let dapps = [dappNumberArray];
     async function BatchSetThisTradeFeeConfigMap() {
       try {
         const batchSetThisTradeFeeConfigMap = await program.methods
-          .batchSetThisTradeFeeConfigMap(dapps,destChainIds,moleculars,denominators)
+          .batchSetThisTradeFeeConfigMap(
+            dapps,
+            destChainIds,
+            moleculars,
+            denominators
+          )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             powerUser: powerUserAuthority,
@@ -596,10 +863,11 @@ describe("Test", () => {
           })
           .signers([signer])
           .rpc();
-        console.log(`batchSetThisTradeFeeConfigMap:${batchSetThisTradeFeeConfigMap}'`);
+        console.log(
+          `batchSetThisTradeFeeConfigMap:${batchSetThisTradeFeeConfigMap}'`
+        );
         // Confirm transaction
         await program.provider.connection.confirmTransaction(batchSetThisTradeFeeConfigMap);
-
       } catch (e) {
         console.log("BatchSetThisTradeFeeConfigMap error:", e);
       }
@@ -607,11 +875,11 @@ describe("Test", () => {
     await BatchSetThisTradeFeeConfigMap();
 
     //batch_set_amount_in_threshold
-    let new_values=[new anchor.BN(88)];
+    let new_values = [new anchor.BN(88)];
     async function BatchSetThisAmountInThreshold() {
       try {
         const batchSetThisAmountInThreshold = await program.methods
-          .batchSetThisAmountInThreshold(destChainIds,new_values)
+          .batchSetThisAmountInThreshold(destChainIds, new_values)
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             powerUser: powerUserAuthority,
@@ -621,10 +889,11 @@ describe("Test", () => {
           })
           .signers([signer])
           .rpc();
-        console.log(`batchSetThisAmountInThreshold:${batchSetThisAmountInThreshold}'`);
+        console.log(
+          `batchSetThisAmountInThreshold:${batchSetThisAmountInThreshold}'`
+        );
         // Confirm transaction
         await program.provider.connection.confirmTransaction(batchSetThisAmountInThreshold);
-
       } catch (e) {
         console.log("BatchSetThisAmountInThreshold error:", e);
       }
@@ -632,11 +901,15 @@ describe("Test", () => {
     await BatchSetThisAmountInThreshold();
 
     //batch_set_this_dapp_price_config_in_diff_chain
-    let base_prices=[new anchor.BN(6666)];
+    let base_prices = [new anchor.BN(6666)];
     async function BatchSetThisDappPriceConfigInDiffChain() {
       try {
         const batchSetThisDappPriceConfigInDiffChain = await program.methods
-          .batchSetThisDappPriceConfigInDiffChain(destChainIds,dapps,base_prices)
+          .batchSetThisDappPriceConfigInDiffChain(
+            destChainIds,
+            dapps,
+            base_prices
+          )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             powerUser: powerUserAuthority,
@@ -646,10 +919,13 @@ describe("Test", () => {
           })
           .signers([signer])
           .rpc();
-        console.log(`batchSetThisDappPriceConfigInDiffChain:${batchSetThisDappPriceConfigInDiffChain}'`);
+        console.log(
+          `batchSetThisDappPriceConfigInDiffChain:${batchSetThisDappPriceConfigInDiffChain}'`
+        );
         // Confirm transaction
-        await program.provider.connection.confirmTransaction(batchSetThisDappPriceConfigInDiffChain);
-
+        await program.provider.connection.confirmTransaction(
+          batchSetThisDappPriceConfigInDiffChain
+        );
       } catch (e) {
         console.log("BatchSetThisDappPriceConfigInDiffChain error:", e);
       }
@@ -661,7 +937,11 @@ describe("Test", () => {
     async function BatchSetThisDappPriceConfigInSameChain() {
       try {
         const batchSetThisDappPriceConfigInSameChain = await program.methods
-          .batchSetThisDappPriceConfigInSameChain(thisChainId,dapps,base_prices)
+          .batchSetThisDappPriceConfigInSameChain(
+            thisChainId,
+            dapps,
+            base_prices
+          )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             powerUser: powerUserAuthority,
@@ -671,10 +951,13 @@ describe("Test", () => {
           })
           .signers([signer])
           .rpc();
-        console.log(`batchSetThisDAppPriceConfigInSameChain:${batchSetThisDappPriceConfigInSameChain}'`);
+        console.log(
+          `batchSetThisDAppPriceConfigInSameChain:${batchSetThisDappPriceConfigInSameChain}'`
+        );
         // Confirm transaction
-        await program.provider.connection.confirmTransaction(batchSetThisDappPriceConfigInSameChain);
-
+        await program.provider.connection.confirmTransaction(
+          batchSetThisDappPriceConfigInSameChain
+        );
       } catch (e) {
         console.log("BatchSetThisDappPriceConfigInSameChain error:", e);
       }
@@ -682,12 +965,18 @@ describe("Test", () => {
     await BatchSetThisDappPriceConfigInSameChain();
 
     //batch_set_exchange_rate
-    let molecular_decimals=Buffer.from("8");
-    let denominator_decimals=Buffer.from("6");
+    let molecular_decimals = Buffer.from("8");
+    let denominator_decimals = Buffer.from("6");
     async function BatchSetThisExchangeRate() {
       try {
         const batchSetThisExchangeRate = await program.methods
-          .batchSetThisExchangeRate(destChainIds,moleculars,denominators,molecular_decimals,denominator_decimals)
+          .batchSetThisExchangeRate(
+            destChainIds,
+            moleculars,
+            denominators,
+            molecular_decimals,
+            denominator_decimals
+          )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             powerUser: powerUserAuthority,
@@ -700,11 +989,199 @@ describe("Test", () => {
         console.log(`batchSetThisExchangeRate:${batchSetThisExchangeRate}'`);
         // Confirm transaction
         await program.provider.connection.confirmTransaction(batchSetThisExchangeRate);
-
       } catch (e) {
         console.log("BatchSetThisExchangeRate error:", e);
       }
     }
     await BatchSetThisExchangeRate();
+
+    //ChangeThisPowerUser
+    async function ChangeThisPowerUser() {
+      try {
+        const changeThisPowerUser = await program.methods
+          .changeThisPowerUser(
+            user,
+            user,
+            user,
+            user,
+            user,
+            user,
+            gas_managers,
+            swap_managers,
+            token_managers
+          )
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`changeThisPowerUser:${changeThisPowerUser}'`);
+        // Confirm transaction
+        await program.provider.connection.confirmTransaction(changeThisPowerUser);
+      } catch (e) {
+        const powerUser = await program.account.powerUser.fetch(
+          powerUserAuthority
+        );
+        console.log("powerUser:", powerUser);
+      }
+    }
+    await ChangeThisPowerUser();
+
+    //
+    let vizingVaultAssociatedToken = await GetOrcreateAssociatedToken(
+      vizingVaultAuthority,
+      newTokenMes.publicKey,
+      signer
+    );
+    console.log(
+      "vizingVaultAssociatedToken:",
+      vizingVaultAssociatedToken.toBase58()
+    );
+
+    await transfer_to(vizingVaultAssociatedToken);
+
+    //WithdrawSplToken
+    let withdraw_amount = new anchor.BN(1000);
+    async function WithdrawVaultSplToken() {
+      try {
+        const withdrawVaultSplToken = await program.methods
+          .withdrawVaultSplToken(withdraw_amount, vizingVaultBump)
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            user: user,
+            source: vizingVaultAssociatedToken,
+            destination: userAssociatedAccount,
+            contractAuthority: vizingVaultAuthority,
+            tokenProgram: TOKEN_PROGRAM_ID,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`withdrawVaultSplToken:${withdrawVaultSplToken}'`);
+        // Confirm transaction
+        await program.provider.connection.confirmTransaction(withdrawVaultSplToken);
+      } catch (e) {
+        console.log("WithdrawVaultSplToken error:", e);
+      }
+    }
+    await WithdrawVaultSplToken();
+
+    //sol_transfer
+    let amount1 = new anchor.BN(1000000);
+    async function SolTransfer(sender, receiver, amount) {
+      try {
+        const solTransfer = await program.methods
+          .solTransfer(amount)
+          .accounts({
+            sender: sender,
+            recipient: receiver,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`solTransfer:${solTransfer}'`);
+        // Confirm transaction
+        await program.provider.connection.confirmTransaction(solTransfer);
+      } catch (e) {
+        console.log("SolTransfer error:", e);
+      }
+    }
+    await SolTransfer(user, vizingVaultAuthority, amount1);
+
+    //withdraw_sol
+    async function WithdrawVaultSol(sender, receiver, amount) {
+      try {
+        const withdrawVaultSol = await program.methods
+          .withdrawVaultSol(amount)
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            user: user,
+            source: sender,
+            destination: receiver,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`withdrawVaultSol:${withdrawVaultSol}'`);
+        // Confirm transaction
+        await program.provider.connection.confirmTransaction(withdrawVaultSol);
+      } catch (e) {
+        console.log("WithdrawVaultSol error:", e);
+      }
+    }
+    let amount2 = new anchor.BN(55555);
+    await WithdrawVaultSol(vizingVaultAuthority, user, amount2);\
+
+    //set_this_token_info_base
+    let symbol=Buffer.from("btc");
+    let tokenAddress = encodeEthereumAddressToU16Array(
+      "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+    );
+    const tokenAddressArray: number[] = Array.from(tokenAddress);
+    let decimals=8;
+    let max_price=new anchor.BN(66666666);
+    async function SetThisTokenInfoBase() {
+      try {
+        const setThisTokenInfoBase = await program.methods
+          .setThisTokenInfoBase(
+            symbol,
+            tokenAddressArray,
+            decimals,
+            max_price
+          )
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            user: user,
+            tokenConfig: initTokenConfigAuthority,
+            symbolConfig: initSymbolConfigAuthority,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(
+          `setThisTokenInfoBase:${setThisTokenInfoBase}'`
+        );
+        // Confirm transaction
+        await program.provider.connection.confirmTransaction(setThisTokenInfoBase);
+      } catch (e) {
+        console.log("SetThisTokenInfoBase error:", e);
+      }
+    }
+    await SetThisTokenInfoBase();
+
+    async function SetThisTokenTradeFeeMap() {
+      try {
+        const setThisTokenTradeFeeMap = await program.methods
+          .setThisTokenTradeFeeMap(
+            tokenAddressArray,
+            destChainIds,
+            moleculars,
+            denominators
+          )
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            user: user,
+            tokenConfig: initTokenConfigAuthority,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(
+          `setThisTokenTradeFeeMap:${setThisTokenTradeFeeMap}'`
+        );
+        // Confirm transaction
+        await program.provider.connection.confirmTransaction(setThisTokenTradeFeeMap);
+      } catch (e) {
+        console.log("SetThisTokenTradeFeeMap error:", e);
+      }
+    }
+    await SetThisTokenTradeFeeMap();
+
   });
 });

@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::system_program::{transfer, Transfer};
 
 // This is your program's public key and it will update
 // automatically when you build the project.
@@ -333,6 +334,109 @@ mod hello_anchor {
         )
     }
 
+    //change_power_user
+    pub fn change_this_power_user(
+        ctx: Context<ChangePowerUser>,
+        new_admin: Pubkey,
+        new_engine_admin: Pubkey,
+        new_station_admin: Pubkey,
+        new_gas_pool_admin: Pubkey,
+        new_trusted_relayer: Pubkey,
+        new_registered_validator: Pubkey,
+        new_gas_managers: Vec<Pubkey>,
+        new_swap_managers: Vec<Pubkey>,
+        new_token_managers: Vec<Pubkey>,
+    ) -> Result<()> {
+        ChangePowerUser::change_power_user(
+            ctx,
+            new_admin,
+            new_engine_admin,
+            new_station_admin,
+            new_gas_pool_admin,
+            new_trusted_relayer,
+            new_registered_validator,
+            new_gas_managers,
+            new_swap_managers,
+            new_token_managers,
+        )
+    }
+    
+    //user=>vizing_vault
+    pub fn sol_transfer(ctx: Context<SolTransfer>, amount: u64) -> Result<()> {
+        let from_pubkey = ctx.accounts.sender.to_account_info();
+        let to_pubkey = ctx.accounts.recipient.to_account_info();
+        let program_id = ctx.accounts.system_program.to_account_info();
+
+        let cpi_context = CpiContext::new(
+            program_id,
+            Transfer {
+                from: from_pubkey,
+                to: to_pubkey,
+            },
+        );
+
+        transfer(cpi_context, amount)?;
+        Ok(())
+    }
+
+    //withdraw_spl_token
+    pub fn withdraw_vault_spl_token(
+        ctx: Context<WithdrawSplToken>,
+        withdraw_amount: u64,
+        this_bump: u8,
+    )-> Result<()> {
+        WithdrawSplToken::withdraw_spl_token(
+            ctx,
+            withdraw_amount,
+            this_bump
+        )
+    }
+
+    //withdraw_sol
+    pub fn withdraw_vault_sol(
+        ctx: Context<WithdrawSol>, 
+        withdraw_amount: u64,
+    )-> Result<()> {
+        WithdrawSol::withdraw_sol(
+            ctx,
+            withdraw_amount
+        )
+    }
+
+    //set_token_info_base
+    pub fn set_this_token_info_base(
+        ctx: Context<SetTokenInfoBase>,
+        symbol: Vec<u8>,
+        token_address: [u16; 20],
+        decimals: u8,
+        max_price: u64,
+    )-> Result<()> {
+        SetTokenInfoBase::set_token_info_base(
+            ctx,
+            symbol,
+            token_address,
+            decimals,
+            max_price
+        )
+    }
+
+    //set_token_trade_fee_map
+    pub fn set_this_token_trade_fee_map(
+        ctx: Context<SetTokenTradeFeeMap>,
+        token_address: [u16; 20],
+        chain_ids: Vec<u64>,
+        moleculars: Vec<u64>,
+        denominators: Vec<u64>,
+    )-> Result<()> {
+        SetTokenTradeFeeMap::set_token_trade_fee_map(
+            ctx,
+            token_address,
+            chain_ids,
+            moleculars,
+            denominators
+        )
+    }
+
 
 }
 // !!!!!need limit SaveDestChainId
@@ -472,4 +576,13 @@ pub struct InitNativeTokenTradeFeeConfig<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct SolTransfer<'info> {
+    #[account(mut)]
+    sender: Signer<'info>,
+    #[account(mut)]
+    recipient: AccountInfo<'info>,
+    system_program: Program<'info, System>,
 }

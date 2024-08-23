@@ -174,14 +174,8 @@ impl WithdrawSplToken<'_> {
         let user_key = & ctx.accounts.user.key();
         let if_power_user = power_user.token_managers.contains(user_key);
         require!(if_power_user, ErrorCode::NonTokenManager);
-        let save_chain_id = &mut ctx.accounts.save_chain_id;
-        let dest_chain_id = &save_chain_id.dest_chain_id;
 
-        let seeds = &[
-            b"vizing_vault".as_ref(),
-            dest_chain_id.as_ref(),
-            &[this_bump],
-        ];
+        let seeds = &[b"vizing_vault".as_ref(), &[this_bump]];
         let signer_seeds = &[&seeds[..]];
 
         let cpi_accounts = Transfer {
@@ -228,6 +222,11 @@ impl SetTokenInfoBase<'_> {
         decimals: u8,
         max_price: u64,
     ) -> Result<()> {
+        let power_user = &mut ctx.accounts.power_user;
+        let user_key = &ctx.accounts.user.key();
+        let if_power_user = power_user.token_managers.contains(user_key);
+        require!(if_power_user, ErrorCode::NonTokenManager);
+
         let token_config = &mut ctx.accounts.token_config;
         let symbol_config = &mut ctx.accounts.symbol_config;
         let symbol_clone: Vec<u8> = symbol.clone();
@@ -245,6 +244,11 @@ impl SetTokenTradeFeeMap<'_> {
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
     ) -> Result<()> {
+        let power_user = &mut ctx.accounts.power_user;
+        let user_key = &ctx.accounts.user.key();
+        let if_power_user = power_user.token_managers.contains(user_key);
+        require!(if_power_user, ErrorCode::NonTokenManager);
+
         let token_config = &mut ctx.accounts.token_config;
         require!(
             chain_ids.len() == moleculars.len() && chain_ids.len() == denominators.len(),
