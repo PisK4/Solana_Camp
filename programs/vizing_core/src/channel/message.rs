@@ -105,7 +105,7 @@ impl LaunchOp<'_> {
         let dapp_config_value=get_dapp_config.value;
 
 
-        let fee=estimate_total_fee(
+        let fee=estimate_gas(
             global_base_price,
             fee_config_base_price,
             dapp_config_value,
