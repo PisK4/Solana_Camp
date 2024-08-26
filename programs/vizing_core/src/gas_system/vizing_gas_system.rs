@@ -1,11 +1,8 @@
 use anchor_lang::prelude::*;
 
-// use crate::error::errors::ErrorCode;
-// use crate::message_type_lib::*;
-// use crate::message_monitor_lib::*;
-// use crate::state::*;
-
-use crate::library::*;
+use crate::error::ErrorCode;
+use crate::message_type_lib::*;
+use crate::message_monitor_lib::*;
 use crate::state::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -262,7 +259,7 @@ impl SetGasGlobal<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        require!(if_power_user, ErrorCode::NonGasManager);
 
         let gas_system_global = &mut ctx.accounts.gas_system_global;
         gas_system_global.global_base_price = global_base_price;
@@ -289,7 +286,7 @@ impl SetFeeConfig<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        require!(if_power_user, ErrorCode::NonGasManager);
 
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         mapping_fee_config.set_fee_config(
@@ -316,7 +313,7 @@ impl SetTokenFeeConfig<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        require!(if_power_user, ErrorCode::NonGasManager);
 
         let g = &mut ctx.accounts.global_trade_fee;
         let n = &mut ctx.accounts.native_token_trade_fee_config;
@@ -337,7 +334,7 @@ impl SetDappPriceConfig<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        require!(if_power_user, ErrorCode::NonGasManager);
         let m = &mut ctx.accounts.mapping_fee_config;
         m.set_dapp_config(chain_id, dapp, base_price);
         Ok(())
@@ -356,7 +353,7 @@ impl SetExchangeRate<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.swap_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonSwapManager);
+        require!(if_power_user, ErrorCode::NonSwapManager);
         let m = &mut ctx.accounts.mapping_fee_config;
 
         if let Some(mut fee_config) = m.get_fee_config(chain_id) {
@@ -375,7 +372,7 @@ impl SetExchangeRate<'_>{
                 fee_config.denominator_decimal,
             );
         } else {
-            return err!(errors::ErrorCode::FeeConfigNotFound);
+            return err!(ErrorCode::FeeConfigNotFound);
         }
         Ok(())
     }
@@ -391,10 +388,10 @@ impl BatchSetTokenFeeConfig<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        require!(if_power_user, ErrorCode::NonGasManager);
         require!(
             dest_chain_ids.len() == moleculars.len() && dest_chain_ids.len() == denominators.len(),
-            errors::ErrorCode::InvalidLength
+            ErrorCode::InvalidLength
         );
         let m = &mut ctx.accounts.mapping_fee_config;
         let n = &mut ctx.accounts.native_token_trade_fee_config;
@@ -418,12 +415,12 @@ impl BatchSetTradeFeeConfigMap<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        require!(if_power_user, ErrorCode::NonGasManager);
         require!(
             dest_chain_ids.len() == moleculars.len()
                 && dest_chain_ids.len() == denominators.len()
                 && dest_chain_ids.len() == dapps.len(),
-            errors::ErrorCode::InvalidLength
+            ErrorCode::InvalidLength
         );
 
         let m = &mut ctx.accounts.mapping_fee_config;
@@ -446,8 +443,8 @@ impl BatchSetAmountInThreshold<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
-        require!(chain_ids.len() == new_values.len(), errors::ErrorCode::InvalidLength);
+        require!(if_power_user, ErrorCode::NonGasManager);
+        require!(chain_ids.len() == new_values.len(), ErrorCode::InvalidLength);
         let a = &mut ctx.accounts.amount_in_thresholds;
         for (i, &current_id) in chain_ids.iter().enumerate() {
             a.set_amount_in_thresholds(current_id, new_values[i]);
@@ -466,10 +463,10 @@ impl BatchSetDappPriceConfigInDiffChain<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        require!(if_power_user, ErrorCode::NonGasManager);
         require!(
             chain_ids.len() == dapps.len() && chain_ids.len() == base_prices.len(),
-            errors::ErrorCode::InvalidLength
+            ErrorCode::InvalidLength
         );
         let m = &mut ctx.accounts.mapping_fee_config;
         for (i, &current_id) in chain_ids.iter().enumerate() {
@@ -490,8 +487,8 @@ impl BatchSetDappPriceConfigInSameChain<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
-        require!(dapps.len() == base_prices.len(), errors::ErrorCode::InvalidLength);
+        require!(if_power_user, ErrorCode::NonGasManager);
+        require!(dapps.len() == base_prices.len(), ErrorCode::InvalidLength);
         let m = &mut ctx.accounts.mapping_fee_config;
         for (i, &price) in base_prices.iter().enumerate() {
             m.set_dapp_config(chain_id, dapps[i], base_prices[i]);
@@ -512,19 +509,19 @@ impl BatchSetExchangeRate<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.swap_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonSwapManager);
+        require!(if_power_user, ErrorCode::NonSwapManager);
         require!(
             chain_ids.len() == moleculars.len()
                 && chain_ids.len() == denominators.len()
                 && chain_ids.len() == molecular_decimals.len()
                 && chain_ids.len() == denominator_decimals.len(),
-            errors::ErrorCode::InvalidLength
+            ErrorCode::InvalidLength
         );
         let m = &mut ctx.accounts.mapping_fee_config;
         for (i, &current_id) in chain_ids.iter().enumerate() {
             let fee_config = m
                 .get_fee_config(current_id)
-                .ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+                .ok_or(ErrorCode::FeeConfigNotFound)?;
             let this_base_price = fee_config.base_price;
             let this_reserve = fee_config.reserve;
             m.set_fee_config(
@@ -567,8 +564,8 @@ impl BatchSetExchangeRate<'_>{
         t_denominator: u64,
         g_molecular: u64,
         g_denominator: u64,
-        // target_contract: [u8; 32],
-        // dest_chain_id: u64,
+        target_contract: [u8; 32],
+        dest_chain_id: u64,
         amount_out: u64,
     ) -> Option<u64> {
         let fee;
@@ -654,6 +651,8 @@ impl BatchSetExchangeRate<'_>{
                 trade_fee_config_denominator,
                 global_trade_fee_molecular,
                 global_trade_fee_denominator,
+                this_dapp,
+                dest_chain_id,
                 amount_in
             ) {
                 final_fee = fee.checked_add(trade_fee2)?;
@@ -800,50 +799,47 @@ impl BatchSetExchangeRate<'_>{
         Some(base_price)
     }
 
-    pub fn batch_estimate_total_fee(
-        ctx: Context<BatchEstimateTotalFee>,
-        amount_outs: Vec<u64>,
-        dest_chain_ids: Vec<u64>,
-        messages: &[&[u8]],
-    ) -> Option<u64> {
-        let m = &mut ctx.accounts.mapping_fee_config;
-        let gas_system_global = &mut ctx.accounts.gas_system_global;
-        let global_trade_fee = &mut ctx.accounts.global_trade_fee;
-        let a = &mut ctx.accounts.amount_in_thresholds;
-        let mut total_trade_fee=0; 
+    // pub fn batch_estimate_total_fee(
+    //     ctx: Context<BatchEstimateTotalFee>,
+    //     amount_outs: Vec<u64>,
+    //     dest_chain_ids: Vec<u64>,
+    //     messages: &[&[u8]],
+    // ) -> Option<u64> {
+    //     let m = &mut ctx.accounts.mapping_fee_config;
+    //     let gas_system_global = &mut ctx.accounts.gas_system_global;
+    //     let global_trade_fee = &mut ctx.accounts.global_trade_fee;
+    //     let a = &mut ctx.accounts.amount_in_thresholds;
+    //     let mut total_trade_fee=0; 
 
-        for (i, &amount) in amount_outs.iter().enumerate() {
-            let t=m.get_trade_fee(dest_chain_ids[i])?;
-            let this_message: [u8; 32] = match messages[i].try_into() {
-                Ok(array) => array,
-                Err(_) => return None, 
-            };
-            let d=m.get_dapp_config(dest_chain_ids[i],this_message)?;
-            let fee_config = m.get_fee_config(dest_chain_ids[i])?;
-            let amount_in_thresholds=a.get_amount_in_thresholds(dest_chain_ids[i])?;
+    //     for (i, &amount) in amount_outs.iter().enumerate() {
+    //         let t=m.get_trade_fee(dest_chain_ids[i])?;
+    //         let Some((dapp, _, _, _))=message_monitor::slice_message(messages[i]) else { todo!() };
+    //         let d=m.get_dapp_config(dest_chain_ids[i],dapp)?;
+    //         let fee_config = m.get_fee_config(dest_chain_ids[i])?;
+    //         let amount_in_thresholds=a.get_amount_in_thresholds(dest_chain_ids[i])?;
             
-            let current_fee=estimate_total_fee(
-                amount_in_thresholds,
-                t.molecular,
-                t.denominator,
-                global_trade_fee.molecular,
-                global_trade_fee.denominator,
-                d.value,
-                fee_config.molecular_decimal,
-                fee_config.denominator_decimal,
-                    fee_config.molecular,
-                    gas_system_global.default_gas_limit,
-                    gas_system_global.global_base_price,
-                    fee_config.base_price,
-                    dest_chain_ids[i],
-                    amount_outs[i],
-                    messages[i]
-            )?;
-            total_trade_fee=current_fee.checked_add(total_trade_fee)?;
-        }
-        Some(total_trade_fee)
+    //         let current_fee=estimate_total_fee(
+    //             amount_in_thresholds,
+    //             t.molecular,
+    //             t.denominator,
+    //             global_trade_fee.molecular,
+    //             global_trade_fee.denominator,
+    //             d.value,
+    //             fee_config.molecular_decimal,
+    //             fee_config.denominator_decimal,
+    //             fee_config.molecular,
+    //             gas_system_global.default_gas_limit,
+    //             gas_system_global.global_base_price,
+    //             fee_config.base_price,
+    //             dest_chain_ids[i],
+    //             amount_outs[i],
+    //             messages[i]
+    //         )?;
+    //         total_trade_fee=current_fee.checked_add(total_trade_fee)?;
+    //     }
+    //     Some(total_trade_fee)
 
-    }
+    // }
 
     // pub fn estimate_total_fee(
     //     token_amount_limit: u64,
@@ -944,7 +940,7 @@ impl BatchSetExchangeRate<'_>{
         } else {
             base_price = g_global_base_price;
         }
-        let this_dapp: [u8; 32];
+        let mut this_dapp: [u8; 32]=[0; 32];
         let fee: u64;
         let mode = MessageType::fetch_msg_mode(&message);
 
@@ -986,6 +982,8 @@ impl BatchSetExchangeRate<'_>{
                 t_denominator,
                 g_molecular,
                 g_denominator,
+                this_dapp,
+                dest_chain_id,
                 amount_in
             )?;
             final_fee = trade_fee2.checked_add(amount_in)?.checked_add(fee)?;
@@ -1357,77 +1355,77 @@ pub struct BatchSetExchangeRate<'info> {
 //     pub gas_system_global: Account<'info, GasSystemGlobal>,
 // }
 
-#[derive(Accounts)]
-pub struct EstimateGas<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
-    #[account(
-        mut,
-        seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub gas_system_global: Account<'info, GasSystemGlobal>,
-    #[account(
-        mut,
-        seeds = [b"global_trade_fee".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub global_trade_fee: Account<'info, GlobalTradeFee>,
-}
+// #[derive(Accounts)]
+// pub struct EstimateGas<'info> {
+//     #[account(mut)]
+//     pub save_chain_id: Account<'info,SaveChainId>,
+//     #[account(
+//         mut,
+//         seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+//         bump
+//     )]
+//     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+//     #[account(
+//         mut,
+//         seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+//         bump
+//     )]
+//     pub gas_system_global: Account<'info, GasSystemGlobal>,
+//     #[account(
+//         mut,
+//         seeds = [b"global_trade_fee".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+//         bump
+//     )]
+//     pub global_trade_fee: Account<'info, GlobalTradeFee>,
+// }
 
-#[derive(Accounts)]
-pub struct BatchEstimateTotalFee<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
-    #[account(
-        mut,
-        seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub gas_system_global: Account<'info, GasSystemGlobal>,
-    #[account(
-        mut,
-        seeds = [b"global_trade_fee".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub global_trade_fee: Account<'info, GlobalTradeFee>,
-    #[account(
-        mut,
-        seeds = [b"amount_in_thresholds".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub amount_in_thresholds: Account<'info, MappingAmountInThresholds>,
-}
+// #[derive(Accounts)]
+// pub struct BatchEstimateTotalFee<'info> {
+//     #[account(mut)]
+//     pub save_chain_id: Account<'info,SaveChainId>,
+//     #[account(
+//         mut,
+//         seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+//         bump
+//     )]
+//     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+//     #[account(
+//         mut,
+//         seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+//         bump
+//     )]
+//     pub gas_system_global: Account<'info, GasSystemGlobal>,
+//     #[account(
+//         mut,
+//         seeds = [b"global_trade_fee".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+//         bump
+//     )]
+//     pub global_trade_fee: Account<'info, GlobalTradeFee>,
+//     #[account(
+//         mut,
+//         seeds = [b"amount_in_thresholds".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+//         bump
+//     )]
+//     pub amount_in_thresholds: Account<'info, MappingAmountInThresholds>,
+// }
 
-#[derive(Accounts)]
-pub struct EstimateTotalFee<'info> {
-    #[account(mut)]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
-    #[account(
-        mut,
-        seeds = [b"gas_global".as_ref()],
-        bump
-    )]
-    pub gas_system_global: Account<'info, GasSystemGlobal>,
-    #[account(
-        mut,
-        seeds = [b"global_trade_fee".as_ref()],
-        bump
-    )]
-    pub global_trade_fee: Account<'info, GlobalTradeFee>,
-}
+// #[derive(Accounts)]
+// pub struct EstimateTotalFee<'info> {
+//     #[account(mut)]
+//     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+//     #[account(
+//         mut,
+//         seeds = [b"gas_global".as_ref()],
+//         bump
+//     )]
+//     pub gas_system_global: Account<'info, GasSystemGlobal>,
+//     #[account(
+//         mut,
+//         seeds = [b"global_trade_fee".as_ref()],
+//         bump
+//     )]
+//     pub global_trade_fee: Account<'info, GlobalTradeFee>,
+// }
 
 // #[derive(Accounts)]
 // pub struct ExactOutput<'info> {
@@ -1440,4 +1438,3 @@ pub struct EstimateTotalFee<'info> {
 //     #[account(mut)]
 //     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
 // }
-
