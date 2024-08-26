@@ -1,19 +1,16 @@
-use super::*;
-use crate::governance::*;
-use crate::library::*;
-
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{instruction::Instruction, program::invoke_signed};
 use anchor_lang::system_program::{transfer, Transfer};
-
-use crate::vizing_gas_system::*;
+use crate::gas_system::*;
+use crate::governance::*;
+use crate::library::*;
 use crate::state::*;
+use crate::vizing_omni::*;
 
 #[derive(Accounts)]
 pub struct LaunchOp<'info> {
     #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
-
+    pub save_chain_id: Account<'info, SaveChainId>,
     /// CHECK: We need signer to claim ownership
     #[account(signer)]
     pub fee_payer: AccountInfo<'info>,
@@ -35,7 +32,7 @@ pub struct LaunchOp<'info> {
         seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub mapping_fee_config: Account<'info, vizing_gas_system::MappingFeeConfig>,
     #[account(
         mut,
         seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
@@ -53,7 +50,7 @@ pub struct LaunchOp<'info> {
 }
 
 impl LaunchOp<'_> {
-    pub fn execute(ctx: &mut Context<LaunchOp>, params: LaunchParams) -> Result<()> {
+    pub fn vizing_launch(ctx: &mut Context<LaunchOp>, params: LaunchParams) -> Result<()> {
         msg!(
             "message_authority: {}",
             ctx.accounts.message_authority.key()
@@ -83,29 +80,34 @@ impl LaunchOp<'_> {
 
         msg!("signature: {:?}", params.message.signature);
 
-        let mapping_fee_config=&mut ctx.accounts.mapping_fee_config;
-        let gas_system_global=&mut ctx.accounts.gas_system_global;
-        let global_trade_fee=&mut ctx.accounts.global_trade_fee;
+        let dest_chain_id = params.dest_chainid;
+        //???
+        let amount_out = params.value;
+        let message = params.message.signature;
+        //message???
+        let (this_dapp, _, _, _) = message_monitor_lib::message_monitor::slice_message(message)?;
+        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let gas_system_global = &mut ctx.accounts.gas_system_global;
+        let global_trade_fee = &mut ctx.accounts.global_trade_fee;
 
-        let get_fee_config=mapping_fee_config.get_fee_config(dest_chain_id)?;
+        let get_fee_config = mapping_fee_config.get_fee_config(dest_chain_id)?;
         let get_trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id)?;
-        //this_dapp [u16 ;20] =>message decode
-        let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id, this_dapp)?;
-        let get_dapp_config = mapping_fee_config.get_dapp_config(dest_chain_id,this_dapp)?;
-        
-        let fee_config_base_price= get_fee_config.base_price;
-        let global_base_price= gas_system_global.global_base_price;
+        let get_trade_fee_config =
+            mapping_fee_config.get_trade_fee_config(dest_chain_id, this_dapp)?;
+        let get_dapp_config = mapping_fee_config.get_dapp_config(dest_chain_id, this_dapp)?;
+
+        let fee_config_base_price = get_fee_config.base_price;
+        let global_base_price = gas_system_global.global_base_price;
         let default_gas_limit = gas_system_global.default_gas_limit;
         let fee_config_molecular_decimal = get_fee_config.molecular_decimal;
         let fee_config_denominator_decimal = get_fee_config.denominator_decimal;
         let global_trade_fee_molecular = global_trade_fee.molecular;
         let global_trade_fee_denominator = global_trade_fee.denominator;
-        let trade_fee_config_molecular=  get_trade_fee_config.molecular;
-        let trade_fee_config_denominator=get_trade_fee_config.denominator;
-        let dapp_config_value=get_dapp_config.value;
+        let trade_fee_config_molecular = get_trade_fee_config.molecular;
+        let trade_fee_config_denominator = get_trade_fee_config.denominator;
+        let dapp_config_value = get_dapp_config.value;
 
-
-        let fee=estimate_gas(
+        let fee = vizing_gas_system::estimate_gas(
             global_base_price,
             fee_config_base_price,
             dapp_config_value,
@@ -116,14 +118,13 @@ impl LaunchOp<'_> {
             global_trade_fee_molecular,
             global_trade_fee_denominator,
             default_gas_limit,
-            // amount_out: u64,
-    //     dest_chain_id: u64,
-    //     message: &[u16]
+            amount_out,
+            dest_chain_id,
+            message,
         )?;
 
         // mock fee
         // let fee: u64 = 1000000000;
-
         transfer(
             CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
@@ -159,16 +160,17 @@ pub struct LandingOp<'info> {
     #[account(signer)]
     pub relayer: AccountInfo<'info>,
 
-    #[account(mut, seeds = [contants::VIZING_PAD_SETTINGS_SEED], bump = vizing.bump,
-    constraint = vizing.trusted_relayers.contains(&relayer.key()) @VizingError::NotRelayer)]
+    #[account(mut, 
+        seeds = [contants::VIZING_PAD_SETTINGS_SEED], 
+        bump = vizing.bump,
+        constraint = vizing.trusted_relayers.contains(&relayer.key()) @VizingError::NotRelayer, 
+        constraint = vizing.is_paused != true @VizingError::VizingNotActivated
+    )]
     pub vizing: Account<'info, VizingPadSettings>,
 
     /// CHECK: We need this PDA as a signer
-    #[account(
-            seeds = [contants::VIZING_AUTHORITY_SEED],
-            bump = vizing_authority.bump
-        )]
-    pub vizing_authority: Account<'info, message::VizingAuthorityParams>,
+    #[account(seeds = [contants::VIZING_AUTHORITY_SEED],bump = vizing_authority.bump)]
+    pub vizing_authority: Account<'info, VizingAuthorityParams>,
 
     /// CHECK: target contract
     #[account(mut, constraint = target_contract.key() == params.message.target_contract @VizingError::TargetContractInvalid)]
@@ -178,59 +180,51 @@ pub struct LandingOp<'info> {
 }
 
 impl LandingOp<'_> {
-    pub fn execute(ctx: &mut Context<LandingOp>, params: LandingParams) -> Result<()> {
-        let seeds = &[VIZING_AUTHORITY_SEED, &[ctx.accounts.vizing_authority.bump]];
-        let signer = &[&seeds[..]];
-        let program_id = ctx.accounts.target_contract.key();
-        let accounts = ctx
+    pub fn vizing_landing(ctx: &mut Context<LandingOp>, params: LandingParams) -> Result<()> {
+        let balance_before = ctx.accounts.relayer.lamports();
+
+        let account_info = ctx
             .remaining_accounts
             .iter()
-            .map(|acc| acc.to_account_metas(None)[0].clone())
-            .collect::<Vec<_>>();
-        let data = build_landing_ix_data(&params).unwrap();
-        let result = invoke_signed(
-            &Instruction {
-                program_id,
-                accounts,
-                data,
-            },
-            ctx.remaining_accounts,
-            signer,
+            .map(|acc| {
+                let mut account = acc.to_account_metas(None)[0].clone();
+                account.is_signer = account.pubkey == ctx.accounts.vizing_authority.key();
+                account
+            }).collect::<Vec<_>>();
+
+        let ix = Instruction {
+            program_id: ctx.accounts.target_contract.key(),
+            accounts: account_info,
+            data: build_landing_ix_data(&params)?,
+        };
+
+        invoke_signed(
+            &ix,
+            &[ctx.remaining_accounts].concat(),
+            &[&[VIZING_AUTHORITY_SEED, &[ctx.accounts.vizing_authority.bump]]],
+        ).map_err(|_| VizingError::CallingFailed)?;
+
+        require!(
+            ctx.accounts.relayer.lamports() <= balance_before + params.value,
+            VizingError::InsufficientBalance
         );
 
-        if result.is_ok() {
-            return Ok(());
-        } else {
-            return err!(VizingError::CallingFailed);
-        }
+        emit!(SuccessfulLanding {
+            message_id: params.message_id,
+            erliest_arrival_timestamp: params.erliest_arrival_timestamp,
+            latest_arrival_timestamp: params.latest_arrival_timestamp,
+            src_chainid: params.src_chainid,
+            src_tx_hash: params.src_tx_hash,
+            src_contract: params.src_contract,
+            src_chain_nonce: params.src_chain_nonce,
+            sender: params.sender,
+            value: params.value,
+            addition_params: params.addition_params,
+            message: params.message,
+        });
+
+        Ok(())
     }
-}
-
-#[account]
-#[derive(InitSpace)]
-pub struct LandingParams {
-    pub message_id: [u8; 32],
-    pub erliest_arrival_timestamp: u64,
-    pub latest_arrival_timestamp: u64,
-    pub src_chainid: u64,
-    pub src_tx_hash: [u8; 32],
-    pub src_contract: Pubkey,
-    pub src_chain_nonce: u32,
-    pub sender: Pubkey,
-    pub value: u64,
-    #[max_len(256)]
-    pub addition_params: Vec<u8>,
-    pub message: LandingMessage,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
-pub struct LandingMessage {
-    pub mode: u8,
-    pub target_contract: Pubkey,
-    pub execute_gas_limit: u64,
-    pub max_fee_per_gas: u64,
-    #[max_len(256)]
-    pub signature: Vec<u8>,
 }
 
 fn build_landing_ix_data(params: &LandingParams) -> Result<Vec<u8>> {

@@ -1,8 +1,11 @@
 use anchor_lang::prelude::*;
 
-use crate::error::ErrorCode;
-use crate::message_type_lib::*;
-use crate::message_monitor_lib::*;
+// use crate::error::errors::ErrorCode;
+// use crate::message_type_lib::*;
+// use crate::message_monitor_lib::*;
+// use crate::state::*;
+
+use crate::library::*;
 use crate::state::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
@@ -33,7 +36,7 @@ pub struct TradeFee {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct TradeFeeConfig {
     pub key: u64,
-    pub dapp: [u16; 20], //address
+    pub dapp: [u8; 32], //address
     pub molecular: u64,
     pub denominator: u64,
 }
@@ -41,7 +44,7 @@ pub struct TradeFeeConfig {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct DappConfig {
     pub key: u64,
-    pub dapp: [u16; 20], //address
+    pub dapp: [u8; 32], //address
     pub value: u64,
 }
 
@@ -125,7 +128,7 @@ impl MappingFeeConfig {
     pub fn set_trade_fee_config(
         &mut self,
         key: u64,
-        dapp: [u16; 20],
+        dapp: [u8; 32],
         molecular: u64,
         denominator: u64,
     ) {
@@ -147,7 +150,7 @@ impl MappingFeeConfig {
         }
     }
 
-    pub fn set_dapp_config(&mut self, key: u64, dapp: [u16; 20], value: u64) {
+    pub fn set_dapp_config(&mut self, key: u64, dapp: [u8; 32], value: u64) {
         if let Some(pair) = self
             .dapp_config_mappings
             .iter_mut()
@@ -162,7 +165,6 @@ impl MappingFeeConfig {
     }
 
     pub fn get_fee_config(&self, key: u64) -> Option<FeeConfig> {
-        // require!(Some(self.valid),ErrorCode::InvalidMapping);
         self.fee_config_mappings
             .iter()
             .find(|pair| pair.key == key)
@@ -170,23 +172,20 @@ impl MappingFeeConfig {
     }
 
     pub fn get_trade_fee(&self, key: u64) -> Option<TradeFee> {
-        // require!(Some(self.valid),ErrorCode::InvalidMapping);
         self.trade_fee_mappings
             .iter()
             .find(|pair| pair.key == key)
             .cloned()
     }
 
-    pub fn get_trade_fee_config(&self, key: u64, dapp: [u16; 20]) -> Option<TradeFeeConfig> {
-        // require!(Some(self.valid),ErrorCode::InvalidMapping);
+    pub fn get_trade_fee_config(&self, key: u64, dapp: [u8; 32]) -> Option<TradeFeeConfig> {
         self.trade_fee_config_mappings
             .iter()
             .find(|pair| pair.key == key && pair.dapp == dapp)
             .cloned()
     }
 
-    pub fn get_dapp_config(&mut self, key: u64, dapp: [u16; 20]) -> Option<DappConfig> {
-        // require!(Some(self.valid),ErrorCode::InvalidMapping);
+    pub fn get_dapp_config(&mut self, key: u64, dapp: [u8; 32]) -> Option<DappConfig> {
         self.dapp_config_mappings
             .iter()
             .find(|pair| pair.key == key && pair.dapp == dapp)
@@ -222,7 +221,6 @@ impl MappingNativeTokenTradeFeeConfig {
         &mut self,
         key: u64,
     ) -> Option<NativeTokenTradeFeeConfig> {
-        // require!(Some(self.valid),ErrorCode::InvalidMapping);
         self.native_token_trade_fee_config_mappings
             .iter()
             .find(|pair| pair.key == key)
@@ -264,7 +262,7 @@ impl SetGasGlobal<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, ErrorCode::NonGasManager);
+        require!(if_power_user, errors::ErrorCode::NonGasManager);
 
         let gas_system_global = &mut ctx.accounts.gas_system_global;
         gas_system_global.global_base_price = global_base_price;
@@ -291,7 +289,7 @@ impl SetFeeConfig<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, ErrorCode::NonGasManager);
+        require!(if_power_user, errors::ErrorCode::NonGasManager);
 
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         mapping_fee_config.set_fee_config(
@@ -318,7 +316,7 @@ impl SetTokenFeeConfig<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, ErrorCode::NonGasManager);
+        require!(if_power_user, errors::ErrorCode::NonGasManager);
 
         let g = &mut ctx.accounts.global_trade_fee;
         let n = &mut ctx.accounts.native_token_trade_fee_config;
@@ -333,13 +331,13 @@ impl SetDappPriceConfig<'_>{
     pub fn set_dapp_price_config(
         ctx: Context<SetDappPriceConfig>,
         chain_id: u64,
-        dapp: [u16; 20],
+        dapp: [u8; 32],
         base_price: u64,
     ) -> Result<()> {
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, ErrorCode::NonGasManager);
+        require!(if_power_user, errors::ErrorCode::NonGasManager);
         let m = &mut ctx.accounts.mapping_fee_config;
         m.set_dapp_config(chain_id, dapp, base_price);
         Ok(())
@@ -358,7 +356,7 @@ impl SetExchangeRate<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.swap_managers.contains(user_key);
-        require!(if_power_user, ErrorCode::NonSwapManager);
+        require!(if_power_user, errors::ErrorCode::NonSwapManager);
         let m = &mut ctx.accounts.mapping_fee_config;
 
         if let Some(mut fee_config) = m.get_fee_config(chain_id) {
@@ -377,7 +375,7 @@ impl SetExchangeRate<'_>{
                 fee_config.denominator_decimal,
             );
         } else {
-            return err!(ErrorCode::FeeConfigNotFound);
+            return err!(errors::ErrorCode::FeeConfigNotFound);
         }
         Ok(())
     }
@@ -393,10 +391,10 @@ impl BatchSetTokenFeeConfig<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, ErrorCode::NonGasManager);
+        require!(if_power_user, errors::ErrorCode::NonGasManager);
         require!(
             dest_chain_ids.len() == moleculars.len() && dest_chain_ids.len() == denominators.len(),
-            ErrorCode::InvalidLength
+            errors::ErrorCode::InvalidLength
         );
         let m = &mut ctx.accounts.mapping_fee_config;
         let n = &mut ctx.accounts.native_token_trade_fee_config;
@@ -412,7 +410,7 @@ impl BatchSetTokenFeeConfig<'_>{
 impl BatchSetTradeFeeConfigMap<'_>{
     pub fn batch_set_trade_fee_config_map(
         ctx: Context<BatchSetTradeFeeConfigMap>,
-        dapps: Vec<[u16; 20]>,
+        dapps: Vec<[u8; 32]>,
         dest_chain_ids: Vec<u64>,
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
@@ -420,12 +418,12 @@ impl BatchSetTradeFeeConfigMap<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, ErrorCode::NonGasManager);
+        require!(if_power_user, errors::ErrorCode::NonGasManager);
         require!(
             dest_chain_ids.len() == moleculars.len()
                 && dest_chain_ids.len() == denominators.len()
                 && dest_chain_ids.len() == dapps.len(),
-            ErrorCode::InvalidLength
+            errors::ErrorCode::InvalidLength
         );
 
         let m = &mut ctx.accounts.mapping_fee_config;
@@ -448,8 +446,8 @@ impl BatchSetAmountInThreshold<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, ErrorCode::NonGasManager);
-        require!(chain_ids.len() == new_values.len(), ErrorCode::InvalidLength);
+        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        require!(chain_ids.len() == new_values.len(), errors::ErrorCode::InvalidLength);
         let a = &mut ctx.accounts.amount_in_thresholds;
         for (i, &current_id) in chain_ids.iter().enumerate() {
             a.set_amount_in_thresholds(current_id, new_values[i]);
@@ -462,16 +460,16 @@ impl BatchSetDappPriceConfigInDiffChain<'_>{
     pub fn batch_set_dapp_price_config_in_diff_chain(
         ctx: Context<BatchSetDappPriceConfigInDiffChain>,
         chain_ids: Vec<u64>,
-        dapps: Vec<[u16; 20]>,
+        dapps: Vec<[u8; 32]>,
         base_prices: Vec<u64>,
     ) -> Result<()> {
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, ErrorCode::NonGasManager);
+        require!(if_power_user, errors::ErrorCode::NonGasManager);
         require!(
             chain_ids.len() == dapps.len() && chain_ids.len() == base_prices.len(),
-            ErrorCode::InvalidLength
+            errors::ErrorCode::InvalidLength
         );
         let m = &mut ctx.accounts.mapping_fee_config;
         for (i, &current_id) in chain_ids.iter().enumerate() {
@@ -486,14 +484,14 @@ impl BatchSetDappPriceConfigInSameChain<'_>{
     pub fn batch_set_dapp_price_config_in_same_chain(
         ctx: Context<BatchSetDappPriceConfigInSameChain>,
         chain_id: u64,
-        dapps: Vec<[u16; 20]>,
+        dapps: Vec<[u8; 32]>,
         base_prices: Vec<u64>,
     ) -> Result<()> {
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, ErrorCode::NonGasManager);
-        require!(dapps.len() == base_prices.len(), ErrorCode::InvalidLength);
+        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        require!(dapps.len() == base_prices.len(), errors::ErrorCode::InvalidLength);
         let m = &mut ctx.accounts.mapping_fee_config;
         for (i, &price) in base_prices.iter().enumerate() {
             m.set_dapp_config(chain_id, dapps[i], base_prices[i]);
@@ -514,19 +512,19 @@ impl BatchSetExchangeRate<'_>{
         let power_user = &mut ctx.accounts.power_user;
         let user_key = &mut ctx.accounts.user.key();
         let if_power_user = power_user.swap_managers.contains(user_key);
-        require!(if_power_user, ErrorCode::NonSwapManager);
+        require!(if_power_user, errors::ErrorCode::NonSwapManager);
         require!(
             chain_ids.len() == moleculars.len()
                 && chain_ids.len() == denominators.len()
                 && chain_ids.len() == molecular_decimals.len()
                 && chain_ids.len() == denominator_decimals.len(),
-            ErrorCode::InvalidLength
+            errors::ErrorCode::InvalidLength
         );
         let m = &mut ctx.accounts.mapping_fee_config;
         for (i, &current_id) in chain_ids.iter().enumerate() {
             let fee_config = m
                 .get_fee_config(current_id)
-                .ok_or(ErrorCode::FeeConfigNotFound)?;
+                .ok_or(errors::ErrorCode::FeeConfigNotFound)?;
             let this_base_price = fee_config.base_price;
             let this_reserve = fee_config.reserve;
             m.set_fee_config(
@@ -569,7 +567,7 @@ impl BatchSetExchangeRate<'_>{
         t_denominator: u64,
         g_molecular: u64,
         g_denominator: u64,
-        // target_contract: [u16; 20],
+        // target_contract: [u8; 32],
         // dest_chain_id: u64,
         amount_out: u64,
     ) -> Option<u64> {
@@ -599,12 +597,12 @@ impl BatchSetExchangeRate<'_>{
         default_gas_limit: u64,
         amount_out: u64,
         dest_chain_id: u64,
-        message: &[u16]
+        message: &[u8]
     ) -> Option<u64> {
         let base_price: u64;
         let fee: u64;
         let mut this_price: u64=0;
-        let mut this_dapp: [u16; 20]=[0; 20];
+        let mut this_dapp: [u8; 32]=[0; 32];
         if(fee_config_base_price>0){
             base_price=fee_config_base_price;
         }else{
@@ -670,12 +668,12 @@ impl BatchSetExchangeRate<'_>{
     //     ctx: Context<EstimateGas>,
     //     amount_out: u64,
     //     dest_chain_id: u64,
-    //     message: &[u16]
+    //     message: &[u8]
     // ) -> Option<u64> {
     //     let base_price: u64;
     //     let fee: u64;
     //     let mut this_price: u64=0;
-    //     let mut this_dapp: [u16; 20]=[0; 20];
+    //     let mut this_dapp: [u8; 32]=[0; 32];
     //     let mapping_fee_config=&mut ctx.accounts.mapping_fee_config;
     //     let gas_system_global=&mut ctx.accounts.gas_system_global;
     //     let global_trade_fee=&mut ctx.accounts.global_trade_fee;
@@ -762,7 +760,7 @@ impl BatchSetExchangeRate<'_>{
         dapp_config_value: u64,
         dest_chain_id: u64,
         chain_base_price: u64,
-        dapp: [u16; 20],
+        dapp: [u8; 32],
     ) -> Option<u64> {
         let this_dapp_base_price: u64;
         if (dapp_config_value > 0) {
@@ -776,7 +774,7 @@ impl BatchSetExchangeRate<'_>{
     pub fn estimate_price1(
         gas_system_global_base_price: u64,
         dapp_config_value: u64,
-        target_contract: [u16; 20],
+        target_contract: [u8; 32],
         dest_chain_id: u64,
     ) -> Option<u64> {
         let dapp_base_price: u64;
@@ -806,7 +804,7 @@ impl BatchSetExchangeRate<'_>{
         ctx: Context<BatchEstimateTotalFee>,
         amount_outs: Vec<u64>,
         dest_chain_ids: Vec<u64>,
-        messages: &[&[u16]],
+        messages: &[&[u8]],
     ) -> Option<u64> {
         let m = &mut ctx.accounts.mapping_fee_config;
         let gas_system_global = &mut ctx.accounts.gas_system_global;
@@ -816,7 +814,7 @@ impl BatchSetExchangeRate<'_>{
 
         for (i, &amount) in amount_outs.iter().enumerate() {
             let t=m.get_trade_fee(dest_chain_ids[i])?;
-            let this_message: [u16; 20] = match messages[i].try_into() {
+            let this_message: [u8; 32] = match messages[i].try_into() {
                 Ok(array) => array,
                 Err(_) => return None, 
             };
@@ -862,7 +860,7 @@ impl BatchSetExchangeRate<'_>{
     //     fee_config_base_price: u64,
     //     dest_chain_id: u64,
     //     amount_out: u64,
-    //     message: &[u16],
+    //     message: &[u8],
     // ) -> Option<u64> {
     //     let base_price: u64;
     //     if (fee_config_base_price > 0) {
@@ -870,7 +868,7 @@ impl BatchSetExchangeRate<'_>{
     //     } else {
     //         base_price = g_global_base_price;
     //     }
-    //     let this_dapp: [u16; 20];
+    //     let this_dapp: [u8; 32];
     //     let fee: u64;
     //     let mode = MessageType::fetch_msg_mode(&message);
 
@@ -938,7 +936,7 @@ impl BatchSetExchangeRate<'_>{
         fee_config_base_price: u64,
         dest_chain_id: u64,
         amount_out: u64,
-        message: &[u16],
+        message: &[u8],
     ) -> Option<u64> {
         let base_price: u64;
         if (fee_config_base_price > 0) {
@@ -946,7 +944,7 @@ impl BatchSetExchangeRate<'_>{
         } else {
             base_price = g_global_base_price;
         }
-        let this_dapp: [u16; 20];
+        let this_dapp: [u8; 32];
         let fee: u64;
         let mode = MessageType::fetch_msg_mode(&message);
 
@@ -1442,4 +1440,3 @@ pub struct EstimateTotalFee<'info> {
 //     #[account(mut)]
 //     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
 // }
-
