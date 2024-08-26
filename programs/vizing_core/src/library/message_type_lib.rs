@@ -64,3 +64,4 @@ impl AdditionParamsType {
 pub fn process_message(message: &[u8]) -> MessageType {
     MessageType::fetch_msg_mode(&message)
 }
+
