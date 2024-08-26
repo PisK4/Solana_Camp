@@ -13,8 +13,8 @@ pub mod message_monitor {
 
         let mut gas_limit_bytes = [0u8; 4];
         for (i, &value) in message[33..35].iter().enumerate() {
-            gas_limit_bytes[i * 2] = (value >> 8) as u8;
-            gas_limit_bytes[i * 2 + 1] = (value & 0xFF) as u8;
+            gas_limit_bytes[i * 2] = value;
+            gas_limit_bytes[i * 2 + 1] = message[33 + i * 2 + 1];
         }
         let gas_limit = u32::from_be_bytes([
             gas_limit_bytes[0],
@@ -24,9 +24,8 @@ pub mod message_monitor {
         ]);
 
         let mut max_fee_per_gas_bytes = [0u8; 8];
-        for (i, &value) in message[36..40].iter().enumerate() {
-            max_fee_per_gas_bytes[i * 2] = (value >> 8) as u8;
-            max_fee_per_gas_bytes[i * 2 + 1] = (value & 0xFF) as u8;
+        for (i, &value) in message[36..44].iter().enumerate() {
+            max_fee_per_gas_bytes[i] = value;
         }
         let max_fee_per_gas = u64::from_be_bytes(max_fee_per_gas_bytes);
 
@@ -43,8 +42,8 @@ pub mod message_monitor {
 
         let mut gas_limit_bytes = [0u8; 4];
         for (i, &value) in message[33..35].iter().enumerate() {
-            gas_limit_bytes[i * 2] = (value >> 8) as u8;
-            gas_limit_bytes[i * 2 + 1] = (value & 0xFF) as u8;
+            gas_limit_bytes[i * 2] = value;
+            gas_limit_bytes[i * 2 + 1] = message[33 + i * 2 + 1];
         }
         let gas_limit = u32::from_be_bytes([
             gas_limit_bytes[0],
@@ -55,3 +54,4 @@ pub mod message_monitor {
         Some((receiver_addr_array, gas_limit))
     }
 }
+

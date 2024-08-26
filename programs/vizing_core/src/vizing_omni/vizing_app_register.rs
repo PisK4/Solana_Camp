@@ -46,7 +46,9 @@ impl VizingAppRegister<'_> {
     ) -> Result<()> {
         ctx.accounts.vizing_app_configs.vizing_app_accounts = params.vizing_app_accounts;
         ctx.accounts.vizing_app_configs.admin = ctx.accounts.admin.key();
-        ctx.accounts.vizing_app_configs.bump = *ctx.bumps.get("vizing_app_configs").unwrap();
+        let (_,app_bump) = Pubkey::find_program_address(&[b"vizing_app_configs".as_ref()], ctx.program_id);
+        // ctx.accounts.vizing_app_configs.bump = *ctx.bumps.get("vizing_app_configs").unwrap();
+        ctx.accounts.vizing_app_configs.bump=app_bump;
         Ok(())
     }
 }

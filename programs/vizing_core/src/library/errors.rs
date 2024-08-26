@@ -62,4 +62,12 @@ pub enum ErrorCode {
     InValidMappingAccount,
     #[msg("Fee config not found.")]
     FeeConfigNotFound,
+    #[msg("Trade fee not found.")]
+    TradeFeeNotFound,
+    #[msg("Trade fee config not found.")]
+    TradeFeeConfigNotFound,
+    #[msg("Dapp config not found.")]
+    DappConfigNotFound,
+    #[msg("Estimate gas not found.")]
+    EstimateGasNotFound,
 }

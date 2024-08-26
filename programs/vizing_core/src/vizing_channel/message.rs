@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{instruction::Instruction, program::invoke_signed};
 use anchor_lang::system_program::{transfer, Transfer};
+use crate::gas_system::vizing_gas_system::MappingFeeConfig;
 use crate::gas_system::*;
 use crate::governance::*;
 use crate::library::*;
@@ -32,7 +33,7 @@ pub struct LaunchOp<'info> {
         seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, vizing_gas_system::MappingFeeConfig>,
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
         seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
@@ -83,18 +84,23 @@ impl LaunchOp<'_> {
         let dest_chain_id = params.dest_chainid;
         //???
         let amount_out = params.value;
-        let message = params.message.signature;
-        //message???
-        let (this_dapp, _, _, _) = message_monitor_lib::message_monitor::slice_message(message)?;
+        let message = &params.message.signature;
+        let dapp;
+        //message
+        if let Some((this_dapp, _, _, _)) = message_monitor_lib::message_monitor::slice_message(&message) {
+           dapp=this_dapp;
+        } else {
+            todo!(); 
+        }
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let gas_system_global = &mut ctx.accounts.gas_system_global;
         let global_trade_fee = &mut ctx.accounts.global_trade_fee;
 
-        let get_fee_config = mapping_fee_config.get_fee_config(dest_chain_id)?;
-        let get_trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id)?;
+        let get_fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+        let get_trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id).ok_or(errors::ErrorCode::TradeFeeNotFound)?;
         let get_trade_fee_config =
-            mapping_fee_config.get_trade_fee_config(dest_chain_id, this_dapp)?;
-        let get_dapp_config = mapping_fee_config.get_dapp_config(dest_chain_id, this_dapp)?;
+            mapping_fee_config.get_trade_fee_config(dest_chain_id, dapp).ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+        let get_dapp_config = mapping_fee_config.get_dapp_config(dest_chain_id, dapp).ok_or(errors::ErrorCode::DappConfigNotFound)?;
 
         let fee_config_base_price = get_fee_config.base_price;
         let global_base_price = gas_system_global.global_base_price;
@@ -120,8 +126,8 @@ impl LaunchOp<'_> {
             default_gas_limit,
             amount_out,
             dest_chain_id,
-            message,
-        )?;
+            &message,
+        ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
 
         // mock fee
         // let fee: u64 = 1000000000;
@@ -135,6 +141,7 @@ impl LaunchOp<'_> {
             ),
             fee,
         )?;
+        
 
         emit!(SuccessfulLaunchMessage {
             erliest_arrival_timestamp: params.erliest_arrival_timestamp,
@@ -146,7 +153,7 @@ impl LaunchOp<'_> {
             fee: fee,
             dest_chainid: params.dest_chainid,
             addition_params: params.addition_params,
-            message: params.message,
+            message: params.message.clone(),
         });
 
         Ok(())
