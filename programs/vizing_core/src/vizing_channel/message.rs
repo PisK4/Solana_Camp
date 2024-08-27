@@ -20,7 +20,7 @@ pub struct LaunchOp<'info> {
     pub vizing: Account<'info, VizingPadSettings>,
 
     /// CHECK: We need this account as to receive the fee
-    #[account(mut, constraint = fee_collector.key() == vizing.fee_receiver @VizingError::FeeCollectorInvalid)]
+    #[account(mut, address = vizing.fee_receiver @VizingError::FeeCollectorInvalid)]
     pub fee_collector: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
@@ -49,7 +49,7 @@ impl LaunchOp<'_> {
 
         msg!("mode: {}", params.message.mode);
 
-        msg!("target_contract: {}", params.message.target_contract);
+        msg!("target_program: {}", params.message.target_program);
 
         msg!("execute_gas_limit: {}", params.message.execute_gas_limit);
 
@@ -91,10 +91,10 @@ impl LaunchOp<'_> {
 #[instruction(params: LandingParams)]
 pub struct LandingOp<'info> {
     /// CHECK: We need signer to claim ownership
-    #[account(signer)]
+    #[account(mut, signer)]
     pub relayer: AccountInfo<'info>,
 
-    #[account(mut, 
+    #[account(
         seeds = [contants::VIZING_PAD_SETTINGS_SEED], 
         bump = vizing.bump,
         constraint = vizing.trusted_relayers.contains(&relayer.key()) @VizingError::NotRelayer, 
@@ -107,14 +107,22 @@ pub struct LandingOp<'info> {
     pub vizing_authority: Account<'info, VizingAuthorityParams>,
 
     /// CHECK: target contract
-    #[account(mut, constraint = target_contract.key() == params.message.target_contract @VizingError::TargetContractInvalid)]
-    pub target_contract: AccountInfo<'info>,
+    #[account(mut, address = params.message.target_program @VizingError::TargetContractInvalid)]
+    pub target_program: AccountInfo<'info>,
+
+    #[account(
+        seeds = [VIZING_APP_CONFIG_SEED, &vizing_app_configs.vizing_app_program_id.to_bytes()],
+        bump = vizing_app_configs.bump,
+        constraint = vizing_app_configs.vizing_app_program_id == target_program.key() @VizingError::TargetContractInvalid
+    )]
+    pub vizing_app_configs: Account<'info, VizingAppConfig>,
 
     pub system_program: Program<'info, System>,
 }
 
 impl LandingOp<'_> {
-    pub fn vizing_landing(ctx: &mut Context<LandingOp>, params: LandingParams) -> Result<()> {
+    #[access_control(landing_check(&ctx))]
+    pub fn vizing_landing<'info>(ctx: &mut Context<'_, '_, '_, 'info, LandingOp<'info>>, params: LandingParams) -> Result<()> {
         let balance_before = ctx.accounts.relayer.lamports();
 
         let account_info = ctx
@@ -127,23 +135,52 @@ impl LandingOp<'_> {
             })
             .collect::<Vec<_>>();
 
-        let ix = Instruction {
-            program_id: ctx.accounts.target_contract.key(),
-            accounts: account_info,
-            data: build_landing_ix_data(&params)?,
-        };
+        let mut traget = ctx.accounts.target_program.to_account_info();
+        
+        if traget.executable {
+            traget = ctx.remaining_accounts[1].to_account_info();
 
-        invoke_signed(
-            &ix,
-            &[ctx.remaining_accounts].concat(),
-            &[&[VIZING_AUTHORITY_SEED, &[ctx.accounts.vizing_authority.bump]]],
-        )
-        .map_err(|_| VizingError::CallingFailed)?;
+            transfer(
+                CpiContext::new(
+                    ctx.accounts.system_program.to_account_info(),
+                    Transfer {
+                        from: ctx.accounts.relayer.to_account_info(),
+                        to: traget
+                    },
+                ),
+                params.value,
+            )?;
 
-        require!(
-            ctx.accounts.relayer.lamports() <= balance_before + params.value,
-            VizingError::InsufficientBalance
-        );
+            let ix = Instruction {
+                program_id: ctx.accounts.target_program.key(),
+                accounts: account_info,
+                data: build_landing_ix_data(&params)?,
+            };
+    
+            invoke_signed(
+                &ix,
+                &[ctx.remaining_accounts].concat(),
+                &[&[VIZING_AUTHORITY_SEED, &[ctx.accounts.vizing_authority.bump]]],
+            )
+            .map_err(|_| VizingError::CallingFailed)?;
+    
+            require!(
+                ctx.accounts.relayer.lamports() <= balance_before + params.value,
+                VizingError::InsufficientBalance
+            );
+    
+        }else{
+            transfer(
+                CpiContext::new(
+                    ctx.accounts.system_program.to_account_info(),
+                    Transfer {
+                        from: ctx.accounts.relayer.to_account_info(),
+                        to: traget
+                    },
+                ),
+                params.value,
+            )?;
+        }
 
         emit!(SuccessfulLanding {
             message_id: params.message_id,
@@ -161,6 +198,17 @@ impl LandingOp<'_> {
 
         Ok(())
     }
+}
+
+fn landing_check(ctx: &Context<LandingOp>) -> Result<()> {
+    let vizing_apps = ctx.accounts.vizing_app_configs.vizing_app_accounts.clone();
+    let remaining_accounts = ctx.remaining_accounts.iter().map(|a| a.key).collect::<Vec<_>>();
+    for app in vizing_apps {
+        if !remaining_accounts.contains(&&app) {
+            return Err(VizingError::VizingAppNotInRemainingAccounts.into());
+        }
+    }
+    Ok(())
 }
 
 fn build_landing_ix_data(params: &LandingParams) -> Result<Vec<u8>> {

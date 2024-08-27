@@ -14,6 +14,7 @@ pub mod vizing_app_mock {
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         ctx.accounts.result_account.result = 0;
         ctx.accounts.result_account.bump = *ctx.bumps.get("result_account").unwrap();
+        ctx.accounts.sol_pda_receiver.bump = *ctx.bumps.get("sol_pda_receiver").unwrap();
         Ok(())
     }
 
@@ -40,8 +41,10 @@ pub struct LandingAppOp<'info> {
     /// CHECK: 1. Vizing Authority account
     #[account(signer)]
     pub vizing_authority: AccountInfo<'info>,
-    /// CHECK: 2. Vizing Sponsor account who came with sol
-    pub vizing_sponsor: AccountInfo<'info>,
+
+    #[account(seeds = [VIZING_APP_SOL_RECEIVER_SEED], bump = sol_pda_receiver.bump)]
+    pub sol_pda_receiver: Account<'info, VizingSolReceiver>,
+
     #[account(seeds = [RESULT_DATA_SEED], bump = result_account.bump)]
     pub result_account: Account<'info, ResultData>,
 }
@@ -50,6 +53,9 @@ pub struct LandingAppOp<'info> {
 pub struct Initialize<'info> {
     #[account(init, payer = payer, space = 8 + ResultData::INIT_SPACE, seeds = [RESULT_DATA_SEED], bump)]
     pub result_account: Account<'info, ResultData>,
+
+    #[account(init, payer = payer, space = 8 + VizingSolReceiver::INIT_SPACE, seeds = [VIZING_APP_SOL_RECEIVER_SEED], bump)]
+    pub sol_pda_receiver: Account<'info, VizingSolReceiver>,
 
     #[account(mut)]
     pub payer: Signer<'info>,

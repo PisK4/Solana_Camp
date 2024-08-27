@@ -1,3 +1,5 @@
+pub const VIZING_APP_SOL_RECEIVER_SEED: &[u8] = b"Vizing_App_Sol_Receiver_Seed";
+
 use anchor_lang::prelude::*;
 #[account]
 #[derive(InitSpace)]
@@ -19,9 +21,15 @@ pub struct LandingParams {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct LandingMessage {
     pub mode: u8,
-    pub target_contract: Pubkey,
+    pub target_program: Pubkey,
     pub execute_gas_limit: u64,
     pub max_fee_per_gas: u64,
     #[max_len(256)]
     pub signature: Vec<u8>,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct VizingSolReceiver {
+    pub bump: u8,
 }

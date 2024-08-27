@@ -5,7 +5,6 @@ import { expect } from "chai";
 import { VizingCore } from "../target/types/vizing_core";
 import { VizingApp } from "../target/types/vizing_app";
 import { VizingAppMock } from "../target/types/vizing_app_mock";
-import { sha256 } from "@coral-xyz/anchor/dist/cjs/utils";
 
 function padStringTo32Bytes(str: string): Buffer {
   const buffer = Buffer.alloc(32);
@@ -25,13 +24,20 @@ describe("Vizing Test", () => {
   const vizingPadSettingsSeed = Buffer.from("Vizing_Pad_Settings_Seed");
   // const relayerSettingsSeed = Buffer.from("Relayer_Settings_Seed");
   const vizingAuthoritySeed = Buffer.from("Vizing_Authority_Seed");
+  const vizingAppConfigSeed = Buffer.from("Vizing_App_Config_Seed");
+  const vizingAppSolReceiverSeed = Buffer.from("Vizing_App_Sol_Receiver_Seed");
 
   let vizingPadSettings: anchor.web3.PublicKey;
   let relayerSettings: anchor.web3.PublicKey;
   let vizingAuthority: anchor.web3.PublicKey;
+  let vizingAppConfig: anchor.web3.PublicKey;
 
   const feeReceiverKeyPair = anchor.web3.Keypair.fromSeed(
     Buffer.from(padStringTo32Bytes("fee_receiver"))
+  );
+
+  const feePayerKeyPair = anchor.web3.Keypair.fromSeed(
+    Buffer.from(padStringTo32Bytes("fee_payer"))
   );
 
   const engineAdminKeyPairs = [
@@ -68,6 +74,24 @@ describe("Vizing Test", () => {
       Buffer.from(padStringTo32Bytes("registered_validator_2"))
     ),
   ];
+
+  it("account setup", async () => {
+    // get airdrop
+    await provider.connection.confirmTransaction(
+      await provider.connection.requestAirdrop(
+        trustedRelayerKeyPairs[0].publicKey,
+        5 * anchor.web3.LAMPORTS_PER_SOL
+      )
+    );
+
+    // get airdrop
+    await provider.connection.confirmTransaction(
+      await provider.connection.requestAirdrop(
+        feePayerKeyPair.publicKey,
+        5 * anchor.web3.LAMPORTS_PER_SOL
+      )
+    );
+  });
 
   it("Initializes Vizing Pad", async () => {
     console.log("start initialize");
@@ -308,7 +332,7 @@ describe("Vizing Test", () => {
   it("Launch", async () => {
     const message = {
       mode: 5,
-      targetContract: anchor.web3.Keypair.generate().publicKey,
+      targetProgram: anchor.web3.Keypair.generate().publicKey,
       executeGasLimit: new anchor.BN(6),
       maxFeePerGas: new anchor.BN(7),
       signature: Buffer.from("1234"),
@@ -377,6 +401,7 @@ describe("Vizing Test", () => {
   });
 
   it("Landing", async () => {
+    let solPdaReceiver: anchor.web3.PublicKey;
     const resultDataSeed = "result_data_seed";
 
     const [resultDataAccount, resultDataBump] =
@@ -385,20 +410,89 @@ describe("Vizing Test", () => {
         vizingAppMockProgram.programId
       );
 
-    await vizingAppProgram.methods.initialize().rpc();
-    await vizingAppMockProgram.methods
+    const targetProgram = vizingAppMockProgram.programId;
+
+    {
+      // #### register vizing app start
+      const [vizingAppContract, vizingAppBump] =
+        anchor.web3.PublicKey.findProgramAddressSync(
+          [vizingAppConfigSeed, targetProgram.toBuffer()],
+          vizingProgram.programId
+        );
+
+      console.log(
+        `vizingAppConfig: ${vizingAppContract.toBase58()}, bump: ${vizingAppBump}`
+      );
+
+      const [solReceiver, bump1] = anchor.web3.PublicKey.findProgramAddressSync(
+        [vizingAppSolReceiverSeed],
+        targetProgram
+      );
+
+      solPdaReceiver = solReceiver;
+
+      console.log(`solPdaReceiver: ${solPdaReceiver.toBase58()}`);
+
+      vizingAppConfig = vizingAppContract;
+
+      const registerParams = {
+        solPdaReciver: solPdaReceiver,
+        vizingAppAccounts: [resultDataAccount],
+        vizingAppProgramId: targetProgram,
+      };
+
+      const tx = await vizingProgram.methods
+        .registerVizingApp(registerParams)
+        .accounts({
+          admin: provider.wallet.publicKey,
+          vizingAppConfigs: vizingAppConfig,
+        })
+        .rpc();
+      console.log(`register vizing app: ${tx}`);
+
+      const fetchedVizingAppConfig =
+        await vizingProgram.account.vizingAppConfig.fetch(vizingAppConfig);
+
+      expect(fetchedVizingAppConfig.vizingAppAccounts[0].toBase58()).to.equal(
+        resultDataAccount.toBase58()
+      );
+
+      expect(fetchedVizingAppConfig.vizingAppProgramId.toBase58()).to.equal(
+        targetProgram.toBase58()
+      );
+
+      expect(fetchedVizingAppConfig.admin.toBase58()).to.equal(
+        provider.wallet.publicKey.toBase58()
+      );
+
+      expect(fetchedVizingAppConfig.bump).to.equal(vizingAppBump);
+    }
+
+    const [solReceiver2, bump2] = anchor.web3.PublicKey.findProgramAddressSync(
+      [vizingAppSolReceiverSeed],
+      vizingAppProgram.programId
+    );
+
+    await vizingAppProgram.methods
       .initialize()
       .accounts({
-        resultAccount: resultDataAccount,
+        solPdaReceiver: solReceiver2,
         payer: provider.wallet.publicKey,
       })
       .rpc();
 
-    const targetContract = vizingAppMockProgram.programId;
+    await vizingAppMockProgram.methods
+      .initialize()
+      .accounts({
+        resultAccount: resultDataAccount,
+        solPdaReceiver: solPdaReceiver,
+        payer: provider.wallet.publicKey,
+      })
+      .rpc();
 
     const message = {
       mode: 5,
-      targetContract: targetContract,
+      targetProgram: targetProgram,
       executeGasLimit: new anchor.BN(6),
       maxFeePerGas: new anchor.BN(7),
       signature: Buffer.alloc(0),
@@ -433,26 +527,10 @@ describe("Vizing Test", () => {
             relayer: mockRelayer.publicKey,
             vizing: vizingPadSettings,
             vizingAuthority: vizingAuthority,
-            targetContract: targetContract,
+            targetProgram: targetProgram,
+            vizingAppConfigs: vizingAppConfig,
             systemProgram: anchor.web3.SystemProgram.programId,
           })
-          .remainingAccounts([
-            {
-              pubkey: vizingAuthority,
-              isSigner: false,
-              isWritable: false,
-            },
-            {
-              pubkey: mockRelayer.publicKey,
-              isSigner: true,
-              isWritable: false,
-            },
-            {
-              pubkey: resultDataAccount,
-              isSigner: false,
-              isWritable: false,
-            },
-          ])
           .signers([mockRelayer])
           .rpc();
         throw new Error("should not come here");
@@ -462,13 +540,44 @@ describe("Vizing Test", () => {
     }
 
     {
+      try {
+        await vizingProgram.methods
+          .landing(landingParams)
+          .accounts({
+            relayer: trustedRelayerKeyPairs[0].publicKey,
+            vizing: vizingPadSettings,
+            vizingAuthority: vizingAuthority,
+            targetProgram: targetProgram,
+            vizingAppConfigs: vizingAppConfig,
+            systemProgram: anchor.web3.SystemProgram.programId,
+          })
+          .signers([trustedRelayerKeyPairs[0]])
+          .rpc();
+        throw new Error("should not come here");
+      } catch (error) {
+        expect(error.error.errorMessage).to.equal(
+          "Vizing App Not In Remaining Accounts"
+        );
+      }
+    }
+
+    {
+      const padReceiverBalanceBefore = new anchor.BN(
+        await provider.connection.getBalance(solPdaReceiver)
+      );
+
+      const relayer = trustedRelayerKeyPairs[0];
+      const feepayer = feePayerKeyPair;
+      console.log(`relayer: ${relayer.publicKey.toBase58()}`);
+      console.log(`feepayer: ${feepayer.publicKey.toBase58()}`);
       const tx = await vizingProgram.methods
         .landing(landingParams)
         .accounts({
-          relayer: trustedRelayerKeyPairs[0].publicKey,
+          relayer: relayer.publicKey,
           vizing: vizingPadSettings,
           vizingAuthority: vizingAuthority,
-          targetContract: targetContract,
+          targetProgram: targetProgram,
+          vizingAppConfigs: vizingAppConfig,
           systemProgram: anchor.web3.SystemProgram.programId,
         })
         .remainingAccounts([
@@ -478,9 +587,9 @@ describe("Vizing Test", () => {
             isWritable: false,
           },
           {
-            pubkey: trustedRelayerKeyPairs[0].publicKey,
-            isSigner: true,
-            isWritable: false,
+            pubkey: solPdaReceiver,
+            isSigner: false,
+            isWritable: true,
           },
           {
             pubkey: resultDataAccount,
@@ -488,9 +597,17 @@ describe("Vizing Test", () => {
             isWritable: false,
           },
         ])
-        .signers([trustedRelayerKeyPairs[0]])
+        .signers([relayer])
         .rpc();
       console.log(`landing tx: ${tx}`);
+
+      const padReceiverBalanceAfter = new anchor.BN(
+        await provider.connection.getBalance(solPdaReceiver)
+      );
+
+      expect(Number(padReceiverBalanceAfter)).equal(
+        Number(padReceiverBalanceBefore.add(landingParams.value))
+      );
     }
   });
 });

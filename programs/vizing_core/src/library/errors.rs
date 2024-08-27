@@ -28,4 +28,6 @@ pub enum VizingError {
     CallingFailed,
     #[msg("Insufficient Balance")]
     InsufficientBalance,
+    #[msg("Vizing App Not In Remaining Accounts")]
+    VizingAppNotInRemainingAccounts,
 }

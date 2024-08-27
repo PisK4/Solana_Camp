@@ -13,7 +13,7 @@ pub struct VizingAppRegister<'info> {
         init,
         payer = admin,
         space = 8 + VizingAppConfig::INIT_SPACE,
-        seeds = [VIZING_APP_CONFIG_SEED, params.vizing_app_program_id.as_ref()],
+        seeds = [VIZING_APP_CONFIG_SEED, &params.vizing_app_program_id.to_bytes()],
         bump
     )]
     pub vizing_app_configs: Account<'info, VizingAppConfig>,
@@ -24,6 +24,7 @@ pub struct VizingAppRegister<'info> {
 #[account]
 #[derive(InitSpace)]
 pub struct VizingAppConfig {
+    pub sol_pda_receiver: Pubkey,
     #[max_len(160)]
     pub vizing_app_accounts: Vec<Pubkey>,
     pub vizing_app_program_id: Pubkey,
@@ -34,9 +35,10 @@ pub struct VizingAppConfig {
 #[account]
 #[derive(InitSpace)]
 pub struct VizingAppRegisterParams {
+    pub sol_pda_receiver: Pubkey,
     #[max_len(160)]
-    vizing_app_accounts: Vec<Pubkey>,
-    vizing_app_program_id: Pubkey,
+    pub vizing_app_accounts: Vec<Pubkey>,
+    pub vizing_app_program_id: Pubkey,
 }
 
 impl VizingAppRegister<'_> {
@@ -44,7 +46,9 @@ impl VizingAppRegister<'_> {
         ctx: &mut Context<VizingAppRegister>,
         params: VizingAppRegisterParams,
     ) -> Result<()> {
+        ctx.accounts.vizing_app_configs.sol_pda_receiver = params.sol_pda_receiver;
         ctx.accounts.vizing_app_configs.vizing_app_accounts = params.vizing_app_accounts;
+        ctx.accounts.vizing_app_configs.vizing_app_program_id = params.vizing_app_program_id;
         ctx.accounts.vizing_app_configs.admin = ctx.accounts.admin.key();
         ctx.accounts.vizing_app_configs.bump = *ctx.bumps.get("vizing_app_configs").unwrap();
         Ok(())
@@ -59,7 +63,7 @@ pub struct VizingAppManagement<'info> {
     pub admin: AccountInfo<'info>,
 
     #[account(
-        seeds = [VIZING_APP_CONFIG_SEED, vizing_app_configs.vizing_app_program_id.as_ref()],
+        seeds = [VIZING_APP_CONFIG_SEED, &vizing_app_configs.vizing_app_program_id.to_bytes()],
         bump = vizing_app_configs.bump,
         has_one = admin
     )]

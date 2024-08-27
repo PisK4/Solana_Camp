@@ -9,7 +9,8 @@ pub mod vizing_app {
 
     use super::*;
 
-    pub fn initialize(_ctx: Context<Initialize>) -> Result<()> {
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        ctx.accounts.sol_pda_receiver.bump = *ctx.bumps.get("sol_pda_receiver").unwrap();
         Ok(())
     }
 
@@ -38,11 +39,18 @@ pub struct LandingAppOp<'info> {
     /// CHECK: 1. Vizing Authority account
     #[account(signer)]
     pub vizing_authority: AccountInfo<'info>,
-    /// CHECK: 2. Vizing Sponsor account who came with sol
-    pub vizing_sponsor: AccountInfo<'info>,
+
+    #[account(seeds = [VIZING_APP_SOL_RECEIVER_SEED], bump = sol_pda_receiver.bump)]
+    pub sol_pda_receiver: Account<'info, VizingSolReceiver>,
 }
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
+    #[account(init, payer = payer, space = 8 + VizingSolReceiver::INIT_SPACE, seeds = [VIZING_APP_SOL_RECEIVER_SEED], bump)]
+    pub sol_pda_receiver: Account<'info, VizingSolReceiver>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
     pub system_program: Program<'info, System>,
 }

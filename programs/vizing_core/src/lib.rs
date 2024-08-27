@@ -20,8 +20,12 @@ pub mod vizing_core {
         LaunchOp::vizing_launch(&mut ctx, params)
     }
 
-    pub fn landing(mut ctx: Context<LandingOp>, params: LandingParams) -> Result<()> {
+    pub fn landing<'info>(
+        mut ctx: Context<'_, '_, '_, 'info, LandingOp<'info>>,
+        params: LandingParams,
+    ) -> Result<()> {
         LandingOp::vizing_landing(&mut ctx, params)
+        // Ok(())
     }
 
     // **********  channel end ************

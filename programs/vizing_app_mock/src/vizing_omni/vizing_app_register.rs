@@ -52,7 +52,6 @@ impl VizingAppRegister<'_> {
 }
 
 #[derive(Accounts)]
-#[instruction(params: VizingAppRegisterParams)]
 pub struct VizingAppManagement<'info> {
     /// CHECK: We need signer to claim ownership
     #[account(mut, signer)]
