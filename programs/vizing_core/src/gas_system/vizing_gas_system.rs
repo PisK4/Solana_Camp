@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::system_program::{transfer, Transfer};
 
 // use crate::error::errors::ErrorCode;
 // use crate::message_type_lib::*;
@@ -250,6 +251,152 @@ impl MappingAmountInThresholds {
     }
 }
 
+
+//init
+impl InitPowerUser<'_>{
+    pub fn initialize_power_user(
+        ctx: Context<InitPowerUser>,
+        new_admin: Pubkey,
+        new_engine_admins: Vec<Pubkey>,
+        new_station_admins: Vec<Pubkey>,
+        new_gas_pool_admins: Vec<Pubkey>,
+        new_trusted_relayers: Vec<Pubkey>,
+        new_registered_validators: Vec<Pubkey>,
+        new_gas_managers: Vec<Pubkey>,
+        new_swap_managers: Vec<Pubkey>,
+        new_token_managers: Vec<Pubkey>,
+    ) -> Result<()> {
+        let power_user = &mut ctx.accounts.power_user;
+
+        power_user.admin = new_admin;
+        power_user.engine_admins = new_engine_admins;
+        power_user.station_admins = new_station_admins;
+        power_user.gas_pool_admins = new_gas_pool_admins;
+        power_user.trusted_relayers = new_trusted_relayers;
+        power_user.registered_validators = new_registered_validators;
+        power_user.gas_managers = new_gas_managers;
+        power_user.swap_managers = new_swap_managers;
+        power_user.token_managers = new_token_managers;
+        Ok(())
+    }
+}
+
+impl SaveDestChainId<'_>{
+    pub fn set_chain_id(ctx: Context<SaveDestChainId>, dest_chain_id: Vec<u8>) -> Result<()> {
+        let save = &mut ctx.accounts.save_chain_id;
+        let power_user = &mut ctx.accounts.power_user;
+        let user_key = ctx.accounts.user.key();
+        require!(
+            user_key == power_user.admin,
+            errors::ErrorCode::NonAdmin
+        );
+
+        save.dest_chain_id = dest_chain_id;
+        Ok(())
+    }
+}
+
+impl InitVizingVault<'_>{
+    pub fn initialize_vizing_vault(ctx: Context<InitVizingVault>) -> Result<()> {
+        let vizing_vault = &mut ctx.accounts.vizing_vault;
+        vizing_vault.current_pragma_id = *ctx.program_id;
+        Ok(())
+    }
+}
+
+impl InitGasGlobal<'_>{
+    pub fn initialize_gas_global(
+        ctx: Context<InitGasGlobal>,
+        global_base_price: u64,
+        default_gas_limit: u64,
+        amount_in_threshold: u64,
+        molecular: u64,
+        denominator: u64,
+    ) -> Result<()> {
+        let power_user = &mut ctx.accounts.power_user;
+        let user_key = &mut ctx.accounts.user.key();
+        let if_power_user = power_user.gas_managers.contains(user_key);
+        require!(if_power_user, errors::ErrorCode::NonGasManager);
+
+        let gas_system_global = &mut ctx.accounts.gas_system_global;
+        gas_system_global.global_base_price = global_base_price;
+        gas_system_global.default_gas_limit = default_gas_limit;
+        gas_system_global.amount_in_threshold = amount_in_threshold;
+
+        let global_trade_fee = &mut ctx.accounts.global_trade_fee;
+        global_trade_fee.molecular = molecular;
+        global_trade_fee.denominator = denominator;
+        Ok(())
+    }
+}
+
+impl InitFeeConfig<'_>{
+    pub fn initialize_fee_config(
+        ctx: Context<InitFeeConfig>,
+        key: u64,
+        base_price: u64,
+        reserve: u64,
+        molecular: u64,
+        denominator: u64,
+        molecular_decimal: u8,
+        denominator_decimal: u8,
+    ) -> Result<()> {
+        let power_user = &mut ctx.accounts.power_user;
+        let user_key = &mut ctx.accounts.user.key();
+        let if_power_user = power_user.gas_managers.contains(user_key);
+        require!(if_power_user, errors::ErrorCode::NonGasManager);
+
+        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        mapping_fee_config.set_fee_config(
+            key,
+            base_price,
+            reserve,
+            molecular,
+            denominator,
+            molecular_decimal,
+            denominator_decimal,
+        );
+        Ok(())
+    }
+}
+
+impl InitAmountInThresholds<'_>{
+    pub fn initialize_amount_in_thresholds(
+        ctx: Context<InitAmountInThresholds>,
+        key: u64,
+        value: u64,
+    ) -> Result<()> {
+        let power_user = &mut ctx.accounts.power_user;
+        let user_key = &mut ctx.accounts.user.key();
+        let if_power_user = power_user.gas_managers.contains(user_key);
+        require!(if_power_user, errors::ErrorCode::NonGasManager);
+
+        let a = &mut ctx.accounts.amount_in_thresholds;
+        a.set_amount_in_thresholds(key, value);
+        Ok(())
+    }
+}
+
+impl InitNativeTokenTradeFeeConfig<'_>{
+    pub fn initialize_native_token_trade_fee_config(
+        ctx: Context<InitNativeTokenTradeFeeConfig>,
+        key: u64,
+        molecular: u64,
+        denominator: u64,
+    ) -> Result<()> {
+        let power_user = &mut ctx.accounts.power_user;
+        let user_key = &mut ctx.accounts.user.key();
+        let if_power_user = power_user.gas_managers.contains(user_key);
+        require!(if_power_user, errors::ErrorCode::NonGasManager);
+
+        let n = &mut ctx.accounts.native_token_trade_fee_config;
+        n.set_native_token_trade_fee_config(key, molecular, denominator);
+        Ok(())
+    }
+}
+
+
+//set
 impl SetGasGlobal<'_>{
     pub fn set_gas_global(
         ctx: Context<SetGasGlobal>,
@@ -493,7 +640,7 @@ impl BatchSetDappPriceConfigInSameChain<'_>{
         require!(if_power_user, errors::ErrorCode::NonGasManager);
         require!(dapps.len() == base_prices.len(), errors::ErrorCode::InvalidLength);
         let m = &mut ctx.accounts.mapping_fee_config;
-        for (i, &price) in base_prices.iter().enumerate() {
+        for (i, _) in base_prices.iter().enumerate() {
             m.set_dapp_config(chain_id, dapps[i], base_prices[i]);
         }
         Ok(())
@@ -541,12 +688,31 @@ impl BatchSetExchangeRate<'_>{
     }
 }
     
+impl SolTransfer<'_>{
+     //user=>vizing_vault
+    pub fn sol_transfer(ctx: Context<SolTransfer>, amount: u64) -> Result<()> {
+        let from_pubkey = ctx.accounts.sender.to_account_info();
+        let to_pubkey = ctx.accounts.vizing_vault.to_account_info();
+        let program_id = ctx.accounts.system_program.to_account_info();
+
+        let cpi_context = CpiContext::new(
+            program_id,
+            Transfer {
+                from: from_pubkey,
+                to: to_pubkey,
+            },
+        );
+
+        transfer(cpi_context, amount)?;
+        Ok(())
+    }
+}    
     pub fn compute_trade_fee1(
         fee_config_molecular: u64,
         fee_config_denominator: u64,
         global_trade_fee_molecular: u64,
         global_trade_fee_denominator: u64,
-        dest_chain_id: u64,
+        _dest_chain_id: u64,
         amount_out: u64,
     ) -> Option<u64> {
         let fee;
@@ -567,12 +733,12 @@ impl BatchSetExchangeRate<'_>{
         t_denominator: u64,
         g_molecular: u64,
         g_denominator: u64,
-        target_contract: [u8; 32],
-        dest_chain_id: u64,
+        _target_contract: [u8; 32],
+        _dest_chain_id: u64,
         amount_out: u64,
     ) -> Option<u64> {
         let fee;
-        if(t_denominator>0){
+        if t_denominator > 0{
             fee = amount_out
                     .checked_mul(t_molecular)?
                     .checked_div(t_denominator)?;
@@ -603,15 +769,15 @@ impl BatchSetExchangeRate<'_>{
         let fee: u64;
         let mut this_price: u64=0;
         let mut this_dapp: [u8; 32]=[0; 32];
-        if(fee_config_base_price>0){
+        if fee_config_base_price > 0 {
             base_price=fee_config_base_price;
         }else{
             base_price=global_base_price;
         }
         let mode = MessageType::fetch_msg_mode(&message);
 
-        if(mode==MessageType::StandardActivate || mode==MessageType::ArbitraryActivate){
-            let (Some((dapp, gas_limit, price, _)))=message_monitor::slice_message(message) else { todo!() };
+        if mode==MessageType::StandardActivate || mode==MessageType::ArbitraryActivate {
+            let Some((dapp, gas_limit, price, _))=message_monitor::slice_message(message) else { todo!() };
             
             let dapp_base_price = get_dapp_base_price(
                 dapp_config_value,
@@ -622,7 +788,7 @@ impl BatchSetExchangeRate<'_>{
 
             this_dapp=dapp;
 
-            if(price<dapp_base_price){
+            if price<dapp_base_price{
                 this_price=dapp_base_price;
             }else{
                 this_price=price;
@@ -630,8 +796,8 @@ impl BatchSetExchangeRate<'_>{
             
             fee=(gas_limit as u64).checked_mul(this_price)?;
 
-        }else if(mode==MessageType::NativeTokenSend){
-            let (Some((_, gas_limit))) = message_monitor::slice_transfer(message) else { todo!() };
+        }else if mode==MessageType::NativeTokenSend{
+            let Some((_, gas_limit)) = message_monitor::slice_transfer(message) else { todo!() };
             fee=(gas_limit as u64).checked_mul(this_price)?;
         }else{
             fee=base_price.checked_mul(default_gas_limit)?;
@@ -639,8 +805,8 @@ impl BatchSetExchangeRate<'_>{
 
         let mut amount_in: u64=amount_out;
         let mut final_fee: u64= fee;
-        if(amount_out>0){
-            if(fee_config_molecular_decimal != 0){
+        if amount_out > 0{
+            if fee_config_molecular_decimal != 0 {
                 amount_in=exact_output(
                     fee_config_molecular_decimal,
                     fee_config_denominator_decimal,
@@ -760,12 +926,12 @@ impl BatchSetExchangeRate<'_>{
 
     pub fn get_dapp_base_price(
         dapp_config_value: u64,
-        dest_chain_id: u64,
+        _dest_chain_id: u64,
         chain_base_price: u64,
-        dapp: [u8; 32],
+        _dapp: [u8; 32],
     ) -> Option<u64> {
         let this_dapp_base_price: u64;
-        if (dapp_config_value > 0) {
+        if dapp_config_value > 0 {
             this_dapp_base_price = dapp_config_value;
         } else {
             this_dapp_base_price = chain_base_price;
@@ -776,11 +942,11 @@ impl BatchSetExchangeRate<'_>{
     pub fn estimate_price1(
         gas_system_global_base_price: u64,
         dapp_config_value: u64,
-        target_contract: [u8; 32],
-        dest_chain_id: u64,
+        _target_contract: [u8; 32],
+        _dest_chain_id: u64,
     ) -> Option<u64> {
         let dapp_base_price: u64;
-        if (dapp_config_value > 0) {
+        if dapp_config_value > 0 {
             dapp_base_price = dapp_config_value;
         } else {
             dapp_base_price = gas_system_global_base_price;
@@ -791,10 +957,10 @@ impl BatchSetExchangeRate<'_>{
     pub fn estimate_price2(
         gas_system_global_base_price: u64,
         fee_config_base_price: u64,
-        dest_chain_id: u64
+        _dest_chain_id: u64
     ) -> Option<u64> {
         let base_price: u64;
-        if (fee_config_base_price > 0) {
+        if fee_config_base_price > 0 {
             base_price = fee_config_base_price;
         } else {
             base_price = gas_system_global_base_price;
@@ -938,7 +1104,7 @@ impl BatchSetExchangeRate<'_>{
         message: &[u8],
     ) -> Option<u64> {
         let base_price: u64;
-        if (fee_config_base_price > 0) {
+        if fee_config_base_price > 0 {
             base_price = fee_config_base_price;
         } else {
             base_price = g_global_base_price;
@@ -947,7 +1113,7 @@ impl BatchSetExchangeRate<'_>{
         let fee: u64;
         let mode = MessageType::fetch_msg_mode(&message);
 
-        if (mode == MessageType::StandardActivate || mode == MessageType::ArbitraryActivate) {
+        if mode == MessageType::StandardActivate || mode == MessageType::ArbitraryActivate {
             let Some((dapp, gas_limit, price, _))=message_monitor::slice_message(message) else { todo!() };
 
             let dapp_base_price = get_dapp_base_price(
@@ -957,12 +1123,12 @@ impl BatchSetExchangeRate<'_>{
                 dapp
             )?;
 
-            if (price < dapp_base_price) {
+            if price < dapp_base_price {
                 return None; 
             }
             this_dapp=dapp;
             fee=(gas_limit as u64).checked_mul(price)?;
-        }else if (mode == MessageType::NativeTokenSend) {
+        }else if mode == MessageType::NativeTokenSend {
             let Some((_, gas_limit)) = message_monitor::slice_transfer(message) else { todo!() };
             fee=(gas_limit as u64).checked_mul(base_price)?;
         }else{
@@ -971,8 +1137,8 @@ impl BatchSetExchangeRate<'_>{
 
         let mut amount_in: u64=amount_out;
         let mut final_fee: u64=fee;
-        if (amount_out > 0) {
-            if (fee_config_molecular != 0) {
+        if amount_out > 0 {
+            if fee_config_molecular != 0 {
                 amount_in = exact_output(
                     fee_config_molecular_decimal,
                     fee_config_denominator_decimal,
@@ -991,7 +1157,7 @@ impl BatchSetExchangeRate<'_>{
             )?;
             final_fee = trade_fee2.checked_add(amount_in)?.checked_add(fee)?;
         }
-        if(amount_in>token_amount_limit){
+        if amount_in > token_amount_limit{
             return None;
         }
 
@@ -1001,12 +1167,12 @@ impl BatchSetExchangeRate<'_>{
     pub fn exact_output(
         fee_config_molecular_decimal: u8,
         fee_config_denominator_decimal: u8,
-        dest_chain_id: u64,
+        _dest_chain_id: u64,
         amount_out: u64,    
     ) -> Option<u64> {
         let this_amount_out;
-            if (fee_config_molecular_decimal != fee_config_denominator_decimal) {
-                if (fee_config_molecular_decimal > fee_config_denominator_decimal) {
+            if fee_config_molecular_decimal != fee_config_denominator_decimal {
+                if fee_config_molecular_decimal > fee_config_denominator_decimal {
                     this_amount_out=amount_out.checked_div(10u64
                         .pow((fee_config_molecular_decimal.checked_sub(fee_config_denominator_decimal)?) as u32))?;
                 } else {
@@ -1024,7 +1190,7 @@ impl BatchSetExchangeRate<'_>{
     pub fn exact_input(
         fee_config_molecular_decimal: u8,
         fee_config_denominator_decimal: u8,
-        dest_chain_id: u64,
+        _dest_chain_id: u64,
         amount_in: u64,
     ) -> Option<u64> {
         let this_amount_in;
@@ -1045,6 +1211,168 @@ impl BatchSetExchangeRate<'_>{
     }
 
 
+//init
+#[derive(Accounts)]
+pub struct InitPowerUser<'info> {
+    #[account(
+        init, 
+        payer = user, 
+        space = 8 + 512,
+        seeds = [b"init_power_user".as_ref()],
+        bump
+    )]
+    pub power_user: Account<'info, PowerUser>,
+    #[account(mut)]
+    pub user: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct SaveDestChainId<'info> {
+    #[account(
+        init,
+        payer = user, 
+        space = 8 + 128,
+    )]
+    pub save_chain_id: Account<'info, SaveChainId>,
+    #[account(
+        mut,
+        seeds = [b"init_power_user".as_ref()],
+        bump
+    )]
+    pub power_user: Account<'info, PowerUser>,
+    #[account(mut)]
+    pub user: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct InitVizingVault<'info> {
+    #[account(
+        init, 
+        payer = user, 
+        space = 8 + 256,
+        seeds = [b"vizing_vault".as_ref()],
+        bump
+    )]
+    pub vizing_vault: Account<'info, VaultMes>,
+    #[account(mut)]
+    pub user: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct InitGasGlobal<'info> {
+    #[account(mut)]
+    pub save_chain_id: Account<'info, SaveChainId>,
+    #[account(
+        init,
+        payer = user, 
+        space = 8 + 128,
+        seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub gas_system_global: Account<'info, GasSystemGlobal>,
+    #[account(
+        init,
+        payer = user, 
+        space = 8 + 128,
+        seeds = [b"global_trade_fee".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub global_trade_fee: Account<'info, GlobalTradeFee>,
+    #[account(
+        mut,
+        seeds = [b"init_power_user".as_ref()],
+        bump
+    )]
+    pub power_user: Account<'info, PowerUser>,
+    #[account(mut)]
+    pub user: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct InitFeeConfig<'info> {
+    #[account(mut)]
+    pub save_chain_id: Account<'info, SaveChainId>,
+    #[account(
+        mut,
+        seeds = [b"init_power_user".as_ref()],
+        bump
+    )]
+    pub power_user: Account<'info, PowerUser>,
+    #[account(
+        init,
+        payer = user, 
+        space = 8 + 256,
+        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(mut)]
+    pub user: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct InitAmountInThresholds<'info> {
+    #[account(mut)]
+    pub save_chain_id: Account<'info, SaveChainId>,
+    #[account(
+        mut,
+        seeds = [b"init_power_user".as_ref()],
+        bump
+    )]
+    pub power_user: Account<'info, PowerUser>,
+    #[account(
+        init,
+        payer = user, 
+        space = 8 + 128,
+        seeds = [b"amount_in_thresholds".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub amount_in_thresholds: Account<'info, MappingAmountInThresholds>,
+    #[account(mut)]
+    pub user: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct InitNativeTokenTradeFeeConfig<'info> {
+    #[account(mut)]
+    pub save_chain_id: Account<'info, SaveChainId>,
+    #[account(
+        mut,
+        seeds = [b"init_power_user".as_ref()],
+        bump
+    )]
+    pub power_user: Account<'info, PowerUser>,
+    #[account(
+        init,
+        payer = user, 
+        space = 8 + 128,
+        seeds = [b"native_token_trade_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub native_token_trade_fee_config: Account<'info, MappingNativeTokenTradeFeeConfig>,
+    #[account(mut)]
+    pub user: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct SolTransfer<'info> {
+    #[account(mut)]
+    pub sender: Signer<'info>,
+    #[account(
+        mut,
+        seeds = [b"vizing_vault".as_ref()],
+        bump
+    )]
+    pub vizing_vault: Account<'info, VaultMes>,
+    pub system_program: Program<'info, System>,
+}
 
 #[derive(Accounts)]
 pub struct SetGasGlobal<'info> {
@@ -1441,4 +1769,3 @@ pub struct BatchSetExchangeRate<'info> {
 //     #[account(mut)]
 //     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
 // }
-

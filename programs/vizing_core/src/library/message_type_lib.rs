@@ -1,5 +1,3 @@
-use anchor_lang::prelude::*;
-
 #[derive(Clone, Copy, PartialEq)]
 pub enum MessageType {
     Default,
@@ -64,4 +62,3 @@ impl AdditionParamsType {
 pub fn process_message(message: &[u8]) -> MessageType {
     MessageType::fetch_msg_mode(&message)
 }
-

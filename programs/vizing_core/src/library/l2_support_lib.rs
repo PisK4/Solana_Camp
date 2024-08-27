@@ -1,5 +1,3 @@
-use anchor_lang::prelude::*;
-
 #[derive(Clone, Copy)]
 pub enum L2SupportLib {
     Ethereum,

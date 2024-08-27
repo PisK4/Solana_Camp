@@ -6,7 +6,6 @@ pub mod vizing_channel;
 pub mod vizing_omni;
 
 use anchor_lang::prelude::*;
-use anchor_lang::system_program::{transfer, Transfer};
 use gas_system::*;
 use governance::*;
 use library::*;
@@ -99,50 +98,61 @@ pub mod vizing_core {
     // ***********  governance end ************
 
     //init
-
     pub fn init_power_user(
         ctx: Context<InitPowerUser>,
         new_admin: Pubkey,
-        new_engine_admin: Pubkey,
-        new_station_admin: Pubkey,
-        new_gas_pool_admin: Pubkey,
-        new_trusted_relayer: Pubkey,
-        new_registered_validator: Pubkey,
+        new_engine_admins: Vec<Pubkey>,
+        new_station_admins: Vec<Pubkey>,
+        new_gas_pool_admins: Vec<Pubkey>,
+        new_trusted_relayers: Vec<Pubkey>,
+        new_registered_validators: Vec<Pubkey>,
         new_gas_managers: Vec<Pubkey>,
         new_swap_managers: Vec<Pubkey>,
         new_token_managers: Vec<Pubkey>,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-
-        power_user.admin_role = new_admin;
-        power_user.engine_admin = new_engine_admin;
-        power_user.station_admin = new_station_admin;
-        power_user.gas_pool_admin = new_gas_pool_admin;
-        power_user.trusted_relayer = new_trusted_relayer;
-        power_user.registered_validator = new_registered_validator;
-        power_user.gas_managers = new_gas_managers;
-        power_user.swap_managers = new_swap_managers;
-        power_user.token_managers = new_token_managers;
-        Ok(())
+        InitPowerUser::initialize_power_user(
+            ctx,
+            new_admin,
+            new_engine_admins,
+            new_station_admins,
+            new_gas_pool_admins,
+            new_trusted_relayers,
+            new_registered_validators,
+            new_gas_managers,
+            new_swap_managers,
+            new_token_managers
+        )
     }
 
     pub fn save_chain_id(ctx: Context<SaveDestChainId>, dest_chain_id: Vec<u8>) -> Result<()> {
-        let save = &mut ctx.accounts.save_chain_id;
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = ctx.accounts.user.key();
-        require!(
-            user_key == power_user.admin_role,
-            errors::ErrorCode::NonAdmin
-        );
-
-        save.dest_chain_id = dest_chain_id;
-        Ok(())
+        SaveDestChainId::set_chain_id(
+            ctx,
+            dest_chain_id
+        )
     }
 
     pub fn init_vizing_vault(ctx: Context<InitVizingVault>) -> Result<()> {
-        let vizing_vault = &mut ctx.accounts.vizing_vault;
-        vizing_vault.current_pragma_id = *ctx.program_id;
-        Ok(())
+        InitVizingVault::initialize_vizing_vault(
+            ctx
+        )
+    }
+
+    pub fn init_gas_global(
+        ctx: Context<InitGasGlobal>,
+        global_base_price: u64,
+        default_gas_limit: u64,
+        amount_in_threshold: u64,
+        molecular: u64,
+        denominator: u64,
+    ) -> Result<()> {
+       InitGasGlobal::initialize_gas_global(
+            ctx,
+            global_base_price,
+            default_gas_limit,
+            amount_in_threshold,
+            molecular,
+            denominator
+       )
     }
 
     pub fn init_fee_config(
@@ -155,61 +165,28 @@ pub mod vizing_core {
         molecular_decimal: u8,
         denominator_decimal: u8,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
-
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        mapping_fee_config.set_fee_config(
+        InitFeeConfig::initialize_fee_config(
+            ctx,
             key,
             base_price,
             reserve,
             molecular,
             denominator,
             molecular_decimal,
-            denominator_decimal,
-        );
-        Ok(())
-    }
-
-    pub fn init_gas_global(
-        ctx: Context<InitGasGlobal>,
-        global_base_price: u64,
-        default_gas_limit: u64,
-        amount_in_threshold: u64,
-        molecular: u64,
-        denominator: u64,
-    ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
-
-        let gas_system_global = &mut ctx.accounts.gas_system_global;
-        gas_system_global.global_base_price = global_base_price;
-        gas_system_global.default_gas_limit = default_gas_limit;
-        gas_system_global.amount_in_threshold = amount_in_threshold;
-
-        let global_trade_fee = &mut ctx.accounts.global_trade_fee;
-        global_trade_fee.molecular = molecular;
-        global_trade_fee.denominator = denominator;
-        Ok(())
+            denominator_decimal
+        )
     }
 
     pub fn init_amount_in_thresholds(
-        ctx: Context<AmountInThresholds>,
+        ctx: Context<InitAmountInThresholds>,
         key: u64,
         value: u64,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
-
-        let a = &mut ctx.accounts.amount_in_thresholds;
-        a.set_amount_in_thresholds(key, value);
-        Ok(())
+        InitAmountInThresholds::initialize_amount_in_thresholds(
+            ctx,
+            key,
+            value
+        )
     }
 
     pub fn init_native_token_trade_fee_config(
@@ -218,14 +195,12 @@ pub mod vizing_core {
         molecular: u64,
         denominator: u64,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
-
-        let n = &mut ctx.accounts.native_token_trade_fee_config;
-        n.set_native_token_trade_fee_config(key, molecular, denominator);
-        Ok(())
+        InitNativeTokenTradeFeeConfig::initialize_native_token_trade_fee_config(
+            ctx,
+            key,
+            molecular,
+            denominator
+        )
     }
 
     pub fn init_token_info_base(
@@ -235,17 +210,13 @@ pub mod vizing_core {
         decimals: u8,
         max_price: u64,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &ctx.accounts.user.key();
-        let if_power_user = power_user.token_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonTokenManager);
-
-        let token_config = &mut ctx.accounts.token_config;
-        let symbol_config = &mut ctx.accounts.symbol_config;
-        let symbol_clone: Vec<u8> = symbol.clone();
-        token_config.set_token_base(token_address, symbol, decimals, max_price);
-        symbol_config.set(symbol_clone, token_address);
-        Ok(())
+        InitTokenInfoBase::initialize_token_info_base(
+            ctx,
+            symbol,
+            token_address,
+            decimals,
+            max_price
+        )
     }
 
     //set
@@ -424,11 +395,11 @@ pub mod vizing_core {
     pub fn change_this_power_user(
         ctx: Context<ChangePowerUser>,
         new_admin: Pubkey,
-        new_engine_admin: Pubkey,
-        new_station_admin: Pubkey,
-        new_gas_pool_admin: Pubkey,
-        new_trusted_relayer: Pubkey,
-        new_registered_validator: Pubkey,
+        new_engine_admins: Vec<Pubkey>,
+        new_station_admins: Vec<Pubkey>,
+        new_gas_pool_admins: Vec<Pubkey>,
+        new_trusted_relayers: Vec<Pubkey>,
+        new_registered_validators: Vec<Pubkey>,
         new_gas_managers: Vec<Pubkey>,
         new_swap_managers: Vec<Pubkey>,
         new_token_managers: Vec<Pubkey>,
@@ -436,33 +407,22 @@ pub mod vizing_core {
         ChangePowerUser::change_power_user(
             ctx,
             new_admin,
-            new_engine_admin,
-            new_station_admin,
-            new_gas_pool_admin,
-            new_trusted_relayer,
-            new_registered_validator,
+            new_engine_admins,
+            new_station_admins,
+            new_gas_pool_admins,
+            new_trusted_relayers,
+            new_registered_validators,
             new_gas_managers,
             new_swap_managers,
             new_token_managers,
         )
     }
 
-    //user=>vizing_vault
-    pub fn sol_transfer(ctx: Context<SolTransfer>, amount: u64) -> Result<()> {
-        let from_pubkey = ctx.accounts.sender.to_account_info();
-        let to_pubkey = ctx.accounts.recipient.to_account_info();
-        let program_id = ctx.accounts.system_program.to_account_info();
-
-        let cpi_context = CpiContext::new(
-            program_id,
-            Transfer {
-                from: from_pubkey,
-                to: to_pubkey,
-            },
-        );
-
-        transfer(cpi_context, amount)?;
-        Ok(())
+    pub fn transfer_sol_valut(ctx: Context<SolTransfer>, amount: u64) ->Result<()>{
+        SolTransfer::sol_transfer(
+            ctx,
+            amount
+        )
     }
 
     //withdraw_spl_token
@@ -507,193 +467,4 @@ pub mod vizing_core {
         )
     }
 
-}
-
-#[derive(Accounts)]
-pub struct InitPowerUser<'info> {
-    #[account(
-        init, 
-        payer = user, 
-        space = 8 + 512,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct SaveDestChainId<'info> {
-    #[account(
-        init,
-        payer = user, 
-        space = 8 + 128,
-    )]
-    pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct InitVizingVault<'info> {
-    #[account(
-        init, 
-        payer = user, 
-        space = 8 + 256,
-        seeds = [b"vizing_vault".as_ref()],
-        bump
-    )]
-    pub vizing_vault: Account<'info, VaultMes>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct InitGasGlobal<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        init,
-        payer = user, 
-        space = 8 + 128,
-        seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub gas_system_global: Account<'info, GasSystemGlobal>,
-    #[account(
-        init,
-        payer = user, 
-        space = 8 + 128,
-        seeds = [b"global_trade_fee".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub global_trade_fee: Account<'info, GlobalTradeFee>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct InitFeeConfig<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
-    #[account(
-        init,
-        payer = user, 
-        space = 8 + 256,
-        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct AmountInThresholds<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
-    #[account(
-        init,
-        payer = user, 
-        space = 8 + 128,
-        seeds = [b"amount_in_thresholds".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub amount_in_thresholds: Account<'info, MappingAmountInThresholds>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct InitNativeTokenTradeFeeConfig<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
-    #[account(
-        init,
-        payer = user, 
-        space = 8 + 128,
-        seeds = [b"native_token_trade_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub native_token_trade_fee_config: Account<'info, MappingNativeTokenTradeFeeConfig>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct SolTransfer<'info> {
-    #[account(mut)]
-    sender: Signer<'info>,
-    #[account(mut)]
-    recipient: AccountInfo<'info>,
-    system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct InitTokenInfoBase<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    #[account(
-        init, 
-        payer = user, 
-        space = 8 + 128,
-        seeds = [b"init_token_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub token_config: Account<'info, MappingTokenConfig>,
-    #[account(
-        init, 
-        payer = user, 
-        space = 8 + 128,
-        seeds = [b"init_symbol_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub symbol_config: Account<'info, MappingSymbolConfig>,
-    pub system_program: Program<'info, System>,
 }

@@ -1,7 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_lang::system_program::{transfer, Transfer as SolTransfer};
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
-use spl_associated_token_account::get_associated_token_address;
 
 // use crate::error::ErrorCode;
 // use crate::message_monitor_lib::*;
@@ -131,15 +129,38 @@ impl MappingSymbolConfig {
     }
 }
 
+//init
+impl InitTokenInfoBase<'_>{
+    pub fn initialize_token_info_base(
+        ctx: Context<InitTokenInfoBase>,
+        symbol: Vec<u8>,
+        token_address: [u8; 32],
+        decimals: u8,
+        max_price: u64,
+    ) -> Result<()> {
+        let power_user = &mut ctx.accounts.power_user;
+        let user_key = &ctx.accounts.user.key();
+        let if_power_user = power_user.token_managers.contains(user_key);
+        require!(if_power_user, errors::ErrorCode::NonTokenManager);
+
+        let token_config = &mut ctx.accounts.token_config;
+        let symbol_config = &mut ctx.accounts.symbol_config;
+        let symbol_clone: Vec<u8> = symbol.clone();
+        token_config.set_token_base(token_address, symbol, decimals, max_price);
+        symbol_config.set(symbol_clone, token_address);
+        Ok(())
+    }
+}
+
 impl ChangePowerUser<'_> {
     pub fn change_power_user(
         ctx: Context<ChangePowerUser>,
         new_admin: Pubkey,
-        new_engine_admin: Pubkey,
-        new_station_admin: Pubkey,
-        new_gas_pool_admin: Pubkey,
-        new_trusted_relayer: Pubkey,
-        new_registered_validator: Pubkey,
+        new_engine_admins: Vec<Pubkey>,
+        new_station_admins: Vec<Pubkey>,
+        new_gas_pool_admins: Vec<Pubkey>,
+        new_trusted_relayers: Vec<Pubkey>,
+        new_registered_validators: Vec<Pubkey>,
         new_gas_managers: Vec<Pubkey>,
         new_swap_managers: Vec<Pubkey>,
         new_token_managers: Vec<Pubkey>,
@@ -147,16 +168,16 @@ impl ChangePowerUser<'_> {
         let power_user = &mut ctx.accounts.power_user;
         let user_key = ctx.accounts.user.key();
         require!(
-            user_key == power_user.admin_role,
+            user_key == power_user.admin,
             errors::ErrorCode::NonAdmin
         );
 
-        power_user.admin_role = new_admin;
-        power_user.engine_admin = new_engine_admin;
-        power_user.station_admin = new_station_admin;
-        power_user.gas_pool_admin = new_gas_pool_admin;
-        power_user.trusted_relayer = new_trusted_relayer;
-        power_user.registered_validator = new_registered_validator;
+        power_user.admin = new_admin;
+        power_user.engine_admins = new_engine_admins;
+        power_user.station_admins = new_station_admins;
+        power_user.gas_pool_admins = new_gas_pool_admins;
+        power_user.trusted_relayers = new_trusted_relayers;
+        power_user.registered_validators = new_registered_validators;
         power_user.gas_managers = new_gas_managers;
         power_user.swap_managers = new_swap_managers;
         power_user.token_managers = new_token_managers;
@@ -271,14 +292,14 @@ pub fn compute_trade_fee(
     global_trade_fee_denominator: u64,
     token_fee_config_molecular: u64,
     token_fee_config_denominator: u64,
-    dest_chain_id: u64,
-    token: [u8; 32],
+    _dest_chain_id: u64,
+    _token: [u8; 32],
     expect_amount_receive: u64,
 ) -> Option<u64> {
     let fee;
     let molecular;
     let denominator;
-    if (token_fee_config_molecular < 1) {
+    if token_fee_config_molecular < 1 {
         molecular = global_trade_fee_molecular;
         denominator = global_trade_fee_denominator;
     } else {
@@ -322,8 +343,8 @@ pub fn compute_amount_composition(
     global_trade_fee_denominator: u64,
     token_fee_config_molecular: u64,
     token_fee_config_denominator: u64,
-    dest_chain_id: u64,
-    token: [u8; 32],
+    _dest_chain_id: u64,
+    _token: [u8; 32],
     total_amount: u64,
 ) -> Option<(u64, u64)> {
     let real_amount;
@@ -331,7 +352,7 @@ pub fn compute_amount_composition(
     let molecular;
     let denominator;
     let one_amount;
-    if (token_fee_config_molecular < 1) {
+    if token_fee_config_molecular < 1 {
         molecular = global_trade_fee_molecular;
         denominator = global_trade_fee_denominator;
     } else {
@@ -349,6 +370,39 @@ pub fn compute_amount_composition(
     Some((real_amount, trade_fee))
 }
 
+//init
+#[derive(Accounts)]
+pub struct InitTokenInfoBase<'info> {
+    #[account(mut)]
+    pub save_chain_id: Account<'info, SaveChainId>,
+    #[account(
+        mut,
+        seeds = [b"init_power_user".as_ref()],
+        bump
+    )]
+    pub power_user: Account<'info, PowerUser>,
+    #[account(mut)]
+    pub user: Signer<'info>,
+    #[account(
+        init, 
+        payer = user, 
+        space = 8 + 128,
+        seeds = [b"init_token_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub token_config: Account<'info, MappingTokenConfig>,
+    #[account(
+        init, 
+        payer = user, 
+        space = 8 + 128,
+        seeds = [b"init_symbol_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub symbol_config: Account<'info, MappingSymbolConfig>,
+    pub system_program: Program<'info, System>,
+}
+
+//set
 #[derive(Accounts)]
 pub struct ChangePowerUser<'info> {
     #[account(mut)]

@@ -1,8 +1,4 @@
-use anchor_lang::prelude::*;
-
 pub mod message_monitor {
-    use super::*;
-
     pub fn slice_message(message: &[u8]) -> Option<([u8; 32], u32, u64, Vec<u8>)> {
         if message.len() < 48 {
             return None;
@@ -54,4 +50,3 @@ pub mod message_monitor {
         Some((receiver_addr_array, gas_limit))
     }
 }
-
