@@ -580,11 +580,11 @@ describe("Test", () => {
     }
     await InitVizingVault();
 
-    let base_price = new anchor.BN(10000);
+    let base_price = new anchor.BN(500);
     let reserve = new anchor.BN(1000);
     let molecular = new anchor.BN(5);
-    let denominator = new anchor.BN(1000);
-    let molecular_decimal = 8;
+    let denominator = new anchor.BN(10);
+    let molecular_decimal = 6;
     let denominator_decimal = 6;
     //init_fee_config
     async function InitFeeConfig() {
@@ -626,8 +626,8 @@ describe("Test", () => {
     await InitFeeConfig();
 
     //init_gas_global
-    let global_base_price = new anchor.BN(100000);
-    let default_gas_limit = new anchor.BN(200);
+    let global_base_price = new anchor.BN(500);
+    let default_gas_limit = new anchor.BN(1000);
     let amount_in_threshold = new anchor.BN(10000000000000);
     async function InitGasGlobal() {
       try {
@@ -707,7 +707,7 @@ describe("Test", () => {
 
     //init_native_token_trade_fee_config
     let native_molecular = new anchor.BN(5);
-    let native_denominator = new anchor.BN(1000);
+    let native_denominator = new anchor.BN(10);
     async function InitNativeTokenTradeFeeConfig() {
       try {
         const mappingNativeTokenTradeFeeConfig =
@@ -760,7 +760,7 @@ describe("Test", () => {
     );
     const init_tokenAddressArray: number[] = Array.from(tokenAddress);
     let init_decimals = 6;
-    let init_max_price = new anchor.BN(100000);
+    let init_max_price = new anchor.BN(1000);
     async function InitTokenInfoBase() {
       try {
         const mappingSymbolConfig =
@@ -852,8 +852,8 @@ describe("Test", () => {
     await GrantFeeCollector();
 
     //setThisGasGlobal
-    let new_global_base_price = new anchor.BN(5000);
-    let new_default_gas_limit = new anchor.BN(2000);
+    let new_global_base_price = new anchor.BN(500);
+    let new_default_gas_limit = new anchor.BN(1000);
     let new_amount_in_threshold = new anchor.BN(500000000);
     async function SetThisGasGlobal() {
       try {
@@ -1015,8 +1015,8 @@ describe("Test", () => {
 
     //batch_set_token_fee_config
     let destChainIds = [new anchor.BN(id)];
-    let moleculars = [new anchor.BN(68886)];
-    let denominators = [new anchor.BN(222)];
+    let moleculars = [new anchor.BN(5)];
+    let denominators = [new anchor.BN(10)];
     async function BatchSetThisTokenFeeConfig() {
       try {
         const batchSetThisTokenFeeConfig = await pg.program.methods
@@ -1075,7 +1075,7 @@ describe("Test", () => {
     await BatchSetThisTradeFeeConfigMap();
 
     //batch_set_amount_in_threshold
-    let new_values = [new anchor.BN(88)];
+    let new_values = [new anchor.BN(1000000000)];
     async function BatchSetThisAmountInThreshold() {
       try {
         const batchSetThisAmountInThreshold = await pg.program.methods
@@ -1101,7 +1101,7 @@ describe("Test", () => {
     await BatchSetThisAmountInThreshold();
 
     //batch_set_this_dapp_price_config_in_diff_chain
-    let base_prices = [new anchor.BN(6666)];
+    let base_prices = [new anchor.BN(1000)];
     async function BatchSetThisDappPriceConfigInDiffChain() {
       try {
         const batchSetThisDappPriceConfigInDiffChain = await pg.program.methods
@@ -1165,36 +1165,37 @@ describe("Test", () => {
     await BatchSetThisDappPriceConfigInSameChain();
 
     //batch_set_exchange_rate
-    let molecular_decimals = Buffer.from("8");
-    let denominator_decimals = Buffer.from("6");
-    async function BatchSetThisExchangeRate() {
-      try {
-        const batchSetThisExchangeRate = await pg.program.methods
-          .batchSetThisExchangeRate(
-            destChainIds,
-            moleculars,
-            denominators,
-            molecular_decimals,
-            denominator_decimals
-          )
-          .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
-            mappingFeeConfig: mappingFeeConfigAuthority,
-            user: user,
-            systemProgram: systemId,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`batchSetThisExchangeRate:${batchSetThisExchangeRate}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(batchSetThisExchangeRate);
-      } catch (e) {
-        console.log("BatchSetThisExchangeRate error:", e);
-      }
-    }
-    await BatchSetThisExchangeRate();
+    // let molecular_decimals = Buffer.from("6");
+    // let denominator_decimals = Buffer.from("6");
+    // async function BatchSetThisExchangeRate() {
+    //   try {
+    //     const batchSetThisExchangeRate = await pg.program.methods
+    //       .batchSetThisExchangeRate(
+    //         destChainIds,
+    //         moleculars,
+    //         denominators,
+    //         molecular_decimals,
+    //         denominator_decimals
+    //       )
+    //       .accounts({
+    //         saveChainId: saveDestChainIdAccount.publicKey,
+    //         powerUser: powerUserAuthority,
+    //         mappingFeeConfig: mappingFeeConfigAuthority,
+    //         user: user,
+    //         systemProgram: systemId,
+    //       })
+    //       .signers([signer])
+    //       .rpc();
+    //     console.log(`batchSetThisExchangeRate:${batchSetThisExchangeRate}'`);
+    //     // Confirm transaction
+    //     await pg.connection.confirmTransaction(batchSetThisExchangeRate);
+    //   } catch (e) {
+    //     console.log("BatchSetThisExchangeRate error:", e);
+    //   }
+    // }
+    // await BatchSetThisExchangeRate();
 
+    /** 
     //ChangeThisPowerUser
     async function ChangeThisPowerUser() {
       try {
@@ -1315,11 +1316,12 @@ describe("Test", () => {
     }
     let amount2 = new anchor.BN(55555);
     await WithdrawVaultSol(vizingVaultAuthority, user, amount2);
+    */
 
     //set_this_token_info_base
     const tokenAddressArray: number[] = Array.from(tokenAddress);
     let decimals = 8;
-    let max_price = new anchor.BN(66666666);
+    let max_price = new anchor.BN(1000);
     async function SetThisTokenInfoBase() {
       try {
         const setThisTokenInfoBase = await pg.program.methods
@@ -1343,16 +1345,43 @@ describe("Test", () => {
     }
     await SetThisTokenInfoBase();
 
+    async function SetThisTokenTradeFeeMap() {
+      try {
+        const setThisTokenTradeFeeMap = await pg.program.methods
+          .setThisTokenTradeFeeMap(
+            tokenAddressArray,
+            destChainIds,
+            moleculars,
+            denominators
+          )
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            user: user,
+            tokenConfig: initTokenConfigAuthority,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`setThisTokenTradeFeeMap:${setThisTokenTradeFeeMap}'`);
+        // Confirm transaction
+        await pg.connection.confirmTransaction(setThisTokenTradeFeeMap);
+      } catch (e) {
+        console.log("SetThisTokenTradeFeeMap error:", e);
+      }
+    }
+    await SetThisTokenTradeFeeMap();
+
     //launch
-    const executeGasLimit = new anchor.BN(6);
-    const maxFeePerGas = new BN(8);
+    const executeGasLimit = new BN(6);
+    const maxFeePerGas = new BN(100);
 
     const message = {
-      mode: 0,
+      mode: 1,
       targetContract: dappNumberArray,
       executeGasLimit: executeGasLimit,
       maxFeePerGas: maxFeePerGas,
-      signature: Buffer.from("btaisab217271"),
+      signature: Buffer.from("000000001"),
     };
 
     const launchParams = {
@@ -1360,7 +1389,7 @@ describe("Test", () => {
       latestArrivalTimestamp: new anchor.BN(2),
       relayer: user,
       sender: user,
-      value: new anchor.BN(3),
+      value: new anchor.BN(1000),
       destChainid: new anchor.BN(4),
       additionParams: Buffer.alloc(0),
       message: message,
@@ -1390,33 +1419,6 @@ describe("Test", () => {
       }
     }
     await Launch();
-
-    async function SetThisTokenTradeFeeMap() {
-      try {
-        const setThisTokenTradeFeeMap = await pg.program.methods
-          .setThisTokenTradeFeeMap(
-            tokenAddressArray,
-            destChainIds,
-            moleculars,
-            denominators
-          )
-          .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
-            user: user,
-            tokenConfig: initTokenConfigAuthority,
-            systemProgram: systemId,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`setThisTokenTradeFeeMap:${setThisTokenTradeFeeMap}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(setThisTokenTradeFeeMap);
-      } catch (e) {
-        console.log("SetThisTokenTradeFeeMap error:", e);
-      }
-    }
-    await SetThisTokenTradeFeeMap();
 
     //landing
   });

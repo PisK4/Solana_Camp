@@ -81,6 +81,7 @@ impl LaunchOp<'_> {
 
         let message = &params.message;
         let serialized_data: Vec<u8> = message.try_to_vec()?;
+
         msg!("serialized_data: {:?}", serialized_data);
 
         let dest_chain_id = params.dest_chainid;
@@ -94,7 +95,6 @@ impl LaunchOp<'_> {
         let get_fee_config = mapping_fee_config
             .get_fee_config(dest_chain_id)
             .ok_or(errors::ErrorCode::FeeConfigNotFound)?;
-        // let get_trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id).ok_or(errors::ErrorCode::TradeFeeNotFound)?;
         let get_trade_fee_config = mapping_fee_config
             .get_trade_fee_config(dest_chain_id, *dapp)
             .ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
@@ -128,8 +128,6 @@ impl LaunchOp<'_> {
             dest_chain_id,
             &serialized_data,
         ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
-
-        msg!("fee: {:?}", fee);
 
         // mock fee
         // let fee: u64 = 1000000000;

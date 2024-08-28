@@ -11,7 +11,7 @@ pub mod message_monitor {
 
         let gas_limit_bytes = &message[33..36];
 
-        let gas_limit = u32::from_be_bytes([
+        let gas_limit = u32::from_le_bytes([
             0,
             gas_limit_bytes[0],
             gas_limit_bytes[1],
@@ -22,7 +22,7 @@ pub mod message_monitor {
         for (i, &value) in message[36..44].iter().enumerate() {
             max_fee_per_gas_bytes[i] = value;
         }
-        let max_fee_per_gas = u64::from_be_bytes(max_fee_per_gas_bytes);
+        let max_fee_per_gas = u64::from_le_bytes(max_fee_per_gas_bytes);
 
         let _standard_message_bytes = &message[44..48];
 

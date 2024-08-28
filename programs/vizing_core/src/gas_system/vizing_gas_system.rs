@@ -778,7 +778,9 @@ impl SolTransfer<'_>{
 
         if mode==MessageType::StandardActivate || mode==MessageType::ArbitraryActivate {
             let Some((_, dapp, gas_limit, price, _))=message_monitor::slice_message(message) else { todo!() };
-            
+            msg!("dapp: {:?}", dapp);
+            msg!("gas_limit: {:?}", gas_limit);
+            msg!("price: {:?}", price);
             let dapp_base_price = get_dapp_base_price(
                 dapp_config_value,
                 dest_chain_id,
@@ -803,11 +805,11 @@ impl SolTransfer<'_>{
             fee=base_price.checked_mul(default_gas_limit)?;
         }
 
-        let mut amount_in: u64=amount_out;
         let mut final_fee: u64= fee;
         if amount_out > 0{
+            let mut output_amount_in: u64 = 0;
             if fee_config_molecular_decimal != 0 {
-                amount_in=exact_output(
+                output_amount_in=exact_output(
                     fee_config_molecular_decimal,
                     fee_config_denominator_decimal,
                     dest_chain_id,
@@ -815,19 +817,17 @@ impl SolTransfer<'_>{
                 )?;
             }
 
-            if let Some(trade_fee2) = compute_trade_fee2(
+            let trade_fee2=compute_trade_fee2(
                 trade_fee_config_molecular,
                 trade_fee_config_denominator,
                 global_trade_fee_molecular,
                 global_trade_fee_denominator,
                 this_dapp,
                 dest_chain_id,
-                amount_in
-            ) {
-                final_fee = fee.checked_add(trade_fee2)?;
-            } else {
-                return None; 
-            }
+                output_amount_in
+            )?;
+            final_fee = fee.checked_add(trade_fee2)?;
+
         }
         Some(final_fee)
     }
