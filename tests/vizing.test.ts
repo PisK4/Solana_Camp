@@ -125,18 +125,6 @@ describe("Vizing Test", () => {
       relayers: trustedRelayerKeyPairs.map((keypair) => keypair.publicKey),
       isPaused: false,
     };
-    // {
-    //   const seed = [relayerSettingsSeed, initParams.trustedRelayer.toBuffer()];
-    //   const [relayer, bump] = anchor.web3.PublicKey.findProgramAddressSync(
-    //     seed,
-    //     vizingProgram.programId
-    //   );
-
-    //   relayerSettings = relayer;
-    //   relayerBump = bump;
-
-    //   console.log(`relayer: ${relayer.toBase58()}, bump: ${bump}`);
-    // }
 
     {
       const seed = [vizingAuthoritySeed];
@@ -145,7 +133,10 @@ describe("Vizing Test", () => {
         vizingProgram.programId
       );
 
-      console.log(`authority: ${authority.toBase58()}, bump: ${bump}`);
+      const authorityU8Array = new Uint8Array(
+        authority.toBuffer().slice(0, 32)
+      );
+
       vizingAuthority = authority;
     }
 
@@ -566,6 +557,10 @@ describe("Vizing Test", () => {
         await provider.connection.getBalance(solPdaReceiver)
       );
 
+      const relayerBalanceBefore = new anchor.BN(
+        await provider.connection.getBalance(feePayerKeyPair.publicKey)
+      );
+
       const relayer = trustedRelayerKeyPairs[0];
       const feepayer = feePayerKeyPair;
       console.log(`relayer: ${relayer.publicKey.toBase58()}`);
@@ -587,6 +582,11 @@ describe("Vizing Test", () => {
             isWritable: false,
           },
           {
+            pubkey: vizingPadSettings,
+            isSigner: false,
+            isWritable: true,
+          },
+          {
             pubkey: solPdaReceiver,
             isSigner: false,
             isWritable: true,
@@ -603,6 +603,18 @@ describe("Vizing Test", () => {
 
       const padReceiverBalanceAfter = new anchor.BN(
         await provider.connection.getBalance(solPdaReceiver)
+      );
+
+      const relayerBalanceAfter = new anchor.BN(
+        await provider.connection.getBalance(feePayerKeyPair.publicKey)
+      );
+
+      console.log(
+        `relayer b:${relayerBalanceBefore},relayer a:${relayerBalanceAfter}`
+      );
+
+      console.log(
+        `feepayer b:${padReceiverBalanceBefore},feepayer a:${padReceiverBalanceAfter}`
       );
 
       expect(Number(padReceiverBalanceAfter)).equal(

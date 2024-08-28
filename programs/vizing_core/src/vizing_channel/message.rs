@@ -124,8 +124,9 @@ impl LandingOp<'_> {
     #[access_control(landing_check(&ctx))]
     pub fn vizing_landing<'info>(ctx: &mut Context<'_, '_, '_, 'info, LandingOp<'info>>, params: LandingParams) -> Result<()> {
         let balance_before = ctx.accounts.relayer.lamports();
-
-        let account_info = ctx
+        let mut traget = ctx.accounts.target_program.to_account_info();
+        if traget.executable {
+            let account_info = ctx
             .remaining_accounts
             .iter()
             .map(|acc| {
@@ -135,10 +136,7 @@ impl LandingOp<'_> {
             })
             .collect::<Vec<_>>();
 
-        let mut traget = ctx.accounts.target_program.to_account_info();
-        
-        if traget.executable {
-            traget = ctx.remaining_accounts[1].to_account_info();
+            traget = ctx.remaining_accounts[2].to_account_info();
 
             transfer(
                 CpiContext::new(
@@ -163,12 +161,7 @@ impl LandingOp<'_> {
                 &[&[VIZING_AUTHORITY_SEED, &[ctx.accounts.vizing_authority.bump]]],
             )
             .map_err(|_| VizingError::CallingFailed)?;
-    
-            require!(
-                ctx.accounts.relayer.lamports() <= balance_before + params.value,
-                VizingError::InsufficientBalance
-            );
-    
+
         }else{
             transfer(
                 CpiContext::new(
@@ -181,6 +174,11 @@ impl LandingOp<'_> {
                 params.value,
             )?;
         }
+
+        require!(
+            ctx.accounts.relayer.lamports() <= balance_before + params.value,
+            VizingError::InsufficientBalance
+        );
 
         emit!(SuccessfulLanding {
             message_id: params.message_id,

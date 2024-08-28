@@ -4,7 +4,7 @@ skip-lint = false
 [programs.localnet]
 bob = "8GYu5JYsvAYoinbFTvW4AACYB5GxGstz21FmZe3MNFn4"
 alice = "6wZDNWprmb9TAZYMAPpT23kHDPABvBLT8jbWQKLHEmBy"
-vizing_core = "VzgnUvjAQD9oXjHLsVGrS67GCMVdzKpwHGj3QanJhk3"
+vizing_core = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
 vizing_app = "C17xMdoPdgPSYd7oGEjYf5LQ1mg6k6P3eavCBdMfaF1X"
 vizing_app_mock = "2xiuj4ozxygvkmC1WKJTGZyJXSD8dtbFxWkuJiMLzrTg"
 

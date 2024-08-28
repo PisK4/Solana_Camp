@@ -7,7 +7,7 @@ use governance::*;
 use vizing_channel::*;
 use vizing_omni::*;
 
-declare_id!("VzgnUvjAQD9oXjHLsVGrS67GCMVdzKpwHGj3QanJhk3");
+declare_id!("vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE");
 
 #[program]
 pub mod vizing_core {
@@ -25,7 +25,6 @@ pub mod vizing_core {
         params: LandingParams,
     ) -> Result<()> {
         LandingOp::vizing_landing(&mut ctx, params)
-        // Ok(())
     }
 
     // **********  channel end ************

@@ -48,7 +48,7 @@ impl InitVizingPad<'_> {
         ctx.accounts.vizing.trusted_relayers = params.trusted_relayers;
 
         let (_, bump) = Pubkey::find_program_address(
-            &[contants::VIZING_AUTHORITY_SEED],
+            &[VIZING_AUTHORITY_SEED],
             &ctx.program_id,
         );
 

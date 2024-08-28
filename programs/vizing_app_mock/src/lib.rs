@@ -18,6 +18,7 @@ pub mod vizing_app_mock {
         Ok(())
     }
 
+    #[access_control(assert_vizing_authority(&ctx.accounts.vizing_authority))]
     pub fn receive_from_vizing(ctx: Context<LandingAppOp>, _params: LandingParams) -> Result<()> {
         msg!(
             "authority from vizing: {}",
@@ -41,6 +42,9 @@ pub struct LandingAppOp<'info> {
     /// CHECK: 1. Vizing Authority account
     #[account(signer)]
     pub vizing_authority: AccountInfo<'info>,
+
+    /// CHECK: 2. Vizing config account
+    pub vizing: AccountInfo<'info>,
 
     #[account(seeds = [VIZING_APP_SOL_RECEIVER_SEED], bump = sol_pda_receiver.bump)]
     pub sol_pda_receiver: Account<'info, VizingSolReceiver>,
