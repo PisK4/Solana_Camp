@@ -19,11 +19,11 @@ pub enum AdditionParamsType {
 impl MessageType {
     pub fn from_byte(byte: u8) -> Self {
         match byte {
-            0x00 => MessageType::Default,
-            0x01 => MessageType::StandardActivate,
-            0x02 => MessageType::ArbitraryActivate,
-            0x03 => MessageType::MessagePost,
-            0x04 => MessageType::NativeTokenSend,
+            0 => MessageType::Default,
+            1 => MessageType::StandardActivate,
+            2 => MessageType::ArbitraryActivate,
+            3 => MessageType::MessagePost,
+            4 => MessageType::NativeTokenSend,
             _ => {
                 panic!("Unknown byte value: {}", byte);
             }
@@ -42,11 +42,11 @@ impl MessageType {
 impl AdditionParamsType {
     pub fn from_byte(byte: u8) -> Self {
         match byte {
-            0x01 => AdditionParamsType::SingleSend,
-            0x02 => AdditionParamsType::ERC20Handler,
-            0x03 => AdditionParamsType::MultiMany2One,
-            0x04 => AdditionParamsType::MultiUniversal,
-            0xFF => AdditionParamsType::MaxMode,
+            1 => AdditionParamsType::SingleSend,
+            2 => AdditionParamsType::ERC20Handler,
+            3 => AdditionParamsType::MultiMany2One,
+            4 => AdditionParamsType::MultiUniversal,
+            255 => AdditionParamsType::MaxMode,
             _ => {
                 panic!("Unknown byte value: {}", byte);
             }

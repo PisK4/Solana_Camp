@@ -1,4 +1,6 @@
 import * as anchor from "@project-serum/anchor";
+import * as borsh from "borsh";
+
 import {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -8,7 +10,6 @@ import {
   getAccount,
   transfer,
 } from "@solana/spl-token";
-// import { Opool } from "../target/types/opool";
 
 import { clusterApiUrl, Connection } from "@solana/web3.js";
 
@@ -41,6 +42,53 @@ const metadataData = {
   collection: null,
   uses: null,
 };
+
+function padStringTo32Bytes(str: string): Buffer {
+  const buffer = Buffer.alloc(32);
+  buffer.write(str);
+  return buffer;
+}
+
+const vizingPadSettingsSeed = Buffer.from("Vizing_Pad_Settings_Seed");
+const vizingAuthoritySeed = Buffer.from("Vizing_Authority_Seed");
+const feeReceiverKeyPair = anchor.web3.Keypair.fromSeed(
+  Buffer.from(padStringTo32Bytes("fee_receiver"))
+);
+
+const engineAdminKeyPairs = [
+  anchor.web3.Keypair.fromSeed(
+    Buffer.from(padStringTo32Bytes("engine_admin_1"))
+  ),
+  anchor.web3.Keypair.fromSeed(
+    Buffer.from(padStringTo32Bytes("engine_admin_2"))
+  ),
+];
+
+const stationAdminKeyPair = anchor.web3.Keypair.fromSeed(
+  Buffer.from(padStringTo32Bytes("station_admim"))
+);
+
+const gasPoolAdminKeyPair = anchor.web3.Keypair.fromSeed(
+  Buffer.from(padStringTo32Bytes("gas_pool_admin"))
+);
+
+const trustedRelayerKeyPairs = [
+  anchor.web3.Keypair.fromSeed(
+    Buffer.from(padStringTo32Bytes("trusted_relayer_1"))
+  ),
+  anchor.web3.Keypair.fromSeed(
+    Buffer.from(padStringTo32Bytes("trusted_relayer_2"))
+  ),
+];
+
+const registeredValidatorKeyPairs = [
+  anchor.web3.Keypair.fromSeed(
+    Buffer.from(padStringTo32Bytes("registered_validator_1"))
+  ),
+  anchor.web3.Keypair.fromSeed(
+    Buffer.from(padStringTo32Bytes("registered_validator_2"))
+  ),
+];
 
 // async function requestAirdrop(user: PublicKey) {
 //   try {
@@ -241,12 +289,55 @@ await transfer_to(destinationTokenAccount);
 describe("Test", () => {
   it("initialize", async () => {
     console.log("current user:", user.toBase58());
-
     let systemId = web3.SystemProgram.programId;
 
-    function encodeEthereumAddressToU16Array(ethAddress: string): Uint16Array {
+    let vizingPadSettings: anchor.web3.PublicKey;
+    let relayerSettings: anchor.web3.PublicKey;
+    let vizingAuthority: anchor.web3.PublicKey;
+    let vizingPadBump: number;
+    let relayerBump: number;
+
+    const seed = [vizingPadSettingsSeed];
+    const [vizingPad, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+      seed,
+      pg.PROGRAM_ID
+    );
+
+    vizingPadSettings = vizingPad;
+    vizingPadBump = bump;
+
+    console.log(`vizingPad: ${vizingPad.toBase58()}, bump: ${bump}`);
+
+    const initParams = {
+      owner: user,
+      feeReceiver: feeReceiverKeyPair.publicKey,
+      engineAdmin: engineAdminKeyPairs.map((keypair) => keypair.publicKey)[0],
+      gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
+      stationAdmin: stationAdminKeyPair.publicKey,
+      trustedRelayers: trustedRelayerKeyPairs.map(
+        (keypair) => keypair.publicKey
+      ),
+      registeredValidator: registeredValidatorKeyPairs.map(
+        (keypair) => keypair.publicKey
+      )[0],
+      relayers: trustedRelayerKeyPairs.map((keypair) => keypair.publicKey),
+      isPaused: false,
+    };
+
+    {
+      const seed = [vizingAuthoritySeed];
+      const [authority, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+        seed,
+        pg.PROGRAM_ID
+      );
+
+      console.log(`authority: ${authority.toBase58()}, bump: ${bump}`);
+      vizingAuthority = authority;
+    }
+
+    function encodeEthereumAddressToU16Array(ethAddress: string): Uint8Array {
       const address = ethAddress.slice(2); // Remove the '0x' prefix
-      const result = new Uint16Array(50);
+      const result = new Uint8Array(50);
       result[0] = 666;
       for (let i = 0; i < 32; i++) {
         let charAddressI = address[i].charCodeAt(0);
@@ -259,7 +350,7 @@ describe("Test", () => {
       return result;
     }
 
-    let id = new anchor.BN(8);
+    let id = new anchor.BN(4);
     let chainId = new Buffer(`${id}`);
     console.log("chainId buffer:", chainId);
 
@@ -371,7 +462,33 @@ describe("Test", () => {
       saveDestChainIdAccount.publicKey.toBase58()
     );
 
+    //initializeVizingPad
+    async function InitializeVizingPad() {
+      try {
+        const vizingPadAccount =
+          await pg.program.account.vizingPadSettings.fetch(vizingPadSettings);
+        console.log("vizingPadAccount:", vizingPadAccount.owner.toBase58());
+      } catch (e) {
+        const tx = await pg.program.methods
+          .initializeVizingPad(initParams)
+          .accounts({
+            vizing: vizingPadSettings,
+            vizingAuthority: vizingAuthority,
+            payer: user,
+            systemProgram: anchor.web3.SystemProgram.programId,
+          })
+          .rpc();
+        console.log(`initializeVizingPad: ${tx}`);
+      }
+    }
+    await InitializeVizingPad();
+
     //init_this_power_user
+    let new_engine_admins = user;
+    let new_station_admins = user;
+    let new_gas_pool_admins = user;
+    let new_trusted_relayers = [user];
+    let new_registered_validators = [user];
     let gas_managers = [user];
     let swap_managers = [user];
     let token_managers = [user];
@@ -385,11 +502,11 @@ describe("Test", () => {
         const initPowerUser = await pg.program.methods
           .initPowerUser(
             user,
-            user,
-            user,
-            user,
-            user,
-            user,
+            new_engine_admins,
+            new_station_admins,
+            new_gas_pool_admins,
+            new_trusted_relayers,
+            new_registered_validators,
             gas_managers,
             swap_managers,
             token_managers
@@ -463,10 +580,10 @@ describe("Test", () => {
     }
     await InitVizingVault();
 
-    let base_price = new anchor.BN(1000000);
-    let reserve = new anchor.BN(100000000);
-    let molecular = new anchor.BN(6666);
-    let denominator = new anchor.BN(222);
+    let base_price = new anchor.BN(10000);
+    let reserve = new anchor.BN(1000);
+    let molecular = new anchor.BN(5);
+    let denominator = new anchor.BN(1000);
     let molecular_decimal = 8;
     let denominator_decimal = 6;
     //init_fee_config
@@ -509,8 +626,8 @@ describe("Test", () => {
     await InitFeeConfig();
 
     //init_gas_global
-    let global_base_price = new anchor.BN(200000);
-    let default_gas_limit = new anchor.BN(100000000);
+    let global_base_price = new anchor.BN(100000);
+    let default_gas_limit = new anchor.BN(200);
     let amount_in_threshold = new anchor.BN(10000000000000);
     async function InitGasGlobal() {
       try {
@@ -589,6 +706,8 @@ describe("Test", () => {
     await InitAmountInThresholds();
 
     //init_native_token_trade_fee_config
+    let native_molecular = new anchor.BN(5);
+    let native_denominator = new anchor.BN(1000);
     async function InitNativeTokenTradeFeeConfig() {
       try {
         const mappingNativeTokenTradeFeeConfig =
@@ -602,7 +721,11 @@ describe("Test", () => {
         );
       } catch (e) {
         const initNativeTokenTradeFeeConfig = await pg.program.methods
-          .initNativeTokenTradeFeeConfig(id, molecular, denominator)
+          .initNativeTokenTradeFeeConfig(
+            id,
+            native_molecular,
+            native_denominator
+          )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             powerUser: powerUserAuthority,
@@ -637,7 +760,7 @@ describe("Test", () => {
     );
     const init_tokenAddressArray: number[] = Array.from(tokenAddress);
     let init_decimals = 6;
-    let init_max_price = new anchor.BN(666866666);
+    let init_max_price = new anchor.BN(100000);
     async function InitTokenInfoBase() {
       try {
         const mappingSymbolConfig =
@@ -675,10 +798,63 @@ describe("Test", () => {
     }
     await InitTokenInfoBase();
 
+    //modifySettings
+    const modifyParams = {
+      owner: user,
+      feeReceiver: feeReceiverKeyPair.publicKey,
+      engineAdmin: engineAdminKeyPairs.map((keypair) => keypair.publicKey)[0],
+      gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
+      stationAdmin: stationAdminKeyPair.publicKey,
+      trustedRelayers: trustedRelayerKeyPairs.map(
+        (keypair) => keypair.publicKey
+      ),
+      registeredValidator: anchor.web3.Keypair.generate().publicKey,
+      isPaused: false,
+    };
+    async function ModifySettings() {
+      try {
+        await pg.program.methods
+          .modifySettings(modifyParams)
+          .accounts({
+            owner: user,
+            vizing: vizingPadSettings,
+          })
+          .signers([signer])
+          .rpc();
+      } catch (e) {
+        console.log("modifySettings error:", e);
+      }
+    }
+    await ModifySettings();
+
+    //grantFeeCollector
+    async function GrantFeeCollector() {
+      try {
+        let vizingPadAccount = await pg.program.account.vizingPadSettings.fetch(
+          vizingPadSettings
+        );
+        console.log(
+          "vizingPadAccount:",
+          vizingPadAccount.feeReceiver.toBase58()
+        );
+      } catch (e) {
+        await pg.program.methods
+          .grantFeeCollector(feeReceiverKeyPair.publicKey)
+          .accounts({
+            gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
+            vizing: vizingPadSettings,
+          })
+          .signers([gasPoolAdminKeyPair])
+          .rpc();
+        console.log("grantFeeCollector error:", e);
+      }
+    }
+    await GrantFeeCollector();
+
     //setThisGasGlobal
-    let new_global_base_price = new anchor.BN(500000);
-    let new_default_gas_limit = new anchor.BN(200000000);
-    let new_amount_in_threshold = new anchor.BN(30000000000000);
+    let new_global_base_price = new anchor.BN(5000);
+    let new_default_gas_limit = new anchor.BN(2000);
+    let new_amount_in_threshold = new anchor.BN(500000000);
     async function SetThisGasGlobal() {
       try {
         const setThisGasGlobal = await pg.program.methods
@@ -1025,11 +1201,11 @@ describe("Test", () => {
         const changeThisPowerUser = await pg.program.methods
           .changeThisPowerUser(
             user,
-            user,
-            user,
-            user,
-            user,
-            user,
+            new_engine_admins,
+            new_station_admins,
+            new_gas_pool_admins,
+            new_trusted_relayers,
+            new_registered_validators,
             gas_managers,
             swap_managers,
             token_managers
@@ -1093,12 +1269,12 @@ describe("Test", () => {
     }
     await WithdrawVaultSplToken();
 
-    //sol_transfer
+    // sol_transfer
     let amount1 = new anchor.BN(1000000);
     async function SolTransfer(sender, receiver, amount) {
       try {
         const solTransfer = await pg.program.methods
-          .solTransfer(amount)
+          .transferSolValut(amount)
           .accounts({
             sender: sender,
             vizingVault: receiver,
@@ -1167,6 +1343,54 @@ describe("Test", () => {
     }
     await SetThisTokenInfoBase();
 
+    //launch
+    const executeGasLimit = new anchor.BN(6);
+    const maxFeePerGas = new BN(8);
+
+    const message = {
+      mode: 0,
+      targetContract: dappNumberArray,
+      executeGasLimit: executeGasLimit,
+      maxFeePerGas: maxFeePerGas,
+      signature: Buffer.from("btaisab217271"),
+    };
+
+    const launchParams = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: user,
+      sender: user,
+      value: new anchor.BN(3),
+      destChainid: new anchor.BN(4),
+      additionParams: Buffer.alloc(0),
+      message: message,
+    };
+    async function Launch() {
+      try {
+        let launch = await pg.program.methods
+          .launch(launchParams)
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            feePayer: user,
+            messageAuthority: user,
+            vizing: vizingPadSettings,
+            feeCollector: feeReceiverKeyPair.publicKey,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            gasSystemGlobal: gasSystemGlobalAuthority,
+            globalTradeFee: globalTradeFeeAuthority,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+
+        console.log(`Launch tx:${launch}'`);
+        await pg.connection.confirmTransaction(launch);
+      } catch (e) {
+        console.log("launch error:", e);
+      }
+    }
+    await Launch();
+
     async function SetThisTokenTradeFeeMap() {
       try {
         const setThisTokenTradeFeeMap = await pg.program.methods
@@ -1193,6 +1417,7 @@ describe("Test", () => {
       }
     }
     await SetThisTokenTradeFeeMap();
+
+    //landing
   });
 });
-

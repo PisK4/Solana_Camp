@@ -156,9 +156,9 @@ impl ChangePowerUser<'_> {
     pub fn change_power_user(
         ctx: Context<ChangePowerUser>,
         new_admin: Pubkey,
-        new_engine_admins: Vec<Pubkey>,
-        new_station_admins: Vec<Pubkey>,
-        new_gas_pool_admins: Vec<Pubkey>,
+        new_engine_admin: Pubkey,
+        new_station_admin: Pubkey,
+        new_gas_pool_admin: Pubkey,
         new_trusted_relayers: Vec<Pubkey>,
         new_registered_validators: Vec<Pubkey>,
         new_gas_managers: Vec<Pubkey>,
@@ -173,9 +173,9 @@ impl ChangePowerUser<'_> {
         );
 
         power_user.admin = new_admin;
-        power_user.engine_admins = new_engine_admins;
-        power_user.station_admins = new_station_admins;
-        power_user.gas_pool_admins = new_gas_pool_admins;
+        power_user.engine_admin = new_engine_admin;
+        power_user.station_admin = new_station_admin;
+        power_user.gas_pool_admin = new_gas_pool_admin;
         power_user.trusted_relayers = new_trusted_relayers;
         power_user.registered_validators = new_registered_validators;
         power_user.gas_managers = new_gas_managers;

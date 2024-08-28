@@ -73,34 +73,33 @@ impl LaunchOp<'_> {
 
         msg!("mode: {}", params.message.mode);
 
-        msg!("target_contract: {}", params.message.target_contract);
-
         msg!("execute_gas_limit: {}", params.message.execute_gas_limit);
 
         msg!("max_fee_per_gas: {}", params.message.max_fee_per_gas);
 
         msg!("signature: {:?}", params.message.signature);
 
+        let message = &params.message;
+        let serialized_data: Vec<u8> = message.try_to_vec()?;
+        msg!("serialized_data: {:?}", serialized_data);
+
         let dest_chain_id = params.dest_chainid;
         //???
         let amount_out = params.value;
-        let message = &params.message.signature;
-        let dapp;
-        //message
-        if let Some((this_dapp, _, _, _)) = message_monitor_lib::message_monitor::slice_message(&message) {
-           dapp=this_dapp;
-        } else {
-            todo!(); 
-        }
+        let dapp = &params.message.target_contract;
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let gas_system_global = &mut ctx.accounts.gas_system_global;
         let global_trade_fee = &mut ctx.accounts.global_trade_fee;
 
-        let get_fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
-        let get_trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id).ok_or(errors::ErrorCode::TradeFeeNotFound)?;
-        let get_trade_fee_config =
-            mapping_fee_config.get_trade_fee_config(dest_chain_id, dapp).ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
-        let get_dapp_config = mapping_fee_config.get_dapp_config(dest_chain_id, dapp).ok_or(errors::ErrorCode::DappConfigNotFound)?;
+        let get_fee_config = mapping_fee_config
+            .get_fee_config(dest_chain_id)
+            .ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+        let get_trade_fee_config = mapping_fee_config
+            .get_trade_fee_config(dest_chain_id, *dapp)
+            .ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+        let get_dapp_config = mapping_fee_config
+            .get_dapp_config(dest_chain_id, *dapp)
+            .ok_or(errors::ErrorCode::DappConfigNotFound)?;
 
         let fee_config_base_price = get_fee_config.base_price;
         let global_base_price = gas_system_global.global_base_price;
@@ -126,8 +125,10 @@ impl LaunchOp<'_> {
             default_gas_limit,
             amount_out,
             dest_chain_id,
-            &message,
+            &serialized_data,
         ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
+
+        msg!("fee: {:?}", fee);
 
         // mock fee
         // let fee: u64 = 1000000000;
@@ -141,7 +142,6 @@ impl LaunchOp<'_> {
             ),
             fee,
         )?;
-        
 
         emit!(SuccessfulLaunchMessage {
             erliest_arrival_timestamp: params.erliest_arrival_timestamp,

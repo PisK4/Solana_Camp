@@ -257,9 +257,9 @@ impl InitPowerUser<'_>{
     pub fn initialize_power_user(
         ctx: Context<InitPowerUser>,
         new_admin: Pubkey,
-        new_engine_admins: Vec<Pubkey>,
-        new_station_admins: Vec<Pubkey>,
-        new_gas_pool_admins: Vec<Pubkey>,
+        new_engine_admin: Pubkey,
+        new_station_admin: Pubkey,
+        new_gas_pool_admin: Pubkey,
         new_trusted_relayers: Vec<Pubkey>,
         new_registered_validators: Vec<Pubkey>,
         new_gas_managers: Vec<Pubkey>,
@@ -269,9 +269,9 @@ impl InitPowerUser<'_>{
         let power_user = &mut ctx.accounts.power_user;
 
         power_user.admin = new_admin;
-        power_user.engine_admins = new_engine_admins;
-        power_user.station_admins = new_station_admins;
-        power_user.gas_pool_admins = new_gas_pool_admins;
+        power_user.engine_admin = new_engine_admin;
+        power_user.station_admin = new_station_admin;
+        power_user.gas_pool_admin = new_gas_pool_admin;
         power_user.trusted_relayers = new_trusted_relayers;
         power_user.registered_validators = new_registered_validators;
         power_user.gas_managers = new_gas_managers;
@@ -777,7 +777,7 @@ impl SolTransfer<'_>{
         let mode = MessageType::fetch_msg_mode(&message);
 
         if mode==MessageType::StandardActivate || mode==MessageType::ArbitraryActivate {
-            let Some((dapp, gas_limit, price, _))=message_monitor::slice_message(message) else { todo!() };
+            let Some((_, dapp, gas_limit, price, _))=message_monitor::slice_message(message) else { todo!() };
             
             let dapp_base_price = get_dapp_base_price(
                 dapp_config_value,
@@ -865,7 +865,7 @@ impl SolTransfer<'_>{
     //     let mode = MessageType::fetch_msg_mode(&message);
 
     //     if(mode==MessageType::StandardActivate || mode==MessageType::ArbitraryActivate){
-    //         let (Some((dapp, gas_limit, price, _)))=message_monitor::slice_message(message) else { todo!() };
+    //         let (Some((_, dapp, gas_limit, price, _)))=message_monitor::slice_message(message) else { todo!() };
     //         let get_dapp_config = mapping_fee_config.get_dapp_config(dest_chain_id,dapp)?;
     //         let dapp_config_value=get_dapp_config.value;
     //         let dapp_base_price = get_dapp_base_price(
@@ -982,7 +982,7 @@ impl SolTransfer<'_>{
 
     //     for (i, &amount) in amount_outs.iter().enumerate() {
     //         let t=m.get_trade_fee(dest_chain_ids[i])?;
-    //         let (Some((dapp, _, _, _)))=message_monitor::slice_message(messages[i]) else { todo!() };
+    //         let (Some((_, dapp, _, _, _)))=message_monitor::slice_message(messages[i]) else { todo!() };
     //         let d=m.get_dapp_config(dest_chain_ids[i], dapp)?;
     //         let fee_config = m.get_fee_config(dest_chain_ids[i])?;
     //         let amount_in_thresholds=a.get_amount_in_thresholds(dest_chain_ids[i])?;
@@ -1038,7 +1038,7 @@ impl SolTransfer<'_>{
     //     let mode = MessageType::fetch_msg_mode(&message);
 
     //     if (mode == MessageType::StandardActivate || mode == MessageType::ArbitraryActivate) {
-    //         let Some((dapp, gas_limit, price, _))=message_monitor::slice_message(message) else { todo!() };
+    //         let Some((_, dapp, gas_limit, price, _))=message_monitor::slice_message(message) else { todo!() };
 
     //         let dapp_base_price = get_dapp_base_price(
     //             dapp_config_value,
@@ -1114,7 +1114,7 @@ impl SolTransfer<'_>{
         let mode = MessageType::fetch_msg_mode(&message);
 
         if mode == MessageType::StandardActivate || mode == MessageType::ArbitraryActivate {
-            let Some((dapp, gas_limit, price, _))=message_monitor::slice_message(message) else { todo!() };
+            let Some((_, dapp, gas_limit, price, _))=message_monitor::slice_message(message) else { todo!() };
 
             let dapp_base_price = get_dapp_base_price(
                 dapp_config_value,
@@ -1232,7 +1232,7 @@ pub struct SaveDestChainId<'info> {
     #[account(
         init,
         payer = user, 
-        space = 8 + 128,
+        space = 8 + 32,
     )]
     pub save_chain_id: Account<'info, SaveChainId>,
     #[account(
@@ -1251,7 +1251,7 @@ pub struct InitVizingVault<'info> {
     #[account(
         init, 
         payer = user, 
-        space = 8 + 256,
+        space = 8 + VaultMes::INIT_SPACE,
         seeds = [b"vizing_vault".as_ref()],
         bump
     )]

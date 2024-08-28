@@ -13,7 +13,7 @@ use state::*;
 use vizing_channel::*;
 use vizing_omni::*;
 
-declare_id!("14Hh6ouUFhUj6abJkxyP922qU7WesTpHdMorQFbxgnbw");
+declare_id!("CJBT2p3N6k3dD76fyFzPRQVZK9cpB1SkAwo3e94bgtrF");
 
 #[program]
 pub mod vizing_core {
@@ -101,9 +101,9 @@ pub mod vizing_core {
     pub fn init_power_user(
         ctx: Context<InitPowerUser>,
         new_admin: Pubkey,
-        new_engine_admins: Vec<Pubkey>,
-        new_station_admins: Vec<Pubkey>,
-        new_gas_pool_admins: Vec<Pubkey>,
+        new_engine_admin: Pubkey,
+        new_station_admin: Pubkey,
+        new_gas_pool_admin: Pubkey,
         new_trusted_relayers: Vec<Pubkey>,
         new_registered_validators: Vec<Pubkey>,
         new_gas_managers: Vec<Pubkey>,
@@ -113,9 +113,9 @@ pub mod vizing_core {
         InitPowerUser::initialize_power_user(
             ctx,
             new_admin,
-            new_engine_admins,
-            new_station_admins,
-            new_gas_pool_admins,
+            new_engine_admin,
+            new_station_admin,
+            new_gas_pool_admin,
             new_trusted_relayers,
             new_registered_validators,
             new_gas_managers,
@@ -395,9 +395,9 @@ pub mod vizing_core {
     pub fn change_this_power_user(
         ctx: Context<ChangePowerUser>,
         new_admin: Pubkey,
-        new_engine_admins: Vec<Pubkey>,
-        new_station_admins: Vec<Pubkey>,
-        new_gas_pool_admins: Vec<Pubkey>,
+        new_engine_admin: Pubkey,
+        new_station_admin: Pubkey,
+        new_gas_pool_admin: Pubkey,
         new_trusted_relayers: Vec<Pubkey>,
         new_registered_validators: Vec<Pubkey>,
         new_gas_managers: Vec<Pubkey>,
@@ -407,9 +407,9 @@ pub mod vizing_core {
         ChangePowerUser::change_power_user(
             ctx,
             new_admin,
-            new_engine_admins,
-            new_station_admins,
-            new_gas_pool_admins,
+            new_engine_admin,
+            new_station_admin,
+            new_gas_pool_admin,
             new_trusted_relayers,
             new_registered_validators,
             new_gas_managers,
