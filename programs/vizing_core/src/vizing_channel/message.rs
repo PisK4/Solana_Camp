@@ -94,6 +94,7 @@ impl LaunchOp<'_> {
         let get_fee_config = mapping_fee_config
             .get_fee_config(dest_chain_id)
             .ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+        // let get_trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id).ok_or(errors::ErrorCode::TradeFeeNotFound)?;
         let get_trade_fee_config = mapping_fee_config
             .get_trade_fee_config(dest_chain_id, *dapp)
             .ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
