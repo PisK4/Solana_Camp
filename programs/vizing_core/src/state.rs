@@ -7,12 +7,12 @@ pub struct SaveChainId {
 
 #[account]
 pub struct PowerUser {
-    pub admin_role: Pubkey,
+    pub admin: Pubkey,
     pub engine_admin: Pubkey,
     pub station_admin: Pubkey,
     pub gas_pool_admin: Pubkey,
-    pub trusted_relayer: Pubkey,
-    pub registered_validator: Pubkey,
+    pub trusted_relayers: Vec<Pubkey>,
+    pub registered_validators: Vec<Pubkey>,
     pub gas_managers: Vec<Pubkey>,
     pub swap_managers: Vec<Pubkey>,
     pub token_managers: Vec<Pubkey>,
@@ -31,6 +31,7 @@ pub struct GlobalTradeFee {
 }
 
 #[account]
+#[derive(InitSpace)]
 pub struct VaultMes {
     pub current_pragma_id: Pubkey,
 }
