@@ -800,6 +800,7 @@ impl SolTransfer<'_>{
 
         }else if mode==MessageType::NativeTokenSend{
             let Some((_, gas_limit)) = message_monitor::slice_transfer(message) else { todo!() };
+            msg!("gas_limit: {:?}", gas_limit);
             fee=(gas_limit as u64).checked_mul(this_price)?;
         }else{
             fee=base_price.checked_mul(default_gas_limit)?;
