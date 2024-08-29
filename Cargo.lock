@@ -1611,10 +1611,18 @@ name = "vizing_app_mock"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+ "vizing_pad",
 ]
 
 [[package]]
 name = "vizing_core"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+]
+
+[[package]]
+name = "vizing_pad"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",

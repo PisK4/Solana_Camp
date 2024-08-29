@@ -200,13 +200,11 @@ impl LandingOp<'_> {
 
 fn landing_check(ctx: &Context<LandingOp>) -> Result<()> {
     if let Some(config) = ctx.accounts.vizing_app_configs.clone() {
-        if !config.vizing_app_accounts.is_empty() {
-            let vizing_apps = config.vizing_app_accounts.clone();
-            let remaining_accounts = ctx.remaining_accounts.iter().map(|a| a.key).collect::<Vec<_>>();
-            for app in vizing_apps {
-                if !remaining_accounts.contains(&&app) {
-                    return Err(VizingError::VizingAppNotInRemainingAccounts.into());
-                }
+        let vizing_apps = config.vizing_app_accounts.clone();
+        let remaining_accounts = ctx.remaining_accounts.iter().map(|a| a.key).collect::<Vec<_>>();
+        for app in vizing_apps {
+            if !remaining_accounts.contains(&&app) {
+                return Err(VizingError::VizingAppNotInRemainingAccounts.into());
             }
         }
     }
