@@ -14,7 +14,8 @@ pub mod vizing_app {
         Ok(())
     }
 
-    pub fn receive_from_vizing(ctx: Context<LandingAppOp>, _params: LandingParams) -> Result<()> {
+    #[access_control(assert_vizing_authority(&ctx.accounts.vizing_authority))]
+    pub fn receive_from_vizing(ctx: Context<LandingAppOp>, _params: VizingMessage) -> Result<()> {
         msg!(
             "@@authority from vizing: {}",
             ctx.accounts.vizing_authority.key()
@@ -27,7 +28,6 @@ pub mod vizing_app {
 
         msg!("Hello world from vizing");
 
-        // msg!("message: {:?}", params.message);
         msg!("remaining_accounts: {:?}", ctx.remaining_accounts);
 
         Ok(())

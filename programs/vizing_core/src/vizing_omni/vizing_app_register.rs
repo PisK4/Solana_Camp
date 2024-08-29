@@ -47,10 +47,18 @@ impl VizingAppRegister<'_> {
         params: VizingAppRegisterParams,
     ) -> Result<()> {
         ctx.accounts.vizing_app_configs.sol_pda_receiver = params.sol_pda_receiver;
-        ctx.accounts.vizing_app_configs.vizing_app_accounts = params.vizing_app_accounts;
+        ctx.accounts.vizing_app_configs.vizing_app_accounts = params.vizing_app_accounts.clone();
         ctx.accounts.vizing_app_configs.vizing_app_program_id = params.vizing_app_program_id;
         ctx.accounts.vizing_app_configs.admin = ctx.accounts.admin.key();
         ctx.accounts.vizing_app_configs.bump = *ctx.bumps.get("vizing_app_configs").unwrap();
+
+        emit!(VizingAppUpdated {
+            sol_pda_receiver: params.sol_pda_receiver,
+            vizing_app_accounts: params.vizing_app_accounts.clone(),
+            vizing_app_program_id: params.vizing_app_program_id,
+            vizing_app_config_pda: ctx.accounts.vizing_app_configs.key(),
+        });
+
         Ok(())
     }
 }
@@ -78,6 +86,13 @@ impl VizingAppManagement<'_> {
         vizing_app_accounts: Vec<Pubkey>,
     ) -> Result<()> {
         ctx.accounts.vizing_app_configs.vizing_app_accounts = vizing_app_accounts;
+
+        emit!(VizingAppUpdated {
+            sol_pda_receiver: ctx.accounts.vizing_app_configs.sol_pda_receiver,
+            vizing_app_accounts: ctx.accounts.vizing_app_configs.vizing_app_accounts.clone(),
+            vizing_app_program_id: ctx.accounts.vizing_app_configs.vizing_app_program_id,
+            vizing_app_config_pda: ctx.accounts.vizing_app_configs.key(),
+        });
         Ok(())
     }
 
@@ -88,4 +103,12 @@ impl VizingAppManagement<'_> {
         ctx.accounts.vizing_app_configs.admin = new_admin.key();
         Ok(())
     }
+}
+
+#[event]
+pub struct VizingAppUpdated {
+    pub sol_pda_receiver: Pubkey,
+    pub vizing_app_accounts: Vec<Pubkey>,
+    pub vizing_app_program_id: Pubkey,
+    pub vizing_app_config_pda: Pubkey,
 }

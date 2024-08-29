@@ -115,7 +115,7 @@ pub struct LandingOp<'info> {
         bump = vizing_app_configs.bump,
         constraint = vizing_app_configs.vizing_app_program_id == target_program.key() @VizingError::TargetContractInvalid
     )]
-    pub vizing_app_configs: Account<'info, VizingAppConfig>,
+    pub vizing_app_configs: Option<Account<'info, VizingAppConfig>>,
 
     pub system_program: Program<'info, System>,
 }
@@ -199,19 +199,57 @@ impl LandingOp<'_> {
 }
 
 fn landing_check(ctx: &Context<LandingOp>) -> Result<()> {
-    let vizing_apps = ctx.accounts.vizing_app_configs.vizing_app_accounts.clone();
-    let remaining_accounts = ctx.remaining_accounts.iter().map(|a| a.key).collect::<Vec<_>>();
-    for app in vizing_apps {
-        if !remaining_accounts.contains(&&app) {
-            return Err(VizingError::VizingAppNotInRemainingAccounts.into());
+    if let Some(config) = ctx.accounts.vizing_app_configs.clone() {
+        if !config.vizing_app_accounts.is_empty() {
+            let vizing_apps = config.vizing_app_accounts.clone();
+            let remaining_accounts = ctx.remaining_accounts.iter().map(|a| a.key).collect::<Vec<_>>();
+            for app in vizing_apps {
+                if !remaining_accounts.contains(&&app) {
+                    return Err(VizingError::VizingAppNotInRemainingAccounts.into());
+                }
+            }
         }
     }
     Ok(())
 }
 
 fn build_landing_ix_data(params: &LandingParams) -> Result<Vec<u8>> {
-    let mut data = Vec::with_capacity(LandingParams::INIT_SPACE);
+    let vizing_message = VizingMessage {
+        src_chainid: params.src_chainid,
+        src_contract: params.src_contract,
+        value: params.value,
+        signature: params.message.signature.clone(),
+    };
+    let mut data = Vec::with_capacity(VizingMessage::INIT_SPACE);
     data.extend(RECEIVE_FROM_VIZING_DISCRIMINATOR);
-    params.serialize(&mut data)?;
+    vizing_message.serialize(&mut data)?;
     Ok(data)
+}
+
+
+#[account]
+#[derive(InitSpace)]
+pub struct LandingParams {
+    pub message_id: [u8; 32],
+    pub erliest_arrival_timestamp: u64,
+    pub latest_arrival_timestamp: u64,
+    pub src_chainid: u64,
+    pub src_tx_hash: [u8; 32],
+    pub src_contract: [u8; 32],
+    pub src_chain_nonce: u32,
+    pub sender: [u8; 32],
+    pub value: u64,
+    #[max_len(512)]
+    pub addition_params: Vec<u8>,
+    pub message: LandingMessage,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+pub struct LandingMessage {
+    pub mode: u8,
+    pub target_program: Pubkey,
+    pub execute_gas_limit: u64,
+    pub max_fee_per_gas: u64,
+    #[max_len(1024)]
+    pub signature: Vec<u8>,
 }

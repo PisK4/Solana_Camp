@@ -138,6 +138,7 @@ describe("Vizing Test", () => {
       );
 
       vizingAuthority = authority;
+      console.log(`authority: ${authority.toBase58()}, bump: ${bump}`);
     }
 
     {
@@ -476,8 +477,15 @@ describe("Vizing Test", () => {
       .initialize()
       .accounts({
         resultAccount: resultDataAccount,
-        solPdaReceiver: solPdaReceiver,
         payer: provider.wallet.publicKey,
+      })
+      .rpc();
+
+    await vizingAppMockProgram.methods
+      .initializeVizing()
+      .accounts({
+        solPdaReceiver: solPdaReceiver,
+        admin: provider.wallet.publicKey,
       })
       .rpc();
 
@@ -501,9 +509,15 @@ describe("Vizing Test", () => {
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
         21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
       ]),
-      srcContract: anchor.web3.Keypair.generate().publicKey,
+      srcContract: Buffer.from([
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+        21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+      ]),
       srcChainNonce: new anchor.BN(4),
-      sender: provider.wallet.publicKey,
+      sender: Buffer.from([
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+        21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+      ]),
       value: new anchor.BN(5),
       additionParams: Buffer.alloc(0),
       message: message,
@@ -547,6 +561,28 @@ describe("Vizing Test", () => {
         throw new Error("should not come here");
       } catch (error) {
         expect(error.error.errorMessage).to.equal(
+          "Vizing App Not In Remaining Accounts"
+        );
+      }
+    }
+
+    {
+      try {
+        await vizingProgram.methods
+          .landing(landingParams)
+          .accounts({
+            relayer: trustedRelayerKeyPairs[0].publicKey,
+            vizing: vizingPadSettings,
+            vizingAuthority: vizingAuthority,
+            targetProgram: targetProgram,
+            vizingAppConfigs: null,
+            systemProgram: anchor.web3.SystemProgram.programId,
+          })
+          .signers([trustedRelayerKeyPairs[0]])
+          .rpc();
+        throw new Error("should not come here");
+      } catch (error: any) {
+        expect(error.toString()).to.not.contain(
           "Vizing App Not In Remaining Accounts"
         );
       }

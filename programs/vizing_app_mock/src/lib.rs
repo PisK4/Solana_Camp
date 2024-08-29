@@ -14,12 +14,15 @@ pub mod vizing_app_mock {
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         ctx.accounts.result_account.result = 0;
         ctx.accounts.result_account.bump = *ctx.bumps.get("result_account").unwrap();
-        ctx.accounts.sol_pda_receiver.bump = *ctx.bumps.get("sol_pda_receiver").unwrap();
         Ok(())
     }
 
+    pub fn initialize_vizing(ctx: Context<VizingInitialize>) -> Result<()> {
+        VizingInitialize::handler(ctx)
+    }
+
     #[access_control(assert_vizing_authority(&ctx.accounts.vizing_authority))]
-    pub fn receive_from_vizing(ctx: Context<LandingAppOp>, _params: LandingParams) -> Result<()> {
+    pub fn receive_from_vizing(ctx: Context<LandingAppOp>, params: VizingMessage) -> Result<()> {
         msg!(
             "authority from vizing: {}",
             ctx.accounts.vizing_authority.key()
@@ -32,6 +35,14 @@ pub mod vizing_app_mock {
         ctx.accounts.result_account.result = c;
 
         msg!("{} + {} = {}", a, b, c);
+
+        msg!("src_chainid: {}", params.src_chainid);
+
+        msg!("src_contract: {:?}", params.src_contract);
+
+        msg!("value: {}", params.value);
+
+        msg!("signature: {:?}", params.signature);
 
         Ok(())
     }
@@ -57,9 +68,6 @@ pub struct LandingAppOp<'info> {
 pub struct Initialize<'info> {
     #[account(init, payer = payer, space = 8 + ResultData::INIT_SPACE, seeds = [RESULT_DATA_SEED], bump)]
     pub result_account: Account<'info, ResultData>,
-
-    #[account(init, payer = payer, space = 8 + VizingSolReceiver::INIT_SPACE, seeds = [VIZING_APP_SOL_RECEIVER_SEED], bump)]
-    pub sol_pda_receiver: Account<'info, VizingSolReceiver>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
