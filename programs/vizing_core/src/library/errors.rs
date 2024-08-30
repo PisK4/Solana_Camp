@@ -60,6 +60,8 @@ pub enum ErrorCode {
     NotManager,
     #[msg("Invalid mapping.")]
     InValidMappingAccount,
+    #[msg("Serialization message error.")]
+    SerializationError,
     #[msg("Fee config not found.")]
     FeeConfigNotFound,
     #[msg("Trade fee not found.")]
@@ -68,6 +70,20 @@ pub enum ErrorCode {
     TradeFeeConfigNotFound,
     #[msg("Dapp config not found.")]
     DappConfigNotFound,
-    #[msg("Estimate gas not found.")]
+    #[msg("AmountInThresholds not found.")]
+    AmountInThresholdsNotFound,
+    #[msg("ComputeTradeFee1 not found.")]
+    ComputeTradeFee1NotFound,
+    #[msg("ComputeTradeFee2 not found.")]
+    ComputeTradeFee2NotFound,
+    #[msg("EstimatePrice2 not found.")]
+    EstimatePrice2NotFound,
+    #[msg("EstimateGas not found.")]
     EstimateGasNotFound,
+    #[msg("EstimateTotalFee not found.")]
+    EstimateTotalFeeNotFound,
+    #[msg("ExactOutput not found.")]
+    ExactOutputNotFound,
+    #[msg("ExactInputput not found.")]
+    ExactInputputNotFound
 }

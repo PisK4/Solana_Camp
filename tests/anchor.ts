@@ -107,184 +107,184 @@ const registeredValidatorKeyPairs = [
 // await requestAirdrop(user);
 
 //createMint
-// async function create_mint() {
-//   const tokenMint = await createMint(
-//     connection,
-//     signer,
-//     user,
-//     null,
-//     6,
-//     newTokenMes,
-//     null,
-//     token_programId
-//   );
-//   console.log("tokenMint:", tokenMint.toString());
-// }
-// await create_mint();
+async function create_mint() {
+  const tokenMint = await createMint(
+    connection,
+    signer,
+    user,
+    null,
+    6,
+    newTokenMes,
+    null,
+    token_programId
+  );
+  console.log("tokenMint:", tokenMint.toString());
+}
+await create_mint();
 
-// //Make some token metadata
-// // Generate a new keypair for the mint
-// async function make_metadata() {
-//   const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
-//     "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
-//   );
+//Make some token metadata
+// Generate a new keypair for the mint
+async function make_metadata() {
+  const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
+    "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
+  );
 
-//   const metadataPDAAndBump = PublicKey.findProgramAddressSync(
-//     [
-//       Buffer.from("metadata"),
-//       TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-//       newTokenMes.publicKey.toBuffer(),
-//     ],
-//     TOKEN_METADATA_PROGRAM_ID
-//   );
+  const metadataPDAAndBump = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from("metadata"),
+      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
+      newTokenMes.publicKey.toBuffer(),
+    ],
+    TOKEN_METADATA_PROGRAM_ID
+  );
 
-//   const metadataPDA = metadataPDAAndBump[0];
-//   console.log("metadataPDA success");
-//   const transaction = new Transaction();
+  const metadataPDA = metadataPDAAndBump[0];
+  console.log("metadataPDA success");
+  const transaction = new Transaction();
 
-//   const createMetadataAccountInstruction =
-//     createCreateMetadataAccountV3Instruction(
-//       {
-//         metadata: metadataPDA,
-//         mint: newTokenMes.publicKey,
-//         mintAuthority: user,
-//         payer: user,
-//         updateAuthority: user,
-//       },
-//       {
-//         createMetadataAccountArgsV3: {
-//           collectionDetails: null,
-//           data: metadataData,
-//           isMutable: true,
-//         },
-//       }
-//     );
+  const createMetadataAccountInstruction =
+    createCreateMetadataAccountV3Instruction(
+      {
+        metadata: metadataPDA,
+        mint: newTokenMes.publicKey,
+        mintAuthority: user,
+        payer: user,
+        updateAuthority: user,
+      },
+      {
+        createMetadataAccountArgsV3: {
+          collectionDetails: null,
+          data: metadataData,
+          isMutable: true,
+        },
+      }
+    );
 
-//   transaction.add(createMetadataAccountInstruction);
+  transaction.add(createMetadataAccountInstruction);
 
-//   // send
-//   try {
-//     const metadataTxHash = await pg.connection.sendTransaction(transaction, [
-//       signer,
-//     ]);
-//     console.log(`Transaction sent`);
-//     // confirm
-//     const metadataConfirmation = await pg.connection.confirmTransaction(
-//       metadataTxHash
-//     );
-//     console.log(
-//       `Transaction confirmed: ${metadataTxHash}`,
-//       metadataConfirmation
-//     );
-//   } catch (error) {
-//     console.error("Error sending transaction:", error);
-//   }
-// }
-// await make_metadata();
+  // send
+  try {
+    const metadataTxHash = await pg.connection.sendTransaction(transaction, [
+      signer,
+    ]);
+    console.log(`Transaction sent`);
+    // confirm
+    const metadataConfirmation = await pg.connection.confirmTransaction(
+      metadataTxHash
+    );
+    console.log(
+      `Transaction confirmed: ${metadataTxHash}`,
+      metadataConfirmation
+    );
+  } catch (error) {
+    console.error("Error sending transaction:", error);
+  }
+}
+await make_metadata();
 
-// let userAssociatedAccount: PublicKey;
-// let destinationTokenAccount: PublicKey;
+let userAssociatedAccount: PublicKey;
+let destinationTokenAccount: PublicKey;
 
-// async function GetOrcreateAssociatedToken(
-//   createAssociateAccount: PublicKey,
-//   newToken: PublicKey,
-//   this_signer
-// ) {
-//   try {
-//     const userAssociatedTokenAccount = await getOrCreateAssociatedTokenAccount(
-//       connection,
-//       this_signer,
-//       newToken,
-//       createAssociateAccount,
-//       true,
-//       null,
-//       null,
-//       token_programId,
-//       associated_token_programId
-//     );
-//     return userAssociatedTokenAccount.address;
-//   } catch (e) {
-//     console.log("GetOrcreateAssociatedToken:", e);
-//   }
-// }
-// userAssociatedAccount = await GetOrcreateAssociatedToken(
-//   user,
-//   newTokenMes.publicKey,
-//   signer
-// );
-// console.log(
-//   "userAssociatedAccount:",
-//   userAssociatedAccount.toString(),
-//   "owner:",
-//   user.toString()
-// );
+async function GetOrcreateAssociatedToken(
+  createAssociateAccount: PublicKey,
+  newToken: PublicKey,
+  this_signer
+) {
+  try {
+    const userAssociatedTokenAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      this_signer,
+      newToken,
+      createAssociateAccount,
+      true,
+      null,
+      null,
+      token_programId,
+      associated_token_programId
+    );
+    return userAssociatedTokenAccount.address;
+  } catch (e) {
+    console.log("GetOrcreateAssociatedToken:", e);
+  }
+}
+userAssociatedAccount = await GetOrcreateAssociatedToken(
+  user,
+  newTokenMes.publicKey,
+  signer
+);
+console.log(
+  "userAssociatedAccount:",
+  userAssociatedAccount.toString(),
+  "owner:",
+  user.toString()
+);
 
-// //
-// destinationTokenAccount = await GetOrcreateAssociatedToken(
-//   testReceiver.publicKey,
-//   newTokenMes.publicKey,
-//   signer
-// );
-// console.log(
-//   "destinationTokenAccountInfo:",
-//   destinationTokenAccount.toString(),
-//   "owner:",
-//   testReceiver.publicKey.toString()
-// );
+//
+destinationTokenAccount = await GetOrcreateAssociatedToken(
+  testReceiver.publicKey,
+  newTokenMes.publicKey,
+  signer
+);
+console.log(
+  "destinationTokenAccountInfo:",
+  destinationTokenAccount.toString(),
+  "owner:",
+  testReceiver.publicKey.toString()
+);
 
-// //mint to
-// async function mint_to(newToken: PublicKey, receiver: PublicKey) {
-//   const init_amount = 10000000000;
-//   try {
-//     const mintToTx = await mintTo(
-//       connection,
-//       signer,
-//       newToken,
-//       receiver,
-//       user,
-//       init_amount,
-//       [signer],
-//       null,
-//       token_programId
-//     );
-//     console.log("mintToTx:", mintToTx);
-//   } catch (e) {
-//     console.log("Mint to error:", e);
-//   }
-// }
-// await mint_to(newTokenMes.publicKey, userAssociatedAccount);
+//mint to
+async function mint_to(newToken: PublicKey, receiver: PublicKey) {
+  const init_amount = 10000000000;
+  try {
+    const mintToTx = await mintTo(
+      connection,
+      signer,
+      newToken,
+      receiver,
+      user,
+      init_amount,
+      [signer],
+      null,
+      token_programId
+    );
+    console.log("mintToTx:", mintToTx);
+  } catch (e) {
+    console.log("Mint to error:", e);
+  }
+}
+await mint_to(newTokenMes.publicKey, userAssociatedAccount);
 
-// //token balance
-// async function getTokenBalance(checkAddress: PublicKey) {
-//   try {
-//     const tokenAccountInfo = await getAccount(connection, checkAddress);
-//     console.log(`This Account Token balance: ${tokenAccountInfo.amount}`);
-//   } catch (err) {
-//     console.error("Failed to get token balance:", err);
-//   }
-// }
-// await getTokenBalance(userAssociatedAccount);
+//token balance
+async function getTokenBalance(checkAddress: PublicKey) {
+  try {
+    const tokenAccountInfo = await getAccount(connection, checkAddress);
+    console.log(`This Account Token balance: ${tokenAccountInfo.amount}`);
+  } catch (err) {
+    console.error("Failed to get token balance:", err);
+  }
+}
+await getTokenBalance(userAssociatedAccount);
 
-// //Transfer token to user
-// async function transfer_to(receiverAssociatedAccount: PublicKey) {
-//   try {
-//     const TransferTokenSignature = await transfer(
-//       connection,
-//       signer,
-//       userAssociatedAccount,
-//       receiverAssociatedAccount,
-//       user,
-//       10000,
-//       [signer],
-//       null,
-//       token_programId
-//     );
-//     console.log("transfer_to:", TransferTokenSignature);
-//   } catch (e) {
-//     console.log("Transfer error:", e);
-//   }
-// }
-// await transfer_to(destinationTokenAccount);
+//Transfer token to user
+async function transfer_to(receiverAssociatedAccount: PublicKey) {
+  try {
+    const TransferTokenSignature = await transfer(
+      connection,
+      signer,
+      userAssociatedAccount,
+      receiverAssociatedAccount,
+      user,
+      10000,
+      [signer],
+      null,
+      token_programId
+    );
+    console.log("transfer_to:", TransferTokenSignature);
+  } catch (e) {
+    console.log("Transfer error:", e);
+  }
+}
+await transfer_to(destinationTokenAccount);
 
 describe("Test", () => {
   it("initialize", async () => {
@@ -467,746 +467,749 @@ describe("Test", () => {
     );
     const dappNumberArray: number[] = Array.from(dapp);
 
-    // //initializeVizingPad
-    // async function InitializeVizingPad() {
-    //   try {
-    //     const vizingPadAccount =
-    //       await pg.program.account.vizingPadSettings.fetch(vizingPadSettings);
-    //     console.log("vizingPadAccount:", vizingPadAccount.owner.toBase58());
-    //   } catch (e) {
-    //     const tx = await pg.program.methods
-    //       .initializeVizingPad(initParams)
-    //       .accounts({
-    //         vizing: vizingPadSettings,
-    //         vizingAuthority: vizingAuthority,
-    //         payer: user,
-    //         systemProgram: anchor.web3.SystemProgram.programId,
-    //       })
-    //       .rpc();
-    //     console.log(`initializeVizingPad: ${tx}`);
-    //   }
-    // }
-    // await InitializeVizingPad();
+    //initializeVizingPad
+    async function InitializeVizingPad() {
+      try {
+        const vizingPadAccount =
+          await pg.program.account.vizingPadSettings.fetch(vizingPadSettings);
+        console.log("vizingPadAccount:", vizingPadAccount.owner.toBase58());
+      } catch (e) {
+        const tx = await pg.program.methods
+          .initializeVizingPad(initParams)
+          .accounts({
+            vizing: vizingPadSettings,
+            vizingAuthority: vizingAuthority,
+            payer: user,
+            systemProgram: anchor.web3.SystemProgram.programId,
+          })
+          .rpc();
+        console.log(`initializeVizingPad: ${tx}`);
+      }
+    }
+    await InitializeVizingPad();
 
-    // //init_this_power_user
-    // let new_engine_admins = user;
-    // let new_station_admins = user;
-    // let new_gas_pool_admins = user;
-    // let new_trusted_relayers = [user];
-    // let new_registered_validators = [user];
-    // let gas_managers = [user];
-    // let swap_managers = [user];
-    // let token_managers = [user];
-    // async function InitPowerUser() {
-    //   try {
-    //     const powerUser = await pg.program.account.powerUser.fetch(
-    //       powerUserAuthority
-    //     );
-    //     console.log("powerUser:", powerUser);
-    //   } catch (e) {
-    //     const initPowerUser = await pg.program.methods
-    //       .initPowerUser(
-    //         user,
-    //         new_engine_admins,
-    //         new_station_admins,
-    //         new_gas_pool_admins,
-    //         new_trusted_relayers,
-    //         new_registered_validators,
-    //         gas_managers,
-    //         swap_managers,
-    //         token_managers
-    //       )
-    //       .accounts({
-    //         powerUser: powerUserAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(`initPowerUser:${initPowerUser}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(initPowerUser);
-    //   }
-    // }
-    // await InitPowerUser();
+    //init_this_power_user
+    let new_engine_admins = user;
+    let new_station_admins = user;
+    let new_gas_pool_admins = user;
+    let new_trusted_relayers = [user];
+    let new_registered_validators = [user];
+    let gas_managers = [user];
+    let swap_managers = [user];
+    let token_managers = [user];
+    async function InitPowerUser() {
+      try {
+        const powerUser = await pg.program.account.powerUser.fetch(
+          powerUserAuthority
+        );
+        console.log("powerUser:", powerUser);
+      } catch (e) {
+        const initPowerUser = await pg.program.methods
+          .initPowerUser(
+            user,
+            new_engine_admins,
+            new_station_admins,
+            new_gas_pool_admins,
+            new_trusted_relayers,
+            new_registered_validators,
+            gas_managers,
+            swap_managers,
+            token_managers
+          )
+          .accounts({
+            powerUser: powerUserAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`initPowerUser:${initPowerUser}'`);
+        // Confirm transaction
+        await pg.connection.confirmTransaction(initPowerUser);
+      }
+    }
+    await InitPowerUser();
 
-    // //saveChainId
-    // async function SaveChainId() {
-    //   try {
-    //     const saveDestChainId = await pg.program.methods
-    //       .saveChainId(chainId)
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         powerUser: powerUserAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer, saveDestChainIdAccount])
-    //       .rpc();
-    //     console.log(`saveDestChainId:${saveDestChainId}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(saveDestChainId);
+    //saveChainId
+    async function SaveChainId() {
+      try {
+        const saveDestChainId = await pg.program.methods
+          .saveChainId(chainId)
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer, saveDestChainIdAccount])
+          .rpc();
+        console.log(`saveDestChainId:${saveDestChainId}'`);
+        // Confirm transaction
+        await pg.connection.confirmTransaction(saveDestChainId);
 
-    //     const getChainId = await pg.program.account.saveChainId.fetch(
-    //       saveDestChainIdAccount.publicKey
-    //     );
-    //     console.log("getChainId:", getChainId);
-    //   } catch (e) {
-    //     console.log("saveDestChainId error:", e);
-    //   }
-    // }
-    // await SaveChainId();
+        const getChainId = await pg.program.account.saveChainId.fetch(
+          saveDestChainIdAccount.publicKey
+        );
+        console.log("getChainId:", getChainId);
+      } catch (e) {
+        console.log("saveDestChainId error:", e);
+      }
+    }
+    await SaveChainId();
 
-    // //initVizingVault
-    // async function InitVizingVault() {
-    //   try {
-    //     const vaultMes = await pg.program.account.vaultMes.fetch(
-    //       vizingVaultAuthority
-    //     );
-    //     console.log("InitVizingVault:", vaultMes);
-    //   } catch (e) {
-    //     const initVizingVault = await pg.program.methods
-    //       .initVizingVault()
-    //       .accounts({
-    //         vizingVault: vizingVaultAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(`initVizingVault:${initVizingVault}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(initVizingVault);
-    //     const vaultMes = await pg.program.account.vaultMes.fetch(
-    //       vizingVaultAuthority
-    //     );
-    //     console.log("InitVizingVault:", vaultMes);
-    //   }
-    // }
-    // await InitVizingVault();
+    //initVizingVault
+    async function InitVizingVault() {
+      try {
+        const vaultMes = await pg.program.account.vaultMes.fetch(
+          vizingVaultAuthority
+        );
+        console.log("InitVizingVault:", vaultMes);
+      } catch (e) {
+        const initVizingVault = await pg.program.methods
+          .initVizingVault()
+          .accounts({
+            vizingVault: vizingVaultAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`initVizingVault:${initVizingVault}'`);
+        // Confirm transaction
+        await pg.connection.confirmTransaction(initVizingVault);
+        const vaultMes = await pg.program.account.vaultMes.fetch(
+          vizingVaultAuthority
+        );
+        console.log("InitVizingVault:", vaultMes);
+      }
+    }
+    await InitVizingVault();
 
-    // let base_price = new anchor.BN(500);
-    // let reserve = new anchor.BN(1000);
-    // let molecular = new anchor.BN(5);
-    // let denominator = new anchor.BN(10);
-    // let molecular_decimal = 6;
-    // let denominator_decimal = 6;
-    // //init_fee_config
-    // async function InitFeeConfig() {
-    //   try {
-    //     const mappingFeeConfig =
-    //       await pg.program.account.mappingFeeConfig.fetch(
-    //         mappingFeeConfigAuthority
-    //       );
-    //     console.log("mappingFeeConfig:", mappingFeeConfig);
-    //   } catch (e) {
-    //     try {
-    //       const initFeeConfig = await pg.program.methods
-    //         .initFeeConfig(
-    //           id,
-    //           base_price,
-    //           reserve,
-    //           molecular,
-    //           denominator,
-    //           molecular_decimal,
-    //           denominator_decimal
-    //         )
-    //         .accounts({
-    //           saveChainId: saveDestChainIdAccount.publicKey,
-    //           powerUser: powerUserAuthority,
-    //           mappingFeeConfig: mappingFeeConfigAuthority,
-    //           user: user,
-    //           systemProgram: systemId,
-    //         })
-    //         .signers([signer])
-    //         .rpc();
-    //       console.log(`initFeeConfig:${initFeeConfig}'`);
-    //       // Confirm transaction
-    //       await pg.connection.confirmTransaction(initFeeConfig);
-    //     } catch (e) {
-    //       console.log("initFeeConfig error:", e);
-    //     }
-    //   }
-    // }
-    // await InitFeeConfig();
+    let base_price = new anchor.BN(500);
+    let reserve = new anchor.BN(1000);
+    let molecular = new anchor.BN(5);
+    let denominator = new anchor.BN(10);
+    let molecular_decimal = 6;
+    let denominator_decimal = 6;
+    //init_fee_config
+    async function InitFeeConfig() {
+      try {
+        const mappingFeeConfig =
+          await pg.program.account.mappingFeeConfig.fetch(
+            mappingFeeConfigAuthority
+          );
+        console.log("mappingFeeConfig:", mappingFeeConfig);
+      } catch (e) {
+        try {
+          const initFeeConfig = await pg.program.methods
+            .initFeeConfig(
+              id,
+              base_price,
+              reserve,
+              molecular,
+              denominator,
+              molecular_decimal,
+              denominator_decimal
+            )
+            .accounts({
+              saveChainId: saveDestChainIdAccount.publicKey,
+              powerUser: powerUserAuthority,
+              mappingFeeConfig: mappingFeeConfigAuthority,
+              user: user,
+              systemProgram: systemId,
+            })
+            .signers([signer])
+            .rpc();
+          console.log(`initFeeConfig:${initFeeConfig}'`);
+          // Confirm transaction
+          await pg.connection.confirmTransaction(initFeeConfig);
+        } catch (e) {
+          console.log("initFeeConfig error:", e);
+        }
+      }
+    }
+    await InitFeeConfig();
 
-    // //init_gas_global
-    // let global_base_price = new anchor.BN(500);
-    // let default_gas_limit = new anchor.BN(1000);
-    // let amount_in_threshold = new anchor.BN(10000000000000);
-    // async function InitGasGlobal() {
-    //   try {
-    //     const globalTradeFee = await pg.program.account.globalTradeFee.fetch(
-    //       globalTradeFeeAuthority
-    //     );
-    //     console.log("globalTradeFee:", globalTradeFee);
-    //     const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
-    //       gasSystemGlobalAuthority
-    //     );
-    //     console.log("gasSystemGlobal:", gasSystemGlobal);
-    //   } catch (e) {
-    //     const initGasGlobal = await pg.program.methods
-    //       .initGasGlobal(
-    //         global_base_price,
-    //         default_gas_limit,
-    //         amount_in_threshold,
-    //         molecular,
-    //         denominator
-    //       )
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         gasSystemGlobal: gasSystemGlobalAuthority,
-    //         globalTradeFee: globalTradeFeeAuthority,
-    //         powerUser: powerUserAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(`initGasGlobal:${initGasGlobal}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(initGasGlobal);
-    //     const globalTradeFee = await pg.program.account.globalTradeFee.fetch(
-    //       globalTradeFeeAuthority
-    //     );
-    //     console.log("globalTradeFee:", globalTradeFee);
-    //     const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
-    //       gasSystemGlobalAuthority
-    //     );
-    //     console.log("gasSystemGlobal:", gasSystemGlobal);
-    //   }
-    // }
-    // await InitGasGlobal();
+    //init_gas_global
+    let global_base_price = new anchor.BN(500);
+    let default_gas_limit = new anchor.BN(1000);
+    let amount_in_threshold = new anchor.BN(10000000000000);
+    async function InitGasGlobal() {
+      try {
+        const globalTradeFee = await pg.program.account.globalTradeFee.fetch(
+          globalTradeFeeAuthority
+        );
+        console.log("globalTradeFee:", globalTradeFee);
+        const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
+          gasSystemGlobalAuthority
+        );
+        console.log("gasSystemGlobal:", gasSystemGlobal);
+      } catch (e) {
+        const initGasGlobal = await pg.program.methods
+          .initGasGlobal(
+            global_base_price,
+            default_gas_limit,
+            amount_in_threshold,
+            molecular,
+            denominator
+          )
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            gasSystemGlobal: gasSystemGlobalAuthority,
+            globalTradeFee: globalTradeFeeAuthority,
+            powerUser: powerUserAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`initGasGlobal:${initGasGlobal}'`);
+        // Confirm transaction
+        await pg.connection.confirmTransaction(initGasGlobal);
+        const globalTradeFee = await pg.program.account.globalTradeFee.fetch(
+          globalTradeFeeAuthority
+        );
+        console.log("globalTradeFee:", globalTradeFee);
+        const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
+          gasSystemGlobalAuthority
+        );
+        console.log("gasSystemGlobal:", gasSystemGlobal);
+      }
+    }
+    await InitGasGlobal();
 
-    // //init_amount_in_thresholds
-    // async function InitAmountInThresholds() {
-    //   try {
-    //     const mappingAmountInThresholds =
-    //       await pg.program.account.mappingAmountInThresholds.fetch(
-    //         amountInThresholdsAuthority
-    //       );
-    //     console.log("mappingAmountInThresholds:", mappingAmountInThresholds);
-    //   } catch (e) {
-    //     const initAmountInThresholds = await pg.program.methods
-    //       .initAmountInThresholds(id, amount_in_threshold)
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         powerUser: powerUserAuthority,
-    //         amountInThresholds: amountInThresholdsAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(`initAmountInThresholds:${initAmountInThresholds}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(initAmountInThresholds);
-    //     const mappingAmountInThresholds =
-    //       await pg.program.account.mappingAmountInThresholds.fetch(
-    //         amountInThresholdsAuthority
-    //       );
-    //     console.log("mappingAmountInThresholds:", mappingAmountInThresholds);
-    //   }
-    // }
-    // await InitAmountInThresholds();
+    //init_amount_in_thresholds
+    async function InitAmountInThresholds() {
+      try {
+        const mappingAmountInThresholds =
+          await pg.program.account.mappingAmountInThresholds.fetch(
+            amountInThresholdsAuthority
+          );
+        console.log("mappingAmountInThresholds:", mappingAmountInThresholds);
+      } catch (e) {
+        const initAmountInThresholds = await pg.program.methods
+          .initAmountInThresholds(id, amount_in_threshold)
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            amountInThresholds: amountInThresholdsAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`initAmountInThresholds:${initAmountInThresholds}'`);
+        // Confirm transaction
+        await pg.connection.confirmTransaction(initAmountInThresholds);
+        const mappingAmountInThresholds =
+          await pg.program.account.mappingAmountInThresholds.fetch(
+            amountInThresholdsAuthority
+          );
+        console.log("mappingAmountInThresholds:", mappingAmountInThresholds);
+      }
+    }
+    await InitAmountInThresholds();
 
-    // //init_native_token_trade_fee_config
-    // let native_molecular = new anchor.BN(5);
-    // let native_denominator = new anchor.BN(10);
-    // async function InitNativeTokenTradeFeeConfig() {
-    //   try {
-    //     const mappingNativeTokenTradeFeeConfig =
-    //       await pg.program.account.mappingNativeTokenTradeFeeConfig.fetch(
-    //         nativeTokenTradeFeeConfigAuthority
-    //       );
-    //     console.log(
-    //       "mappingNativeTokenTradeFeeConfig:",
-    //       mappingNativeTokenTradeFeeConfig,
-    //       "\n"
-    //     );
-    //   } catch (e) {
-    //     const initNativeTokenTradeFeeConfig = await pg.program.methods
-    //       .initNativeTokenTradeFeeConfig(
-    //         id,
-    //         native_molecular,
-    //         native_denominator
-    //       )
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         powerUser: powerUserAuthority,
-    //         nativeTokenTradeFeeConfig: nativeTokenTradeFeeConfigAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(
-    //       `initNativeTokenTradeFeeConfig:${initNativeTokenTradeFeeConfig}'`
-    //     );
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(initNativeTokenTradeFeeConfig);
+    //init_native_token_trade_fee_config
+    let native_molecular = new anchor.BN(5);
+    let native_denominator = new anchor.BN(10);
+    async function InitNativeTokenTradeFeeConfig() {
+      try {
+        const mappingNativeTokenTradeFeeConfig =
+          await pg.program.account.mappingNativeTokenTradeFeeConfig.fetch(
+            nativeTokenTradeFeeConfigAuthority
+          );
+        console.log(
+          "mappingNativeTokenTradeFeeConfig:",
+          mappingNativeTokenTradeFeeConfig,
+          "\n"
+        );
+      } catch (e) {
+        const initNativeTokenTradeFeeConfig = await pg.program.methods
+          .initNativeTokenTradeFeeConfig(
+            id,
+            native_molecular,
+            native_denominator
+          )
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            nativeTokenTradeFeeConfig: nativeTokenTradeFeeConfigAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(
+          `initNativeTokenTradeFeeConfig:${initNativeTokenTradeFeeConfig}'`
+        );
+        // Confirm transaction
+        await pg.connection.confirmTransaction(initNativeTokenTradeFeeConfig);
 
-    //     const mappingNativeTokenTradeFeeConfig =
-    //       await pg.program.account.mappingNativeTokenTradeFeeConfig.fetch(
-    //         nativeTokenTradeFeeConfigAuthority
-    //       );
-    //     console.log(
-    //       "mappingNativeTokenTradeFeeConfig:",
-    //       mappingNativeTokenTradeFeeConfig,
-    //       "\n"
-    //     );
-    //   }
-    // }
-    // await InitNativeTokenTradeFeeConfig();
+        const mappingNativeTokenTradeFeeConfig =
+          await pg.program.account.mappingNativeTokenTradeFeeConfig.fetch(
+            nativeTokenTradeFeeConfigAuthority
+          );
+        console.log(
+          "mappingNativeTokenTradeFeeConfig:",
+          mappingNativeTokenTradeFeeConfig,
+          "\n"
+        );
+      }
+    }
+    await InitNativeTokenTradeFeeConfig();
 
-    // let symbol = Buffer.from("eth");
-    // let tokenAddress = encodeEthereumAddressToU16Array(
-    //   "0xdAC17F958D2ee523a2206206994597C13D831ec7"
-    // );
-    // const init_tokenAddressArray: number[] = Array.from(tokenAddress);
-    // let init_decimals = 6;
-    // let init_max_price = new anchor.BN(1000);
-    // async function InitTokenInfoBase() {
-    //   try {
-    //     const mappingSymbolConfig =
-    //       await pg.program.account.mappingSymbolConfig.fetch(
-    //         initSymbolConfigAuthority
-    //       );
-    //     console.log("mappingSymbolConfig:", mappingSymbolConfig);
-    //     const mappingTokenConfig =
-    //       await pg.program.account.mappingTokenConfig.fetch(
-    //         initTokenConfigAuthority
-    //       );
-    //     console.log("mappingTokenConfig:", mappingTokenConfig);
-    //   } catch (e) {
-    //     const initTokenInfoBase = await pg.program.methods
-    //       .initTokenInfoBase(
-    //         symbol,
-    //         init_tokenAddressArray,
-    //         init_decimals,
-    //         init_max_price
-    //       )
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         powerUser: powerUserAuthority,
-    //         user: user,
-    //         tokenConfig: initTokenConfigAuthority,
-    //         symbolConfig: initSymbolConfigAuthority,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(`initTokenInfoBase:${initTokenInfoBase}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(initTokenInfoBase);
-    //   }
-    // }
-    // await InitTokenInfoBase();
+    let symbol = Buffer.from("eth");
+    let tokenAddress = encodeEthereumAddressToU16Array(
+      "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+    );
+    const init_tokenAddressArray: number[] = Array.from(tokenAddress);
+    let init_decimals = 6;
+    let init_max_price = new anchor.BN(1000);
+    async function InitTokenInfoBase() {
+      try {
+        const mappingSymbolConfig =
+          await pg.program.account.mappingSymbolConfig.fetch(
+            initSymbolConfigAuthority
+          );
+        console.log("mappingSymbolConfig:", mappingSymbolConfig);
+        const mappingTokenConfig =
+          await pg.program.account.mappingTokenConfig.fetch(
+            initTokenConfigAuthority
+          );
+        console.log("mappingTokenConfig:", mappingTokenConfig);
+      } catch (e) {
+        const initTokenInfoBase = await pg.program.methods
+          .initTokenInfoBase(
+            symbol,
+            init_tokenAddressArray,
+            init_decimals,
+            init_max_price
+          )
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            user: user,
+            tokenConfig: initTokenConfigAuthority,
+            symbolConfig: initSymbolConfigAuthority,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`initTokenInfoBase:${initTokenInfoBase}'`);
+        // Confirm transaction
+        await pg.connection.confirmTransaction(initTokenInfoBase);
+      }
+    }
+    await InitTokenInfoBase();
 
-    // //modifySettings
-    // const modifyParams = {
-    //   owner: user,
-    //   feeReceiver: feeReceiverKeyPair.publicKey,
-    //   engineAdmin: engineAdminKeyPairs.map((keypair) => keypair.publicKey)[0],
-    //   gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
-    //   stationAdmin: stationAdminKeyPair.publicKey,
-    //   trustedRelayers: trustedRelayerKeyPairs.map(
-    //     (keypair) => keypair.publicKey
-    //   ),
-    //   registeredValidator: anchor.web3.Keypair.generate().publicKey,
-    //   isPaused: false,
-    // };
-    // async function ModifySettings() {
-    //   try {
-    //     await pg.program.methods
-    //       .modifySettings(modifyParams)
-    //       .accounts({
-    //         owner: user,
-    //         vizing: vizingPadSettings,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //   } catch (e) {
-    //     console.log("modifySettings error:", e);
-    //   }
-    // }
-    // await ModifySettings();
+    //modifySettings
+    const modifyParams = {
+      owner: user,
+      feeReceiver: feeReceiverKeyPair.publicKey,
+      engineAdmin: engineAdminKeyPairs.map((keypair) => keypair.publicKey)[0],
+      gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
+      stationAdmin: stationAdminKeyPair.publicKey,
+      trustedRelayers: trustedRelayerKeyPairs.map(
+        (keypair) => keypair.publicKey
+      ),
+      registeredValidator: anchor.web3.Keypair.generate().publicKey,
+      isPaused: false,
+    };
+    async function ModifySettings() {
+      try {
+        await pg.program.methods
+          .modifySettings(modifyParams)
+          .accounts({
+            owner: user,
+            vizing: vizingPadSettings,
+          })
+          .signers([signer])
+          .rpc();
+      } catch (e) {
+        console.log("modifySettings error:", e);
+      }
+    }
+    await ModifySettings();
 
-    // //grantFeeCollector
-    // async function GrantFeeCollector() {
-    //   try {
-    //     let vizingPadAccount = await pg.program.account.vizingPadSettings.fetch(
-    //       vizingPadSettings
-    //     );
-    //     console.log(
-    //       "vizingPadAccount:",
-    //       vizingPadAccount.feeReceiver.toBase58()
-    //     );
-    //   } catch (e) {
-    //     await pg.program.methods
-    //       .grantFeeCollector(feeReceiverKeyPair.publicKey)
-    //       .accounts({
-    //         gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
-    //         vizing: vizingPadSettings,
-    //       })
-    //       .signers([gasPoolAdminKeyPair])
-    //       .rpc();
-    //     console.log("grantFeeCollector error:", e);
-    //   }
-    // }
-    // await GrantFeeCollector();
+    //grantFeeCollector
+    async function GrantFeeCollector() {
+      try {
+        let vizingPadAccount = await pg.program.account.vizingPadSettings.fetch(
+          vizingPadSettings
+        );
+        console.log(
+          "vizingPadAccount:",
+          vizingPadAccount.feeReceiver.toBase58()
+        );
+      } catch (e) {
+        await pg.program.methods
+          .grantFeeCollector(feeReceiverKeyPair.publicKey)
+          .accounts({
+            gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
+            vizing: vizingPadSettings,
+          })
+          .signers([gasPoolAdminKeyPair])
+          .rpc();
+        console.log("grantFeeCollector error:", e);
+      }
+    }
+    await GrantFeeCollector();
 
-    // //setThisGasGlobal
-    // let new_global_base_price = new anchor.BN(500);
-    // let new_default_gas_limit = new anchor.BN(1000);
-    // let new_amount_in_threshold = new anchor.BN(500000000);
-    // async function SetThisGasGlobal() {
-    //   try {
-    //     const setThisGasGlobal = await pg.program.methods
-    //       .setThisGasGlobal(
-    //         new_global_base_price,
-    //         new_default_gas_limit,
-    //         new_amount_in_threshold,
-    //         molecular,
-    //         denominator
-    //       )
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         gasSystemGlobal: gasSystemGlobalAuthority,
-    //         globalTradeFee: globalTradeFeeAuthority,
-    //         powerUser: powerUserAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(`setThisGasGlobal:${setThisGasGlobal}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(setThisGasGlobal);
+    //setThisGasGlobal
+    let new_global_base_price = new anchor.BN(500);
+    let new_default_gas_limit = new anchor.BN(1000);
+    let new_amount_in_threshold = new anchor.BN(500000000);
+    async function SetThisGasGlobal() {
+      try {
+        const setThisGasGlobal = await pg.program.methods
+          .setThisGasGlobal(
+            new_global_base_price,
+            new_default_gas_limit,
+            new_amount_in_threshold,
+            molecular,
+            denominator
+          )
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            gasSystemGlobal: gasSystemGlobalAuthority,
+            globalTradeFee: globalTradeFeeAuthority,
+            powerUser: powerUserAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`setThisGasGlobal:${setThisGasGlobal}'`);
+        // Confirm transaction
+        await pg.connection.confirmTransaction(setThisGasGlobal);
 
-    //     const globalTradeFee = await pg.program.account.globalTradeFee.fetch(
-    //       globalTradeFeeAuthority
-    //     );
-    //     console.log("globalTradeFee:", globalTradeFee, "\n");
-    //     const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
-    //       gasSystemGlobalAuthority
-    //     );
-    //     console.log("gasSystemGlobal:", gasSystemGlobal);
-    //   } catch (e) {
-    //     console.log("SetThisGasGlobal error:", e);
-    //   }
-    // }
-    // await SetThisGasGlobal();
+        const globalTradeFee = await pg.program.account.globalTradeFee.fetch(
+          globalTradeFeeAuthority
+        );
+        console.log("globalTradeFee:", globalTradeFee, "\n");
+        const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
+          gasSystemGlobalAuthority
+        );
+        console.log("gasSystemGlobal:", gasSystemGlobal);
+      } catch (e) {
+        console.log("SetThisGasGlobal error:", e);
+      }
+    }
+    await SetThisGasGlobal();
 
-    // //set_this_fee_config
-    // async function SetThisFeeConfig() {
-    //   try {
-    //     const setThisFeeConfig = await pg.program.methods
-    //       .setThisFeeConfig(
-    //         id,
-    //         base_price,
-    //         reserve,
-    //         molecular,
-    //         denominator,
-    //         molecular_decimal,
-    //         denominator_decimal
-    //       )
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         powerUser: powerUserAuthority,
-    //         mappingFeeConfig: mappingFeeConfigAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(`setThisFeeConfig:${setThisFeeConfig}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(setThisFeeConfig);
-    //   } catch (e) {
-    //     console.log("SetThisFeeConfig error:", e);
-    //   }
-    // }
-    // await SetThisFeeConfig();
+    //set_this_fee_config
+    async function SetThisFeeConfig() {
+      try {
+        const setThisFeeConfig = await pg.program.methods
+          .setThisFeeConfig(
+            id,
+            base_price,
+            reserve,
+            molecular,
+            denominator,
+            molecular_decimal,
+            denominator_decimal
+          )
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`setThisFeeConfig:${setThisFeeConfig}'`);
+        // Confirm transaction
+        await pg.connection.confirmTransaction(setThisFeeConfig);
+      } catch (e) {
+        console.log("SetThisFeeConfig error:", e);
+      }
+    }
+    await SetThisFeeConfig();
 
-    // //set_token_fee_config
-    // async function SetThisTokenFeeConfig() {
-    //   try {
-    //     const setThisTokenFeeConfig = await pg.program.methods
-    //       .setThisTokenFeeConfig(id, molecular, denominator)
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         powerUser: powerUserAuthority,
-    //         globalTradeFee: globalTradeFeeAuthority,
-    //         nativeTokenTradeFeeConfig: nativeTokenTradeFeeConfigAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(`setThisTokenFeeConfig:${setThisTokenFeeConfig}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(setThisTokenFeeConfig);
+    //set_token_fee_config
+    async function SetThisTokenFeeConfig() {
+      try {
+        const setThisTokenFeeConfig = await pg.program.methods
+          .setThisTokenFeeConfig(id, molecular, denominator)
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            globalTradeFee: globalTradeFeeAuthority,
+            nativeTokenTradeFeeConfig: nativeTokenTradeFeeConfigAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`setThisTokenFeeConfig:${setThisTokenFeeConfig}'`);
+        // Confirm transaction
+        await pg.connection.confirmTransaction(setThisTokenFeeConfig);
 
-    //     const globalTradeFee = await pg.program.account.globalTradeFee.fetch(
-    //       globalTradeFeeAuthority
-    //     );
-    //     console.log("globalTradeFee:", globalTradeFee, "\n");
-    //   } catch (e) {
-    //     console.log("SetThisTokenFeeConfig error:", e);
-    //   }
-    // }
-    // await SetThisTokenFeeConfig();
+        const globalTradeFee = await pg.program.account.globalTradeFee.fetch(
+          globalTradeFeeAuthority
+        );
+        console.log("globalTradeFee:", globalTradeFee, "\n");
+      } catch (e) {
+        console.log("SetThisTokenFeeConfig error:", e);
+      }
+    }
+    await SetThisTokenFeeConfig();
 
-    // async function SetThisDappPriceConfig() {
-    //   try {
-    //     const setThisDappPriceConfig = await pg.program.methods
-    //       .setThisDappPriceConfig(id, dappNumberArray, base_price)
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         powerUser: powerUserAuthority,
-    //         mappingFeeConfig: mappingFeeConfigAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(`setThisDappPriceConfig:${setThisDappPriceConfig}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(setThisDappPriceConfig);
+    async function SetThisDappPriceConfig() {
+      try {
+        const setThisDappPriceConfig = await pg.program.methods
+          .setThisDappPriceConfig(id, dappNumberArray, base_price)
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`setThisDappPriceConfig:${setThisDappPriceConfig}'`);
+        // Confirm transaction
+        await pg.connection.confirmTransaction(setThisDappPriceConfig);
 
-    //     const globalTradeFee = await pg.program.account.globalTradeFee.fetch(
-    //       globalTradeFeeAuthority
-    //     );
-    //     console.log("globalTradeFee:", globalTradeFee, "\n");
-    //   } catch (e) {
-    //     console.log("SetThisDappPriceConfig error:", e);
-    //   }
-    // }
-    // await SetThisDappPriceConfig();
+        const globalTradeFee = await pg.program.account.globalTradeFee.fetch(
+          globalTradeFeeAuthority
+        );
+        console.log("globalTradeFee:", globalTradeFee, "\n");
+      } catch (e) {
+        console.log("SetThisDappPriceConfig error:", e);
+      }
+    }
+    await SetThisDappPriceConfig();
 
-    // //set_exchange_rate
-    // async function SetThisExchangeRate() {
-    //   try {
-    //     const setThisExchangeRate = await pg.program.methods
-    //       .setThisExchangeRate(
-    //         id,
-    //         molecular,
-    //         denominator,
-    //         molecular_decimal,
-    //         denominator_decimal
-    //       )
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         powerUser: powerUserAuthority,
-    //         mappingFeeConfig: mappingFeeConfigAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(`setThisExchangeRate:${setThisExchangeRate}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(setThisExchangeRate);
-    //   } catch (e) {
-    //     console.log("SetThisExchangeRate error:", e);
-    //   }
-    // }
-    // await SetThisExchangeRate();
+    //set_exchange_rate
+    async function SetThisExchangeRate() {
+      try {
+        const setThisExchangeRate = await pg.program.methods
+          .setThisExchangeRate(
+            id,
+            molecular,
+            denominator,
+            molecular_decimal,
+            denominator_decimal
+          )
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`setThisExchangeRate:${setThisExchangeRate}'`);
+        // Confirm transaction
+        await pg.connection.confirmTransaction(setThisExchangeRate);
+      } catch (e) {
+        console.log("SetThisExchangeRate error:", e);
+      }
+    }
+    await SetThisExchangeRate();
 
-    // //batch_set_token_fee_config
-    // let destChainIds = [new anchor.BN(id)];
-    // let moleculars = [new anchor.BN(5)];
-    // let denominators = [new anchor.BN(10)];
-    // async function BatchSetThisTokenFeeConfig() {
-    //   try {
-    //     const batchSetThisTokenFeeConfig = await pg.program.methods
-    //       .batchSetThisTokenFeeConfig(destChainIds, moleculars, denominators)
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         powerUser: powerUserAuthority,
-    //         mappingFeeConfig: mappingFeeConfigAuthority,
-    //         nativeTokenTradeFeeConfig: nativeTokenTradeFeeConfigAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(
-    //       `batchSetThisTokenFeeConfig:${batchSetThisTokenFeeConfig}'`
-    //     );
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(batchSetThisTokenFeeConfig);
-    //   } catch (e) {
-    //     console.log("BatchSetThisTokenFeeConfig error:", e);
-    //   }
-    // }
-    // await BatchSetThisTokenFeeConfig();
+    //batch_set_token_fee_config
+    let destChainIds = [new anchor.BN(id)];
+    let moleculars = [new anchor.BN(5)];
+    let denominators = [new anchor.BN(10)];
+    async function BatchSetThisTokenFeeConfig() {
+      try {
+        const batchSetThisTokenFeeConfig = await pg.program.methods
+          .batchSetThisTokenFeeConfig(destChainIds, moleculars, denominators)
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            nativeTokenTradeFeeConfig: nativeTokenTradeFeeConfigAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(
+          `batchSetThisTokenFeeConfig:${batchSetThisTokenFeeConfig}'`
+        );
+        // Confirm transaction
+        await pg.connection.confirmTransaction(batchSetThisTokenFeeConfig);
+      } catch (e) {
+        console.log("BatchSetThisTokenFeeConfig error:", e);
+      }
+    }
+    await BatchSetThisTokenFeeConfig();
 
-    // //batch_set_this_trade_fee_config_map
-    // let dapps = [dappNumberArray];
-    // async function BatchSetThisTradeFeeConfigMap() {
-    //   try {
-    //     const batchSetThisTradeFeeConfigMap = await pg.program.methods
-    //       .batchSetThisTradeFeeConfigMap(
-    //         dapps,
-    //         destChainIds,
-    //         moleculars,
-    //         denominators
-    //       )
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         powerUser: powerUserAuthority,
-    //         mappingFeeConfig: mappingFeeConfigAuthority,
-    //         nativeTokenTradeFeeConfig: nativeTokenTradeFeeConfigAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(
-    //       `batchSetThisTradeFeeConfigMap:${batchSetThisTradeFeeConfigMap}'`
-    //     );
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(batchSetThisTradeFeeConfigMap);
-    //   } catch (e) {
-    //     console.log("BatchSetThisTradeFeeConfigMap error:", e);
-    //   }
-    // }
-    // await BatchSetThisTradeFeeConfigMap();
+    //batch_set_this_trade_fee_config_map
+    let dapps = [dappNumberArray];
+    async function BatchSetThisTradeFeeConfigMap() {
+      try {
+        const batchSetThisTradeFeeConfigMap = await pg.program.methods
+          .batchSetThisTradeFeeConfigMap(
+            dapps,
+            destChainIds,
+            moleculars,
+            denominators
+          )
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            nativeTokenTradeFeeConfig: nativeTokenTradeFeeConfigAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(
+          `batchSetThisTradeFeeConfigMap:${batchSetThisTradeFeeConfigMap}'`
+        );
+        // Confirm transaction
+        await pg.connection.confirmTransaction(batchSetThisTradeFeeConfigMap);
+      } catch (e) {
+        console.log("BatchSetThisTradeFeeConfigMap error:", e);
+      }
+    }
+    await BatchSetThisTradeFeeConfigMap();
 
-    // //batch_set_amount_in_threshold
-    // let new_values = [new anchor.BN(1000000000)];
-    // async function BatchSetThisAmountInThreshold() {
-    //   try {
-    //     const batchSetThisAmountInThreshold = await pg.program.methods
-    //       .batchSetThisAmountInThreshold(destChainIds, new_values)
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         powerUser: powerUserAuthority,
-    //         amountInThresholds: amountInThresholdsAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(
-    //       `batchSetThisAmountInThreshold:${batchSetThisAmountInThreshold}'`
-    //     );
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(batchSetThisAmountInThreshold);
-    //   } catch (e) {
-    //     console.log("BatchSetThisAmountInThreshold error:", e);
-    //   }
-    // }
-    // await BatchSetThisAmountInThreshold();
+    //batch_set_amount_in_threshold
+    let new_values = [new anchor.BN(1000000000)];
+    async function BatchSetThisAmountInThreshold() {
+      try {
+        const batchSetThisAmountInThreshold = await pg.program.methods
+          .batchSetThisAmountInThreshold(destChainIds, new_values)
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            amountInThresholds: amountInThresholdsAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(
+          `batchSetThisAmountInThreshold:${batchSetThisAmountInThreshold}'`
+        );
+        // Confirm transaction
+        await pg.connection.confirmTransaction(batchSetThisAmountInThreshold);
+      } catch (e) {
+        console.log("BatchSetThisAmountInThreshold error:", e);
+      }
+    }
+    await BatchSetThisAmountInThreshold();
 
-    // //batch_set_this_dapp_price_config_in_diff_chain
-    // let base_prices = [new anchor.BN(1000)];
-    // async function BatchSetThisDappPriceConfigInDiffChain() {
-    //   try {
-    //     const batchSetThisDappPriceConfigInDiffChain = await pg.program.methods
-    //       .batchSetThisDappPriceConfigInDiffChain(
-    //         destChainIds,
-    //         dapps,
-    //         base_prices
-    //       )
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         powerUser: powerUserAuthority,
-    //         mappingFeeConfig: mappingFeeConfigAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(
-    //       `batchSetThisDappPriceConfigInDiffChain:${batchSetThisDappPriceConfigInDiffChain}'`
-    //     );
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(
-    //       batchSetThisDappPriceConfigInDiffChain
-    //     );
-    //   } catch (e) {
-    //     console.log("BatchSetThisDappPriceConfigInDiffChain error:", e);
-    //   }
-    // }
-    // await BatchSetThisDappPriceConfigInDiffChain();
+    //batch_set_this_dapp_price_config_in_diff_chain
+    let base_prices = [new anchor.BN(1000)];
+    async function BatchSetThisDappPriceConfigInDiffChain() {
+      try {
+        const batchSetThisDappPriceConfigInDiffChain = await pg.program.methods
+          .batchSetThisDappPriceConfigInDiffChain(
+            destChainIds,
+            dapps,
+            base_prices
+          )
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(
+          `batchSetThisDappPriceConfigInDiffChain:${batchSetThisDappPriceConfigInDiffChain}'`
+        );
+        // Confirm transaction
+        await pg.connection.confirmTransaction(
+          batchSetThisDappPriceConfigInDiffChain
+        );
+      } catch (e) {
+        console.log("BatchSetThisDappPriceConfigInDiffChain error:", e);
+      }
+    }
+    await BatchSetThisDappPriceConfigInDiffChain();
 
-    // //batch_set_this_dapp_price_config_in_same_chain
-    // let thisChainId = new anchor.BN(id);
-    // async function BatchSetThisDappPriceConfigInSameChain() {
-    //   try {
-    //     const batchSetThisDappPriceConfigInSameChain = await pg.program.methods
-    //       .batchSetThisDappPriceConfigInSameChain(
-    //         thisChainId,
-    //         dapps,
-    //         base_prices
-    //       )
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         powerUser: powerUserAuthority,
-    //         mappingFeeConfig: mappingFeeConfigAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(
-    //       `batchSetThisDAppPriceConfigInSameChain:${batchSetThisDappPriceConfigInSameChain}'`
-    //     );
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(
-    //       batchSetThisDappPriceConfigInSameChain
-    //     );
-    //   } catch (e) {
-    //     console.log("BatchSetThisDappPriceConfigInSameChain error:", e);
-    //   }
-    // }
-    // await BatchSetThisDappPriceConfigInSameChain();
+    //batch_set_this_dapp_price_config_in_same_chain
+    let thisChainId = new anchor.BN(id);
+    async function BatchSetThisDappPriceConfigInSameChain() {
+      try {
+        const batchSetThisDappPriceConfigInSameChain = await pg.program.methods
+          .batchSetThisDappPriceConfigInSameChain(
+            thisChainId,
+            dapps,
+            base_prices
+          )
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(
+          `batchSetThisDAppPriceConfigInSameChain:${batchSetThisDappPriceConfigInSameChain}'`
+        );
+        // Confirm transaction
+        await pg.connection.confirmTransaction(
+          batchSetThisDappPriceConfigInSameChain
+        );
+      } catch (e) {
+        console.log("BatchSetThisDappPriceConfigInSameChain error:", e);
+      }
+    }
+    await BatchSetThisDappPriceConfigInSameChain();
 
     //get
-    async function GetDappBasepPrice(
-      dest_chain_id,
-      chain_base_price,
-      dapp,
-    ) {
+    async function GetDappBasepPrice(dest_chain_id, chain_base_price, dapp) {
       let dapp_base_price;
       const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
         mappingFeeConfigAuthority
       );
       const dappConfigMappings = await mappingFeeConfig.dappConfigMappings;
       let dapp_config_value = dappConfigMappings[0].value.toNumber();
-      if(dapp_config_value>0){
-        dapp_base_price=dapp_config_value;
-      }else{
-        dapp_base_price=chain_base_price;
+      if (dapp_config_value > 0) {
+        dapp_base_price = dapp_config_value;
+      } else {
+        dapp_base_price = chain_base_price;
       }
+      console.log("GetDappBasepPrice:", dapp_base_price);
       return dapp_base_price;
     }
 
-    async function ExactOutput(
-      dest_chain_id,
-      amount_out  
-    ){
+    async function ExactOutput(dest_chain_id, amount_out) {
       const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
         mappingFeeConfigAuthority
       );
       const feeConfigMappings = await mappingFeeConfig.feeConfigMappings;
-      const fee_config_molecular_decimal = feeConfigMappings[0].molecularDecimal;
-      const fee_config_denominator_decimal = feeConfigMappings[0].denominatorDecimal;
+      const fee_config_molecular_decimal =
+        feeConfigMappings[0].molecularDecimal;
+      const fee_config_denominator_decimal =
+        feeConfigMappings[0].denominatorDecimal;
       let this_amount_out;
-      if(fee_config_molecular_decimal != fee_config_denominator_decimal){
-        if(fee_config_molecular_decimal>fee_config_denominator_decimal){
-          this_amount_out=amount_out/10^(fee_config_molecular_decimal-fee_config_denominator_decimal);
-        }else{
-          this_amount_out=amount_out/10^(fee_config_denominator_decimal-fee_config_molecular_decimal);
+      if (fee_config_molecular_decimal != fee_config_denominator_decimal) {
+        if (fee_config_molecular_decimal > fee_config_denominator_decimal) {
+          this_amount_out =
+            (amount_out / 10) ^
+            (fee_config_molecular_decimal - fee_config_denominator_decimal);
+        } else {
+          this_amount_out =
+            (amount_out / 10) ^
+            (fee_config_denominator_decimal - fee_config_molecular_decimal);
         }
-      }else{
-        this_amount_out=amount_out;
+      } else {
+        this_amount_out = amount_out;
       }
 
-      let amount_in = this_amount_out * fee_config_denominator_decimal / fee_config_denominator_decimal;
+      let amount_in =
+        (this_amount_out * fee_config_denominator_decimal) /
+        fee_config_denominator_decimal;
+      console.log("ExactOutput:", amount_in);
       return amount_in;
     }
 
@@ -1214,26 +1217,106 @@ describe("Test", () => {
       target_contract,
       dest_chain_id,
       amount_out
-    ){
-
+    ) {
       const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
         mappingFeeConfigAuthority
       );
       const globalTradeFee = await pg.program.account.globalTradeFee.fetch(
         globalTradeFeeAuthority
       );
-      const tradeFeeConfigMappings = await mappingFeeConfig.tradeFeeConfigMappings;
-      let trade_fee_config_molecular=tradeFeeConfigMappings[0].molecular.toNumber();
-      let trade_fee_config_denominator=tradeFeeConfigMappings[0].denominator.toNumber();
-      let global_trade_fee_molecular=globalTradeFee.molecular.toNumber();
-      let global_trade_fee_denominator=globalTradeFee.denominator.toNumber();
+      const tradeFeeConfigMappings =
+        await mappingFeeConfig.tradeFeeConfigMappings;
+      let trade_fee_config_molecular =
+        tradeFeeConfigMappings[0].molecular.toNumber();
+      let trade_fee_config_denominator =
+        tradeFeeConfigMappings[0].denominator.toNumber();
+      let global_trade_fee_molecular = globalTradeFee.molecular.toNumber();
+      let global_trade_fee_denominator = globalTradeFee.denominator.toNumber();
       let fee;
-      if(trade_fee_config_denominator>0){
-        fee = amount_out*trade_fee_config_molecular/trade_fee_config_denominator;
-      }else{
-        fee = amount_out*global_trade_fee_molecular/global_trade_fee_denominator;
+      if (trade_fee_config_denominator > 0) {
+        fee =
+          (amount_out * trade_fee_config_molecular) /
+          trade_fee_config_denominator;
+      } else {
+        fee =
+          (amount_out * global_trade_fee_molecular) /
+          global_trade_fee_denominator;
       }
+      console.log("ComputeTradeFee2:", fee);
       return fee;
+    }
+
+    async function EstimatePrice1(target_contract, dest_chain_id) {
+      const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
+        mappingFeeConfigAuthority
+      );
+      const dappConfigMappings = await mappingFeeConfig.dappConfigMappings;
+      const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
+        gasSystemGlobalAuthority
+      );
+      let gas_system_global_base_price =
+        await gasSystemGlobal[0].global_base_price.toNumber();
+      let dapp_config_value = dappConfigMappings[0].value.toNumber();
+      let dapp_base_price;
+      if (dapp_config_value > 0) {
+        dapp_base_price = dapp_config_value;
+      } else {
+        dapp_base_price = gas_system_global_base_price;
+      }
+      console.log("EstimatePrice1:", dapp_base_price);
+      return dapp_base_price;
+    }
+
+    async function EstimatePrice2(dest_chain_id) {
+      const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
+        mappingFeeConfigAuthority
+      );
+      const feeConfigMappings = await mappingFeeConfig.feeConfigMappings;
+      const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
+        gasSystemGlobalAuthority
+      );
+
+      let gas_system_global_base_price =
+        await gasSystemGlobal[0].global_base_price.toNumber();
+      let fee_config_base_price =
+        await feeConfigMappings[0].basePrice.toNumber();
+      let base_price;
+      if (fee_config_base_price > 0) {
+        base_price = fee_config_base_price;
+      } else {
+        base_price = gas_system_global_base_price;
+      }
+      console.log("EstimatePrice2:", base_price);
+      return base_price;
+    }
+
+    async function ExactInput(dest_chain_id, amount_in) {
+      const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
+        mappingFeeConfigAuthority
+      );
+      const feeConfigMappings = await mappingFeeConfig.feeConfigMappings;
+      let fee_config_molecular_decimal = feeConfigMappings[0].molecularDecimal;
+      let fee_config_denominator_decimal =
+        feeConfigMappings[0].denominatorDecimal;
+      let this_amount_in;
+      if (fee_config_molecular_decimal != fee_config_denominator_decimal) {
+        if (fee_config_molecular_decimal > fee_config_denominator_decimal) {
+          this_amount_in =
+            (amount_in * 10) ^
+            (fee_config_molecular_decimal - fee_config_denominator_decimal);
+        } else {
+          this_amount_in =
+            (amount_in / 10) ^
+            (fee_config_denominator_decimal - fee_config_molecular_decimal);
+        }
+      } else {
+        this_amount_in = amount_in;
+      }
+      let amount_out =
+        (this_amount_in * fee_config_molecular_decimal) /
+        fee_config_denominator_decimal;
+      console.log("ExactInput:", amount_out);
+      return amount_out;
     }
 
     let testAmountOut = new anchor.BN(1000);
@@ -1246,7 +1329,7 @@ describe("Test", () => {
       maxFeePerGas: testMaxFeePerGas,
       signature: Buffer.from("000000001"),
     };
-    async function GetEstimateGas(amount_out, dest_chain_id, this_message) {
+    async function EstimateGas(amount_out, dest_chain_id, this_message) {
       const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
         mappingFeeConfigAuthority
       );
@@ -1269,32 +1352,29 @@ describe("Test", () => {
         base_price = global_base_price;
       }
       if (this_message.mode == 1 || this_message.mode == 2) {
-        let dapp_base_price=await GetDappBasepPrice(
-            dest_chain_id,
-            base_price,
-            this_message.targetContract
+        let dapp_base_price = await GetDappBasepPrice(
+          dest_chain_id,
+          base_price,
+          this_message.targetContract
         );
         let this_price;
-        if(this_message.maxFeePerGas<dapp_base_price){
-          this_price=dapp_base_price;
-        }else{
-          this_price=this_message.maxFeePerGas;
+        if (this_message.maxFeePerGas < dapp_base_price) {
+          this_price = dapp_base_price;
+        } else {
+          this_price = this_message.maxFeePerGas;
         }
-        fee = this_price*this_message.executeGasLimit;
-      }else if(this_message.mode == 4){
-        fee = base_price * this_message.maxFeePerGas;
-      }else{
+        fee = this_price * this_message.executeGasLimit;
+      } else if (this_message.mode == 4) {
+        fee = base_price * this_message.executeGasLimit;
+      } else {
         fee = base_price * default_gas_limit;
       }
 
-      if(amount_out>0){
+      if (amount_out > 0) {
         let output_amount_in;
-        let fee_config_molecular=feeConfigMappings[0].molecular.toNumber();
-        if(fee_config_molecular!=0){
-          output_amount_in=await ExactOutput(
-            dest_chain_id,
-            amount_out
-          );
+        let fee_config_molecular = feeConfigMappings[0].molecular.toNumber();
+        if (fee_config_molecular != 0) {
+          output_amount_in = await ExactOutput(dest_chain_id, amount_out);
         }
 
         let trade_fee2 = await ComputeTradeFee2(
@@ -1304,110 +1384,109 @@ describe("Test", () => {
         );
         fee += trade_fee2;
       }
-      console.log("finally fee:",fee);
+      console.log("finally fee:", fee);
       return fee;
     }
-    await GetEstimateGas(testAmountOut, id, newMessage);
+    await EstimateGas(testAmountOut, id, newMessage);
 
-    async function EstimatePrice1(
-      target_contract,
-      dest_chain_id
-    ){
-        const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
-          mappingFeeConfigAuthority
-        );
-        const dappConfigMappings = await mappingFeeConfig.dappConfigMappings;
-        const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
-          gasSystemGlobalAuthority
-        );
-        let gas_system_global_base_price = await gasSystemGlobal[0].global_base_price.toNumber();
-        let dapp_config_value = dappConfigMappings[0].value.toNumber();
-        let dapp_base_price;
-        if(dapp_config_value>0){
-          dapp_base_price=dapp_config_value;
-        }else{
-          dapp_base_price=gas_system_global_base_price;
-        }
-        return dapp_base_price;
-    }
-
-    async function EstimatePrice2(dest_chain_id){
+    async function EstimateTotalFee(dest_chain_id, amount_out, this_message) {
       const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
-          mappingFeeConfigAuthority
+        mappingFeeConfigAuthority
       );
-      const feeConfigMappings = await mappingFeeConfig.feeConfigMappings;
+      const feeConfigMappings = mappingFeeConfig.feeConfigMappings;
       const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
-          gasSystemGlobalAuthority
+        gasSystemGlobalAuthority
       );
 
-      let gas_system_global_base_price = await gasSystemGlobal[0].global_base_price.toNumber();
-      let fee_config_base_price = await feeConfigMappings[0].basePrice.toNumber();
+      const mappingAmountInThresholds =
+        await pg.program.account.mappingAmountInThresholds.fetch(
+          amountInThresholdsAuthority
+        );
+      const amountInThresholdsMappings =
+        mappingAmountInThresholds.amountInThresholdsMappings;
+      const token_amount_limit = amountInThresholdsMappings[0].value.toNumber();
+
+      const feeConfigBasePrice = feeConfigMappings[0].basePrice.toNumber();
+      const global_base_price = gasSystemGlobal.globalBasePrice.toNumber();
+      const default_gas_limit = gasSystemGlobal.defaultGasLimit.toNumber();
+
       let base_price;
-      if (fee_config_base_price > 0) {
-          base_price = fee_config_base_price;
+      let fee;
+      if (feeConfigBasePrice > 0) {
+        base_price = feeConfigBasePrice;
       } else {
-          base_price = gas_system_global_base_price;
+        base_price = global_base_price;
       }
-      return base_price;
-    }
 
-    async function ExactInput(
-      dest_chain_id,
-      amount_in
-    ){
-      const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
-          mappingFeeConfigAuthority
-      );
-      const feeConfigMappings = await mappingFeeConfig.feeConfigMappings;
-      let fee_config_molecular_decimal=feeConfigMappings[0].molecularDecimal;
-      let fee_config_denominator_decimal=feeConfigMappings[0].denominatorDecimal;
-      let this_amount_in;
-      if(fee_config_molecular_decimal!=fee_config_denominator_decimal){
-        if (fee_config_molecular_decimal > fee_config_denominator_decimal) {
-            this_amount_in=amount_in*10^(fee_config_molecular_decimal-fee_config_denominator_decimal);
-        } else {
-            this_amount_in=amount_in/10^(fee_config_denominator_decimal-fee_config_molecular_decimal);
+      if (this_message.mode == 1 || this_message.mode == 2) {
+        let dapp_base_price = await GetDappBasepPrice(
+          dest_chain_id,
+          base_price,
+          this_message.targetContract
+        );
+        if (this_message.maxFeePerGas < dapp_base_price) {
+          throw "dapp_base_price > price";
         }
+        fee = this_message.maxFeePerGas * this_message.executeGasLimit;
+      } else if (this_message.mode == 4) {
+        fee = base_price * this_message.executeGasLimit;
       } else {
-            this_amount_in=amount_in
-      };
-      let amount_out = this_amount_in*fee_config_molecular_decimal
-            /fee_config_denominator_decimal;
-      return amount_out;
+        fee = base_price * default_gas_limit;
+      }
+
+      let output_amount_in = amount_out.toNumber();
+      if (output_amount_in > 0) {
+        let fee_config_molecular = feeConfigMappings[0].molecular.toNumber();
+        if (fee_config_molecular != 0) {
+          output_amount_in = await ExactOutput(dest_chain_id, output_amount_in);
+        }
+
+        let trade_fee2 = await ComputeTradeFee2(
+          this_message.targetContract,
+          dest_chain_id,
+          output_amount_in
+        );
+        fee += trade_fee2 + output_amount_in + fee;
+      }
+      if (output_amount_in > token_amount_limit) {
+        throw "Overflow token amount limit!";
+      }
+      console.log("EstimateTotalFee:", fee);
+      return fee;
     }
+    await EstimateTotalFee(testAmountOut, id, newMessage);
 
     //batch_set_exchange_rate
-    // let molecular_decimals = Buffer.from("6");
-    // let denominator_decimals = Buffer.from("6");
-    // async function BatchSetThisExchangeRate() {
-    //   try {
-    //     const batchSetThisExchangeRate = await pg.program.methods
-    //       .batchSetThisExchangeRate(
-    //         destChainIds,
-    //         moleculars,
-    //         denominators,
-    //         molecular_decimals,
-    //         denominator_decimals
-    //       )
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         powerUser: powerUserAuthority,
-    //         mappingFeeConfig: mappingFeeConfigAuthority,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(`batchSetThisExchangeRate:${batchSetThisExchangeRate}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(batchSetThisExchangeRate);
-    //   } catch (e) {
-    //     console.log("BatchSetThisExchangeRate error:", e);
-    //   }
-    // }
-    // await BatchSetThisExchangeRate();
+    let molecular_decimals = Buffer.from("6");
+    let denominator_decimals = Buffer.from("6");
+    async function BatchSetThisExchangeRate() {
+      try {
+        const batchSetThisExchangeRate = await pg.program.methods
+          .batchSetThisExchangeRate(
+            destChainIds,
+            moleculars,
+            denominators,
+            molecular_decimals,
+            denominator_decimals
+          )
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            powerUser: powerUserAuthority,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`batchSetThisExchangeRate:${batchSetThisExchangeRate}'`);
+        // Confirm transaction
+        await pg.connection.confirmTransaction(batchSetThisExchangeRate);
+      } catch (e) {
+        console.log("BatchSetThisExchangeRate error:", e);
+      }
+    }
+    await BatchSetThisExchangeRate();
 
-    /** 
     //ChangeThisPowerUser
     async function ChangeThisPowerUser() {
       try {
@@ -1483,52 +1562,51 @@ describe("Test", () => {
     await WithdrawVaultSplToken();
 
     // sol_transfer
-    let amount1 = new anchor.BN(1000000);
-    async function SolTransfer(sender, receiver, amount) {
-      try {
-        const solTransfer = await pg.program.methods
-          .transferSolValut(amount)
-          .accounts({
-            sender: sender,
-            vizingVault: receiver,
-            systemProgram: systemId,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`solTransfer:${solTransfer}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(solTransfer);
-      } catch (e) {
-        console.log("SolTransfer error:", e);
-      }
-    }
-    await SolTransfer(user, vizingVaultAuthority, amount1);
+    // let amount1 = new anchor.BN(1000000);
+    // async function SolTransfer(sender, receiver, amount) {
+    //   try {
+    //     const solTransfer = await pg.program.methods
+    //       .transferSolValut(amount)
+    //       .accounts({
+    //         sender: sender,
+    //         vizingVault: receiver,
+    //         systemProgram: systemId,
+    //       })
+    //       .signers([signer])
+    //       .rpc();
+    //     console.log(`solTransfer:${solTransfer}'`);
+    //     // Confirm transaction
+    //     await pg.connection.confirmTransaction(solTransfer);
+    //   } catch (e) {
+    //     console.log("SolTransfer error:", e);
+    //   }
+    // }
+    // await SolTransfer(user, vizingVaultAuthority, amount1);
 
     //withdraw_sol
-    async function WithdrawVaultSol(sender, receiver, amount) {
-      try {
-        const withdrawVaultSol = await pg.program.methods
-          .withdrawVaultSol(amount)
-          .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
-            user: user,
-            source: sender,
-            destination: receiver,
-            systemProgram: systemId,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`withdrawVaultSol:${withdrawVaultSol}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(withdrawVaultSol);
-      } catch (e) {
-        console.log("WithdrawVaultSol error:", e);
-      }
-    }
-    let amount2 = new anchor.BN(55555);
-    await WithdrawVaultSol(vizingVaultAuthority, user, amount2);
-    
+    // async function WithdrawVaultSol(sender, receiver, amount) {
+    //   try {
+    //     const withdrawVaultSol = await pg.program.methods
+    //       .withdrawVaultSol(amount)
+    //       .accounts({
+    //         saveChainId: saveDestChainIdAccount.publicKey,
+    //         powerUser: powerUserAuthority,
+    //         user: user,
+    //         source: sender,
+    //         destination: receiver,
+    //         systemProgram: systemId,
+    //       })
+    //       .signers([signer])
+    //       .rpc();
+    //     console.log(`withdrawVaultSol:${withdrawVaultSol}'`);
+    //     // Confirm transaction
+    //     await pg.connection.confirmTransaction(withdrawVaultSol);
+    //   } catch (e) {
+    //     console.log("WithdrawVaultSol error:", e);
+    //   }
+    // }
+    // let amount2 = new anchor.BN(55555);
+    // await WithdrawVaultSol(vizingVaultAuthority, user, amount2);
 
     //set_this_token_info_base
     const tokenAddressArray: number[] = Array.from(tokenAddress);
@@ -1583,56 +1661,73 @@ describe("Test", () => {
       }
     }
     await SetThisTokenTradeFeeMap();
-    */
 
-    //launch
-    // const executeGasLimit = new BN(6);
-    // const maxFeePerGas = new BN(100);
+    // launch
+    const executeGasLimit = new BN(6);
+    const maxFeePerGas = new BN(100);
 
-    // const message = {
-    //   mode: 1,
-    //   targetContract: dappNumberArray,
-    //   executeGasLimit: executeGasLimit,
-    //   maxFeePerGas: maxFeePerGas,
-    //   signature: Buffer.from("000000001"),
-    // };
+    const message = {
+      mode: 1,
+      targetContract: dappNumberArray,
+      executeGasLimit: executeGasLimit,
+      maxFeePerGas: maxFeePerGas,
+      signature: Buffer.from("000000001"),
+    };
 
-    // const launchParams = {
-    //   erliestArrivalTimestamp: new anchor.BN(1),
-    //   latestArrivalTimestamp: new anchor.BN(2),
-    //   relayer: user,
-    //   sender: user,
-    //   value: new anchor.BN(1000),
-    //   destChainid: new anchor.BN(4),
-    //   additionParams: Buffer.alloc(0),
-    //   message: message,
-    // };
-    // async function Launch() {
-    //   try {
-    //     let launch = await pg.program.methods
-    //       .launch(launchParams)
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         feePayer: user,
-    //         messageAuthority: user,
-    //         vizing: vizingPadSettings,
-    //         feeCollector: feeReceiverKeyPair.publicKey,
-    //         mappingFeeConfig: mappingFeeConfigAuthority,
-    //         gasSystemGlobal: gasSystemGlobalAuthority,
-    //         globalTradeFee: globalTradeFeeAuthority,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
+    const launchParams = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: user,
+      sender: user,
+      value: new anchor.BN(1000),
+      destChainid: new anchor.BN(4),
+      additionParams: Buffer.alloc(0),
+      message: message,
+    };
+    async function Launch() {
+      try {
+        let launch = await pg.program.methods
+          .launch(launchParams)
+          .accounts({
+            saveChainId: saveDestChainIdAccount.publicKey,
+            feePayer: user,
+            messageAuthority: user,
+            vizing: vizingPadSettings,
+            feeCollector: feeReceiverKeyPair.publicKey,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            gasSystemGlobal: gasSystemGlobalAuthority,
+            globalTradeFee: globalTradeFeeAuthority,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
 
-    //     console.log(`Launch tx:${launch}'`);
-    //     await pg.connection.confirmTransaction(launch);
-    //   } catch (e) {
-    //     console.log("launch error:", e);
-    //   }
-    // }
-    // await Launch();
+        console.log(`Launch tx:${launch}'`);
+        await pg.connection.confirmTransaction(launch);
+      } catch (e) {
+        console.log("launch error:", e);
+      }
+    }
+    await Launch();
 
     //landing
+
+    //get
+    async function GetEstimateGas(amount_out, dest_chain_id, this_message) {
+      const estimateGas = await pg.program.methods
+        .estimateGas(amount_out, dest_chain_id, this_message)
+        .accounts({
+          saveChainId: saveDestChainIdAccount.publicKey,
+          mappingFeeConfig: mappingFeeConfigAuthority,
+          gasSystemGlobal: gasSystemGlobalAuthority,
+          globalTradeFee: globalTradeFeeAuthority,
+        })
+        .signers([signer])
+        .rpc();
+      console.log(`estimateGas:${estimateGas}'`);
+      // Confirm transaction
+      await pg.connection.confirmTransaction(estimateGas);
+    }
+    await GetEstimateGas(testAmountOut, id, newMessage);
   });
 });

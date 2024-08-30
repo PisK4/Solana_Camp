@@ -13,7 +13,7 @@ use state::*;
 use vizing_channel::*;
 use vizing_omni::*;
 
-declare_id!("CJBT2p3N6k3dD76fyFzPRQVZK9cpB1SkAwo3e94bgtrF");
+declare_id!("H8zn4moc93tskEBHNw7D9FxxozvBqcdDesiY3L1F5ZTy");
 
 #[program]
 pub mod vizing_core {
@@ -418,12 +418,12 @@ pub mod vizing_core {
         )
     }
 
-    pub fn transfer_sol_valut(ctx: Context<SolTransfer>, amount: u64) ->Result<()>{
-        SolTransfer::sol_transfer(
-            ctx,
-            amount
-        )
-    }
+    // pub fn transfer_sol_valut(ctx: Context<SolTransfer>, amount: u64) ->Result<()>{
+    //     SolTransfer::sol_transfer(
+    //         ctx,
+    //         amount
+    //     )
+    // }
 
     //withdraw_spl_token
     pub fn withdraw_vault_spl_token(
@@ -464,6 +464,127 @@ pub mod vizing_core {
             chain_ids,
             moleculars,
             denominators,
+        )
+    }
+
+    //get
+    /*
+        /// @notice Calculate the fee for the native token transfer
+        /// @param amount The value we spent in the source chain
+    */
+    pub fn compute_trade_fee1(
+        ctx: Context<ComputeTradeFee1>,
+        dest_chain_id: u64,
+        amount_out: u64,
+    ) -> Result<u64>{
+        ComputeTradeFee1::get_compute_trade_fee1(
+            ctx,
+            dest_chain_id,
+            amount_out
+        )
+    }
+
+    pub fn compute_trade_fee2(
+        ctx: Context<ComputeTradeFee2>,
+        target_contract: [u8; 32],
+        dest_chain_id: u64,
+        amount_out: u64,
+    ) -> Result<u64> {
+        ComputeTradeFee2::get_compute_trade_fee2(
+            ctx,
+            target_contract,
+            dest_chain_id,
+            amount_out
+        )
+    }
+
+    /*
+        /// @notice Estimate the gas price we need to encode in message
+        /// @param destChainid The chain id of the destination chain
+    */
+    pub fn estimate_price2(
+        ctx: Context<EstimatePrice2>,
+        dest_chain_id: u64
+    ) -> Result<u64> {
+        EstimatePrice2::get_estimate_price2(
+            ctx,
+            dest_chain_id
+        )
+    }
+
+    /*
+        /// @notice Estimate the gas fee we should pay to vizing
+        /// @param amountOut amountOut in the destination chain
+        /// @param destChainid The chain id of the destination chain
+        /// @param message The message we want to send to the destination chain
+    */
+    pub fn estimate_gas(
+        ctx: Context<EstimateGas>,
+        amount_out: u64,
+        dest_chain_id: u64,
+        message: Message
+    ) -> Result<u64> {
+        EstimateGas::get_estimate_gas(
+            ctx,
+            amount_out,
+            dest_chain_id,
+            message
+        )
+    }
+
+    /*
+        /// @notice Estimate the total fee we should pay to vizing
+        /// @param amountOut amountOut in the destination chain
+        /// @param destChainid The chain id of the destination chain
+        /// @param message The message we want to send to the destination chain
+    */
+    pub fn estimate_total_fee(
+        ctx: Context<EstimateTotalFee>,
+        dest_chain_id: u64,
+        amount_out: u64,
+        message: Message
+    ) -> Result<u64> {
+        EstimateTotalFee::get_estimate_total_fee(
+            ctx,
+            dest_chain_id,
+            amount_out,
+            message
+        )
+    }
+
+    /*
+        /// @notice similar to uniswap Swap Router
+        /// @notice Estimate how many native token we should spend to exchange the amountOut in the destChainid
+        /// @param destChainid The chain id of the destination chain
+        /// @param amountOut The value we want to receive in the destination chain
+    */
+    pub fn exact_output(
+        ctx: Context<ExactOutput>,
+        dest_chain_id: u64,
+        amount_out: u64,    
+    ) -> Result<u64> {
+        ExactOutput::get_exact_output(
+            ctx,
+            dest_chain_id,
+            amount_out
+        )
+    }
+
+    /*
+        /// @notice similar to uniswap Swap Router
+        /// @notice Estimate how many native token we could get in the destChainid if we input the amountIn
+        /// @param destChainid The chain id of the destination chain
+        /// @param amountIn The value we spent in the source chain
+    */
+    pub fn exact_input(
+        ctx: Context<ExactInput>,
+        dest_chain_id: u64,
+        amount_in: u64,
+    ) -> Result<u64> {
+        ExactInput::get_exact_input(
+            ctx,
+            dest_chain_id,
+            amount_in
         )
     }
 

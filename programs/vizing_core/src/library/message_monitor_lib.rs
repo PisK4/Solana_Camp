@@ -40,8 +40,6 @@ pub mod message_monitor {
         let mut receiver_addr_array = [0u8; 32];
         receiver_addr_array.copy_from_slice(receiver);
 
-        let gas_limit_bytes = &message[33..36];
-
         let u8_gas_limit: [u8; 4] = [
             message[33],
             message[34],

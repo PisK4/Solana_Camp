@@ -85,8 +85,7 @@ impl LaunchOp<'_> {
         msg!("serialized_data: {:?}", serialized_data);
 
         let dest_chain_id = params.dest_chainid;
-        //???
-        let amount_out = params.value;
+
         let dapp = &params.message.target_contract;
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let gas_system_global = &mut ctx.accounts.gas_system_global;
@@ -102,29 +101,19 @@ impl LaunchOp<'_> {
             .get_dapp_config(dest_chain_id, *dapp)
             .ok_or(errors::ErrorCode::DappConfigNotFound)?;
 
-        let fee_config_base_price = get_fee_config.base_price;
-        let global_base_price = gas_system_global.global_base_price;
-        let default_gas_limit = gas_system_global.default_gas_limit;
-        let fee_config_molecular_decimal = get_fee_config.molecular_decimal;
-        let fee_config_denominator_decimal = get_fee_config.denominator_decimal;
-        let global_trade_fee_molecular = global_trade_fee.molecular;
-        let global_trade_fee_denominator = global_trade_fee.denominator;
-        let trade_fee_config_molecular = get_trade_fee_config.molecular;
-        let trade_fee_config_denominator = get_trade_fee_config.denominator;
-        let dapp_config_value = get_dapp_config.value;
-
         let fee = vizing_gas_system::estimate_gas(
-            global_base_price,
-            fee_config_base_price,
-            dapp_config_value,
-            fee_config_molecular_decimal,
-            fee_config_denominator_decimal,
-            trade_fee_config_molecular,
-            trade_fee_config_denominator,
-            global_trade_fee_molecular,
-            global_trade_fee_denominator,
-            default_gas_limit,
-            amount_out,
+            gas_system_global.global_base_price,
+            get_fee_config.base_price,
+            get_dapp_config.value,
+            get_fee_config.molecular_decimal,
+            get_fee_config.denominator_decimal,
+            get_fee_config.molecular,
+            get_trade_fee_config.molecular,
+            get_trade_fee_config.denominator,
+            global_trade_fee.molecular,
+            global_trade_fee.denominator,
+            gas_system_global.default_gas_limit,
+            params.value,
             dest_chain_id,
             &serialized_data,
         ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
@@ -238,4 +227,309 @@ fn build_landing_ix_data(params: &LandingParams) -> Result<Vec<u8>> {
     data.extend(RECEIVE_FROM_VIZING_DISCRIMINATOR);
     params.serialize(&mut data)?;
     Ok(data)
+}
+
+//get
+#[derive(Accounts)]
+pub struct ComputeTradeFee1<'info> {
+    #[account(mut)]
+    pub save_chain_id: Account<'info, SaveChainId>,
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"global_trade_fee".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub global_trade_fee: Account<'info, GlobalTradeFee>,
+}
+impl ComputeTradeFee1<'_> {
+    pub fn get_compute_trade_fee1(
+        ctx: Context<ComputeTradeFee1>,
+        dest_chain_id: u64,
+        amount_out: u64,
+    ) -> Result<u64> {
+        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+        let global_trade_fee = &mut ctx.accounts.global_trade_fee;
+        let fee: u64 = vizing_gas_system::compute_trade_fee1(
+            fee_config.molecular,
+            fee_config.denominator,
+            global_trade_fee.molecular,
+            global_trade_fee.denominator,
+            dest_chain_id,
+            amount_out,
+        ).ok_or(errors::ErrorCode::ComputeTradeFee1NotFound)?;
+        Ok(fee)
+    }
+}
+#[derive(Accounts)]
+pub struct ComputeTradeFee2<'info> {
+    #[account(mut)]
+    pub save_chain_id: Account<'info, SaveChainId>,
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"global_trade_fee".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub global_trade_fee: Account<'info, GlobalTradeFee>,
+}
+impl ComputeTradeFee2<'_> {
+    pub fn get_compute_trade_fee2(
+        ctx: Context<ComputeTradeFee2>,
+        target_contract: [u8; 32],
+        dest_chain_id: u64,
+        amount_out: u64,
+    ) -> Result<u64> {
+        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,target_contract).ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+        let global_trade_fee = &mut ctx.accounts.global_trade_fee;
+        let fee: u64 = vizing_gas_system::compute_trade_fee2(
+            trade_fee_config.molecular,
+            trade_fee_config.denominator,
+            global_trade_fee.molecular,
+            global_trade_fee.denominator,
+            target_contract,
+            dest_chain_id,
+            amount_out,
+        ).ok_or(errors::ErrorCode::ComputeTradeFee2NotFound)?;
+        Ok(fee)
+    }
+}
+
+#[derive(Accounts)]
+pub struct EstimatePrice2<'info> {
+    #[account(mut)]
+    pub save_chain_id: Account<'info,SaveChainId>,
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub gas_system_global: Account<'info, GasSystemGlobal>,
+}
+impl EstimatePrice2<'_> {
+    pub fn get_estimate_price2(
+        ctx: Context<EstimatePrice2>,
+        dest_chain_id: u64,
+    ) -> Result<u64> {
+        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+        let gas_system_global = &mut ctx.accounts.gas_system_global;
+
+        let base_price: u64 = vizing_gas_system::estimate_price2(
+            gas_system_global.global_base_price,
+            fee_config.base_price,
+            dest_chain_id,
+        ).ok_or(errors::ErrorCode::EstimatePrice2NotFound)?;
+        Ok(base_price)
+    }
+}
+
+#[derive(Accounts)]
+pub struct EstimateGas<'info> {
+    #[account(mut)]
+    pub save_chain_id: Account<'info,SaveChainId>,
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub gas_system_global: Account<'info, GasSystemGlobal>,
+    #[account(
+        mut,
+        seeds = [b"global_trade_fee".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub global_trade_fee: Account<'info, GlobalTradeFee>,
+}
+impl EstimateGas<'_> {
+    pub fn get_estimate_gas(
+        ctx: Context<EstimateGas>,
+        amount_out: u64,
+        dest_chain_id: u64,
+        message: Message,
+    ) -> Result<u64> {
+        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let gas_system_global = &mut ctx.accounts.gas_system_global;
+        let global_trade_fee = &mut ctx.accounts.global_trade_fee;
+
+        let serialized_data: Vec<u8> = message.try_to_vec()?;
+        let Some((_, dapp, _, _, _))=message_monitor::slice_message(&serialized_data) else { todo!() };
+
+        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+        let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,dapp).ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+        let dapp_config = mapping_fee_config.get_dapp_config(dest_chain_id,dapp).ok_or(errors::ErrorCode::DappConfigNotFound)?;
+
+
+        let fee: u64 = vizing_gas_system::estimate_gas(
+            gas_system_global.global_base_price,
+            fee_config.base_price,
+            dapp_config.value,
+            fee_config.molecular_decimal,
+            fee_config.denominator_decimal,
+            fee_config.molecular,
+            trade_fee_config.molecular,
+            trade_fee_config.denominator,
+            global_trade_fee.molecular,
+            global_trade_fee.denominator,
+            gas_system_global.default_gas_limit,
+            amount_out,
+            dest_chain_id,
+            &serialized_data,
+        ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
+        Ok(fee)
+    }
+}
+
+#[derive(Accounts)]
+pub struct EstimateTotalFee<'info> {
+    #[account(mut)]
+    pub save_chain_id: Account<'info,SaveChainId>,
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub gas_system_global: Account<'info, GasSystemGlobal>,
+    #[account(
+        mut,
+        seeds = [b"global_trade_fee".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub global_trade_fee: Account<'info, GlobalTradeFee>,
+    #[account(
+        mut,
+        seeds = [b"amount_in_thresholds".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub amount_in_thresholds: Account<'info, MappingAmountInThresholds>,
+}
+impl EstimateTotalFee<'_> {
+    pub fn get_estimate_total_fee(
+        ctx: Context<EstimateTotalFee>,
+        dest_chain_id: u64,
+        amount_out: u64,
+        message: Message,
+    ) -> Result<u64> {
+        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let gas_system_global = &mut ctx.accounts.gas_system_global;
+        let global_trade_fee = &mut ctx.accounts.global_trade_fee;
+        let mapping_amount_in_thresholds = &mut ctx.accounts.amount_in_thresholds;
+
+        let serialized_data: Vec<u8> = message.try_to_vec()?;
+        let Some((_, dapp, _, _, _))=message_monitor::slice_message(&serialized_data) else { todo!() };
+
+        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+        let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,dapp).ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+        let dapp_config = mapping_fee_config.get_dapp_config(dest_chain_id,dapp).ok_or(errors::ErrorCode::DappConfigNotFound)?;
+        let token_amount_limit=mapping_amount_in_thresholds.get_amount_in_thresholds(dest_chain_id).ok_or(errors::ErrorCode::AmountInThresholdsNotFound)?;
+
+        let fee: u64 = vizing_gas_system::estimate_total_fee(
+            token_amount_limit,
+            trade_fee_config.molecular,
+            trade_fee_config.denominator,
+            global_trade_fee.molecular,
+            global_trade_fee.denominator,
+            dapp_config.value,
+            fee_config.molecular_decimal,
+            fee_config.denominator_decimal,
+            fee_config.molecular,
+            gas_system_global.default_gas_limit,
+            gas_system_global.global_base_price,
+            fee_config.base_price,
+            dest_chain_id,
+            amount_out,
+            &serialized_data,
+        ).ok_or(errors::ErrorCode::EstimateTotalFeeNotFound)?;
+        Ok(fee)
+    }
+}
+
+#[derive(Accounts)]
+pub struct ExactOutput<'info> {
+    #[account(mut)]
+    pub save_chain_id: Account<'info,SaveChainId>,
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+}
+impl ExactOutput<'_> {
+    pub fn get_exact_output(
+        ctx: Context<ExactOutput>,
+        dest_chain_id: u64,
+        amount_out: u64,
+    ) -> Result<u64> {
+        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+
+        let amount_in: u64 = vizing_gas_system::exact_output(
+            fee_config.molecular_decimal,
+            fee_config.denominator_decimal,
+            dest_chain_id,
+            amount_out,
+        ).ok_or(errors::ErrorCode::ExactOutputNotFound)?;
+        Ok(amount_in)
+    }
+}
+
+#[derive(Accounts)]
+pub struct ExactInput<'info> {
+    #[account(mut)]
+    pub save_chain_id: Account<'info,SaveChainId>,
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+}
+impl ExactInput<'_> {
+    pub fn get_exact_input(
+        ctx: Context<ExactInput>,
+        dest_chain_id: u64,
+        amount_in: u64,
+    ) -> Result<u64> {
+        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+        
+        let amount_out: u64 = vizing_gas_system::exact_input(
+            fee_config.molecular_decimal,
+            fee_config.denominator_decimal,
+            dest_chain_id,
+            amount_in,
+        ).ok_or(errors::ErrorCode::ExactInputputNotFound)?;
+        Ok(amount_out)
+    }
 }
