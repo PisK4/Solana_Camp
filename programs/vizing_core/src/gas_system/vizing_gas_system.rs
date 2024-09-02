@@ -1,13 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program::{transfer, Transfer};
 
-// use crate::error::errors::ErrorCode;
-// use crate::message_type_lib::*;
-// use crate::message_monitor_lib::*;
-// use crate::state::*;
-
 use crate::library::*;
 use crate::state::*;
+use crate::governance::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
 pub struct NativeTokenTradeFeeConfig {
@@ -49,11 +45,11 @@ pub struct DappConfig {
     pub value: u64,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
-pub struct AmountInThresholds {
-    pub key: u64,
-    pub value: u64,
-}
+// #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default)]
+// pub struct AmountInThresholds {
+//     pub key: u64,
+//     pub value: u64,
+// }
 
 #[account]
 pub struct MappingFeeConfig {
@@ -68,10 +64,10 @@ pub struct MappingNativeTokenTradeFeeConfig {
     pub native_token_trade_fee_config_mappings: Vec<NativeTokenTradeFeeConfig>,
 }
 
-#[account]
-pub struct MappingAmountInThresholds {
-    pub amount_in_thresholds_mappings: Vec<AmountInThresholds>,
-}
+// #[account]
+// pub struct MappingAmountInThresholds {
+//     pub amount_in_thresholds_mappings: Vec<AmountInThresholds>,
+// }
 
 impl MappingFeeConfig {
     //feeConfig
@@ -229,67 +225,67 @@ impl MappingNativeTokenTradeFeeConfig {
     }
 }
 
-impl MappingAmountInThresholds {
-    pub fn set_amount_in_thresholds(&mut self, key: u64, value: u64) {
-        if let Some(pair) = self
-            .amount_in_thresholds_mappings
-            .iter_mut()
-            .find(|pair| pair.key == key)
-        {
-            pair.value = value;
-        } else {
-            self.amount_in_thresholds_mappings
-                .push(AmountInThresholds { key, value });
-        }
-    }
+// impl MappingAmountInThresholds {
+//     pub fn set_amount_in_thresholds(&mut self, key: u64, value: u64) {
+//         if let Some(pair) = self
+//             .amount_in_thresholds_mappings
+//             .iter_mut()
+//             .find(|pair| pair.key == key)
+//         {
+//             pair.value = value;
+//         } else {
+//             self.amount_in_thresholds_mappings
+//                 .push(AmountInThresholds { key, value });
+//         }
+//     }
 
-    pub fn get_amount_in_thresholds(&mut self, key: u64) -> Option<u64> {
-        self.amount_in_thresholds_mappings
-            .iter()
-            .find(|pair| pair.key == key)
-            .map(|pair| pair.value)
-    }
-}
+//     pub fn get_amount_in_thresholds(&mut self, key: u64) -> Option<u64> {
+//         self.amount_in_thresholds_mappings
+//             .iter()
+//             .find(|pair| pair.key == key)
+//             .map(|pair| pair.value)
+//     }
+// }
 
 
 //init
-impl InitPowerUser<'_>{
-    pub fn initialize_power_user(
-        ctx: Context<InitPowerUser>,
-        new_admin: Pubkey,
-        new_engine_admin: Pubkey,
-        new_station_admin: Pubkey,
-        new_gas_pool_admin: Pubkey,
-        new_trusted_relayers: Vec<Pubkey>,
-        new_registered_validators: Vec<Pubkey>,
-        new_gas_managers: Vec<Pubkey>,
-        new_swap_managers: Vec<Pubkey>,
-        new_token_managers: Vec<Pubkey>,
-    ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
+// impl InitPowerUser<'_>{
+//     pub fn initialize_power_user(
+//         ctx: Context<InitPowerUser>,
+//         new_admin: Pubkey,
+//         new_engine_admin: Pubkey,
+//         new_station_admin: Pubkey,
+//         new_gas_pool_admin: Pubkey,
+//         new_trusted_relayers: Vec<Pubkey>,
+//         new_registered_validators: Vec<Pubkey>,
+//         new_gas_managers: Vec<Pubkey>,
+//         new_swap_managers: Vec<Pubkey>,
+//         new_token_managers: Vec<Pubkey>,
+//     ) -> Result<()> {
+//         let power_user = &mut ctx.accounts.power_user;
 
-        power_user.admin = new_admin;
-        power_user.engine_admin = new_engine_admin;
-        power_user.station_admin = new_station_admin;
-        power_user.gas_pool_admin = new_gas_pool_admin;
-        power_user.trusted_relayers = new_trusted_relayers;
-        power_user.registered_validators = new_registered_validators;
-        power_user.gas_managers = new_gas_managers;
-        power_user.swap_managers = new_swap_managers;
-        power_user.token_managers = new_token_managers;
-        Ok(())
-    }
-}
+//         power_user.admin = new_admin;
+//         power_user.engine_admin = new_engine_admin;
+//         power_user.station_admin = new_station_admin;
+//         power_user.gas_pool_admin = new_gas_pool_admin;
+//         power_user.trusted_relayers = new_trusted_relayers;
+//         power_user.registered_validators = new_registered_validators;
+//         power_user.gas_managers = new_gas_managers;
+//         power_user.swap_managers = new_swap_managers;
+//         power_user.token_managers = new_token_managers;
+//         Ok(())
+//     }
+// }
 
 impl SaveDestChainId<'_>{
     pub fn set_chain_id(ctx: Context<SaveDestChainId>, dest_chain_id: Vec<u8>) -> Result<()> {
         let save = &mut ctx.accounts.save_chain_id;
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = ctx.accounts.user.key();
-        require!(
-            user_key == power_user.admin,
-            errors::ErrorCode::NonAdmin
-        );
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = ctx.accounts.user.key();
+        // require!(
+        //     user_key == power_user.admin,
+        //     errors::ErrorCode::NonAdmin
+        // );
 
         save.dest_chain_id = dest_chain_id;
         Ok(())
@@ -313,10 +309,10 @@ impl InitGasGlobal<'_>{
         molecular: u64,
         denominator: u64,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &mut ctx.accounts.user.key();
+        // let if_power_user = power_user.gas_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonGasManager);
 
         let gas_system_global = &mut ctx.accounts.gas_system_global;
         gas_system_global.global_base_price = global_base_price;
@@ -339,10 +335,10 @@ impl InitFeeConfig<'_>{
         molecular_decimal: u8,
         denominator_decimal: u8,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &mut ctx.accounts.user.key();
+        // let if_power_user = power_user.gas_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonGasManager);
 
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         mapping_fee_config.set_fee_config(
@@ -358,22 +354,22 @@ impl InitFeeConfig<'_>{
     }
 }
 
-impl InitAmountInThresholds<'_>{
-    pub fn initialize_amount_in_thresholds(
-        ctx: Context<InitAmountInThresholds>,
-        key: u64,
-        value: u64,
-    ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+// impl InitAmountInThresholds<'_>{
+//     pub fn initialize_amount_in_thresholds(
+//         ctx: Context<InitAmountInThresholds>,
+//         key: u64,
+//         value: u64,
+//     ) -> Result<()> {
+//         // let power_user = &mut ctx.accounts.power_user;
+//         // let user_key = &mut ctx.accounts.user.key();
+//         // let if_power_user = power_user.gas_managers.contains(user_key);
+//         // require!(if_power_user, errors::ErrorCode::NonGasManager);
 
-        let a = &mut ctx.accounts.amount_in_thresholds;
-        a.set_amount_in_thresholds(key, value);
-        Ok(())
-    }
-}
+//         let a = &mut ctx.accounts.amount_in_thresholds;
+//         a.set_amount_in_thresholds(key, value);
+//         Ok(())
+//     }
+// }
 
 impl InitNativeTokenTradeFeeConfig<'_>{
     pub fn initialize_native_token_trade_fee_config(
@@ -382,10 +378,10 @@ impl InitNativeTokenTradeFeeConfig<'_>{
         molecular: u64,
         denominator: u64,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &mut ctx.accounts.user.key();
+        // let if_power_user = power_user.gas_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonGasManager);
 
         let n = &mut ctx.accounts.native_token_trade_fee_config;
         n.set_native_token_trade_fee_config(key, molecular, denominator);
@@ -404,10 +400,10 @@ impl SetGasGlobal<'_>{
         molecular: u64,
         denominator: u64,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &mut ctx.accounts.user.key();
+        // let if_power_user = power_user.gas_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonGasManager);
 
         let gas_system_global = &mut ctx.accounts.gas_system_global;
         gas_system_global.global_base_price = global_base_price;
@@ -430,10 +426,10 @@ impl SetFeeConfig<'_>{
         molecular_decimal: u8,
         denominator_decimal: u8,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &mut ctx.accounts.user.key();
+        // let if_power_user = power_user.gas_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonGasManager);
 
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         mapping_fee_config.set_fee_config(
@@ -457,10 +453,10 @@ impl SetTokenFeeConfig<'_>{
         molecular: u64,
         denominator: u64,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &mut ctx.accounts.user.key();
+        // let if_power_user = power_user.gas_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonGasManager);
 
         let gas_system_global = &mut ctx.accounts.gas_system_global;
         let native_token_trade_fee_config = &mut ctx.accounts.native_token_trade_fee_config;
@@ -478,10 +474,10 @@ impl SetDappPriceConfig<'_>{
         dapp: [u8; 32],
         base_price: u64,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &mut ctx.accounts.user.key();
+        // let if_power_user = power_user.gas_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonGasManager);
         let m = &mut ctx.accounts.mapping_fee_config;
         m.set_dapp_config(chain_id, dapp, base_price);
         Ok(())
@@ -497,10 +493,10 @@ impl SetExchangeRate<'_>{
         molecular_decimal: u8,
         denominator_decimal: u8,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.swap_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonSwapManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &mut ctx.accounts.user.key();
+        // let if_power_user = power_user.swap_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonSwapManager);
         let m = &mut ctx.accounts.mapping_fee_config;
 
         if let Some(mut fee_config) = m.get_fee_config(chain_id) {
@@ -532,10 +528,10 @@ impl BatchSetTokenFeeConfig<'_>{
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &mut ctx.accounts.user.key();
+        // let if_power_user = power_user.gas_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonGasManager);
         require!(
             dest_chain_ids.len() == moleculars.len() && dest_chain_ids.len() == denominators.len(),
             errors::ErrorCode::InvalidLength
@@ -559,10 +555,10 @@ impl BatchSetTradeFeeConfigMap<'_>{
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &mut ctx.accounts.user.key();
+        // let if_power_user = power_user.gas_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonGasManager);
         require!(
             dest_chain_ids.len() == moleculars.len()
                 && dest_chain_ids.len() == denominators.len()
@@ -581,24 +577,24 @@ impl BatchSetTradeFeeConfigMap<'_>{
     }
 }
     
-impl BatchSetAmountInThreshold<'_>{
-    pub fn batch_set_amount_in_threshold(
-        ctx: Context<BatchSetAmountInThreshold>,
-        chain_ids: Vec<u64>,
-        new_values: Vec<u64>,
-    ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
-        require!(chain_ids.len() == new_values.len(), errors::ErrorCode::InvalidLength);
-        let a = &mut ctx.accounts.amount_in_thresholds;
-        for (i, &current_id) in chain_ids.iter().enumerate() {
-            a.set_amount_in_thresholds(current_id, new_values[i]);
-        }
-        Ok(())
-    }
-}
+// impl BatchSetAmountInThreshold<'_>{
+//     pub fn batch_set_amount_in_threshold(
+//         ctx: Context<BatchSetAmountInThreshold>,
+//         chain_ids: Vec<u64>,
+//         new_values: Vec<u64>,
+//     ) -> Result<()> {
+//         // let power_user = &mut ctx.accounts.power_user;
+//         // let user_key = &mut ctx.accounts.user.key();
+//         // let if_power_user = power_user.gas_managers.contains(user_key);
+//         // require!(if_power_user, errors::ErrorCode::NonGasManager);
+//         require!(chain_ids.len() == new_values.len(), errors::ErrorCode::InvalidLength);
+//         let a = &mut ctx.accounts.amount_in_thresholds;
+//         for (i, &current_id) in chain_ids.iter().enumerate() {
+//             a.set_amount_in_thresholds(current_id, new_values[i]);
+//         }
+//         Ok(())
+//     }
+// }
     
 impl BatchSetDappPriceConfigInDiffChain<'_>{
     pub fn batch_set_dapp_price_config_in_diff_chain(
@@ -607,10 +603,10 @@ impl BatchSetDappPriceConfigInDiffChain<'_>{
         dapps: Vec<[u8; 32]>,
         base_prices: Vec<u64>,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &mut ctx.accounts.user.key();
+        // let if_power_user = power_user.gas_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonGasManager);
         require!(
             chain_ids.len() == dapps.len() && chain_ids.len() == base_prices.len(),
             errors::ErrorCode::InvalidLength
@@ -631,10 +627,10 @@ impl BatchSetDappPriceConfigInSameChain<'_>{
         dapps: Vec<[u8; 32]>,
         base_prices: Vec<u64>,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.gas_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonGasManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &mut ctx.accounts.user.key();
+        // let if_power_user = power_user.gas_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonGasManager);
         require!(dapps.len() == base_prices.len(), errors::ErrorCode::InvalidLength);
         let m = &mut ctx.accounts.mapping_fee_config;
         for (i, _) in base_prices.iter().enumerate() {
@@ -653,10 +649,10 @@ impl BatchSetExchangeRate<'_>{
         molecular_decimals: Vec<u8>,
         denominator_decimals: Vec<u8>,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &mut ctx.accounts.user.key();
-        let if_power_user = power_user.swap_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonSwapManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &mut ctx.accounts.user.key();
+        // let if_power_user = power_user.swap_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonSwapManager);
         require!(
             chain_ids.len() == moleculars.len()
                 && chain_ids.len() == denominators.len()
@@ -783,6 +779,10 @@ impl BatchSetExchangeRate<'_>{
                 dapp
             )?;
 
+            msg!("dapp: {:?}", dapp);
+            msg!("gas_limit: {:?}", gas_limit);
+            msg!("price: {:?}", price);
+
             this_dapp=dapp;
             let this_price: u64;
             if price<dapp_base_price{
@@ -821,6 +821,7 @@ impl BatchSetExchangeRate<'_>{
                 dest_chain_id,
                 output_amount_in
             )?;
+
             final_fee = fee.checked_add(trade_fee2)?;
 
         }
@@ -871,47 +872,6 @@ impl BatchSetExchangeRate<'_>{
         Some(base_price)
     }
 
-    // pub fn batch_estimate_total_fee(
-    //     ctx: Context<BatchEstimateTotalFee>,
-    //     amount_outs: Vec<u64>,
-    //     dest_chain_ids: Vec<u64>,
-    //     messages: &[&[u8]],
-    // ) -> Option<u64> {
-    //     let m = &mut ctx.accounts.mapping_fee_config;
-    //     let gas_system_global = &mut ctx.accounts.gas_system_global;
-    //     let global_trade_fee = &mut ctx.accounts.global_trade_fee;
-    //     let a = &mut ctx.accounts.amount_in_thresholds;
-    //     let mut total_trade_fee=0; 
-
-    //     for (i, &amount) in amount_outs.iter().enumerate() {
-    //         let t=m.get_trade_fee(dest_chain_ids[i])?;
-    //         let (Some((_, dapp, _, _, _)))=message_monitor::slice_message(messages[i]) else { todo!() };
-    //         let d=m.get_dapp_config(dest_chain_ids[i], dapp)?;
-    //         let fee_config = m.get_fee_config(dest_chain_ids[i])?;
-    //         let amount_in_thresholds=a.get_amount_in_thresholds(dest_chain_ids[i])?;
-            
-    //         let current_fee=estimate_total_fee(
-    //             amount_in_thresholds,
-    //             t.molecular,
-    //             t.denominator,
-    //             global_trade_fee.molecular,
-    //             global_trade_fee.denominator,
-    //             d.value,
-    //             fee_config.molecular_decimal,
-    //             fee_config.denominator_decimal,
-    //             fee_config.molecular,
-    //             gas_system_global.default_gas_limit,
-    //             gas_system_global.global_base_price,
-    //             fee_config.base_price,
-    //             dest_chain_ids[i],
-    //             amount_outs[i],
-    //             messages[i]
-    //         )?;
-    //         total_trade_fee=current_fee.checked_add(total_trade_fee)?;
-    //     }
-    //     Some(total_trade_fee)
-
-    // }
     pub fn estimate_total_fee(
         token_amount_limit: u64,
         trade_fee_config_molecular: u64,
@@ -941,6 +901,10 @@ impl BatchSetExchangeRate<'_>{
 
         if mode == MessageType::StandardActivate || mode == MessageType::ArbitraryActivate {
             let Some((_, dapp, gas_limit, price, _))=message_monitor::slice_message(message) else { todo!() };
+            
+            msg!("dapp: {:?}", dapp);
+            msg!("gas_limit: {:?}", gas_limit);
+            msg!("price: {:?}", price);
 
             let dapp_base_price = get_dapp_base_price(
                 dapp_config_value,
@@ -1038,35 +1002,18 @@ impl BatchSetExchangeRate<'_>{
 
 
 //init
-#[derive(Accounts)]
-pub struct InitPowerUser<'info> {
-    #[account(
-        init, 
-        payer = user, 
-        space = 8 + 512,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
 
 #[derive(Accounts)]
 pub struct SaveDestChainId<'info> {
     #[account(
         init,
         payer = user, 
-        space = 8 + 32,
+        space = 8 + 32
     )]
     pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.owner == user.key() @VizingError::NotOwner)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -1099,12 +1046,9 @@ pub struct InitGasGlobal<'info> {
         bump
     )]
     pub gas_system_global: Account<'info, GasSystemGlobal>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -1114,12 +1058,15 @@ pub struct InitGasGlobal<'info> {
 pub struct InitFeeConfig<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(
         init,
         payer = user, 
@@ -1134,38 +1081,18 @@ pub struct InitFeeConfig<'info> {
 }
 
 #[derive(Accounts)]
-pub struct InitAmountInThresholds<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
-    #[account(
-        init,
-        payer = user, 
-        space = 8 + 128,
-        seeds = [b"amount_in_thresholds".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub amount_in_thresholds: Account<'info, MappingAmountInThresholds>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
 pub struct InitNativeTokenTradeFeeConfig<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(
         init,
         payer = user, 
@@ -1202,12 +1129,15 @@ pub struct SetGasGlobal<'info> {
         bump
     )]
     pub gas_system_global: Account<'info, GasSystemGlobal>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -1217,12 +1147,15 @@ pub struct SetGasGlobal<'info> {
 pub struct SetFeeConfig<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(
         mut,
         seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
@@ -1238,12 +1171,15 @@ pub struct SetFeeConfig<'info> {
 pub struct SetTokenFeeConfig<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(
         mut,
         seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
@@ -1265,12 +1201,15 @@ pub struct SetTokenFeeConfig<'info> {
 pub struct BatchSetTokenFeeConfig<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(
         mut,
         seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
@@ -1292,12 +1231,15 @@ pub struct BatchSetTokenFeeConfig<'info> {
 pub struct BatchSetTradeFeeConfigMap<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(
         mut,
         seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
@@ -1315,37 +1257,43 @@ pub struct BatchSetTradeFeeConfigMap<'info> {
     pub system_program: Program<'info, System>,
 }
 
-#[derive(Accounts)]
-pub struct BatchSetAmountInThreshold<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
-    #[account(
-        mut,
-        seeds = [b"amount_in_thresholds".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub amount_in_thresholds: Account<'info, MappingAmountInThresholds>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
+// #[derive(Accounts)]
+// pub struct BatchSetAmountInThreshold<'info> {
+//     #[account(mut)]
+//     pub save_chain_id: Account<'info,SaveChainId>,
+//     // #[account(
+//     //     mut,
+//     //     seeds = [b"init_power_user".as_ref()],
+//     //     bump
+//     // )]
+//     // pub power_user: Account<'info, PowerUser>,
+//     #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+//         , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+//     pub vizing: Account<'info, VizingPadSettings>,
+//     // #[account(
+//     //     mut,
+//     //     seeds = [b"amount_in_thresholds".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+//     //     bump
+//     // )]
+//     // pub amount_in_thresholds: Account<'info, MappingAmountInThresholds>,
+//     #[account(mut)]
+//     pub user: Signer<'info>,
+//     pub system_program: Program<'info, System>,
+// }
 
 #[derive(Accounts)]
 pub struct SetDappPriceConfig<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(
         mut,
         seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
@@ -1361,12 +1309,15 @@ pub struct SetDappPriceConfig<'info> {
 pub struct BatchSetDappPriceConfigInDiffChain<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(
         mut,
         seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
@@ -1382,12 +1333,15 @@ pub struct BatchSetDappPriceConfigInDiffChain<'info> {
 pub struct BatchSetDappPriceConfigInSameChain<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(
         mut,
         seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
@@ -1403,12 +1357,15 @@ pub struct BatchSetDappPriceConfigInSameChain<'info> {
 pub struct SetExchangeRate<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(
         mut,
         seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
@@ -1424,12 +1381,15 @@ pub struct SetExchangeRate<'info> {
 pub struct BatchSetExchangeRate<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info,SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(
         mut,
         seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],

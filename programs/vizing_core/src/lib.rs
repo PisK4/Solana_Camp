@@ -98,31 +98,31 @@ pub mod vizing_core {
     // ***********  governance end ************
 
     //init
-    pub fn init_power_user(
-        ctx: Context<InitPowerUser>,
-        new_admin: Pubkey,
-        new_engine_admin: Pubkey,
-        new_station_admin: Pubkey,
-        new_gas_pool_admin: Pubkey,
-        new_trusted_relayers: Vec<Pubkey>,
-        new_registered_validators: Vec<Pubkey>,
-        new_gas_managers: Vec<Pubkey>,
-        new_swap_managers: Vec<Pubkey>,
-        new_token_managers: Vec<Pubkey>,
-    ) -> Result<()> {
-        InitPowerUser::initialize_power_user(
-            ctx,
-            new_admin,
-            new_engine_admin,
-            new_station_admin,
-            new_gas_pool_admin,
-            new_trusted_relayers,
-            new_registered_validators,
-            new_gas_managers,
-            new_swap_managers,
-            new_token_managers
-        )
-    }
+    // pub fn init_power_user(
+    //     ctx: Context<InitPowerUser>,
+    //     new_admin: Pubkey,
+    //     new_engine_admin: Pubkey,
+    //     new_station_admin: Pubkey,
+    //     new_gas_pool_admin: Pubkey,
+    //     new_trusted_relayers: Vec<Pubkey>,
+    //     new_registered_validators: Vec<Pubkey>,
+    //     new_gas_managers: Vec<Pubkey>,
+    //     new_swap_managers: Vec<Pubkey>,
+    //     new_token_managers: Vec<Pubkey>,
+    // ) -> Result<()> {
+    //     InitPowerUser::initialize_power_user(
+    //         ctx,
+    //         new_admin,
+    //         new_engine_admin,
+    //         new_station_admin,
+    //         new_gas_pool_admin,
+    //         new_trusted_relayers,
+    //         new_registered_validators,
+    //         new_gas_managers,
+    //         new_swap_managers,
+    //         new_token_managers
+    //     )
+    // }
 
     pub fn save_chain_id(ctx: Context<SaveDestChainId>, dest_chain_id: Vec<u8>) -> Result<()> {
         SaveDestChainId::set_chain_id(
@@ -177,17 +177,17 @@ pub mod vizing_core {
         )
     }
 
-    pub fn init_amount_in_thresholds(
-        ctx: Context<InitAmountInThresholds>,
-        key: u64,
-        value: u64,
-    ) -> Result<()> {
-        InitAmountInThresholds::initialize_amount_in_thresholds(
-            ctx,
-            key,
-            value
-        )
-    }
+    // pub fn init_amount_in_thresholds(
+    //     ctx: Context<InitAmountInThresholds>,
+    //     key: u64,
+    //     value: u64,
+    // ) -> Result<()> {
+    //     InitAmountInThresholds::initialize_amount_in_thresholds(
+    //         ctx,
+    //         key,
+    //         value
+    //     )
+    // }
 
     pub fn init_native_token_trade_fee_config(
         ctx: Context<InitNativeTokenTradeFeeConfig>,
@@ -334,13 +334,13 @@ pub mod vizing_core {
     }
 
     //batch_set_amount_in_threshold
-    pub fn batch_set_this_amount_in_threshold(
-        ctx: Context<BatchSetAmountInThreshold>,
-        chain_ids: Vec<u64>,
-        new_values: Vec<u64>,
-    ) -> Result<()> {
-        BatchSetAmountInThreshold::batch_set_amount_in_threshold(ctx, chain_ids, new_values)
-    }
+    // pub fn batch_set_this_amount_in_threshold(
+    //     ctx: Context<BatchSetAmountInThreshold>,
+    //     chain_ids: Vec<u64>,
+    //     new_values: Vec<u64>,
+    // ) -> Result<()> {
+    //     BatchSetAmountInThreshold::batch_set_amount_in_threshold(ctx, chain_ids, new_values)
+    // }
 
     //batch_set_dapp_price_config_in_diff_chain
     pub fn batch_set_this_dapp_price_config_in_diff_chain(
@@ -392,31 +392,31 @@ pub mod vizing_core {
     }
 
     //change_power_user
-    pub fn change_this_power_user(
-        ctx: Context<ChangePowerUser>,
-        new_admin: Pubkey,
-        new_engine_admin: Pubkey,
-        new_station_admin: Pubkey,
-        new_gas_pool_admin: Pubkey,
-        new_trusted_relayers: Vec<Pubkey>,
-        new_registered_validators: Vec<Pubkey>,
-        new_gas_managers: Vec<Pubkey>,
-        new_swap_managers: Vec<Pubkey>,
-        new_token_managers: Vec<Pubkey>,
-    ) -> Result<()> {
-        ChangePowerUser::change_power_user(
-            ctx,
-            new_admin,
-            new_engine_admin,
-            new_station_admin,
-            new_gas_pool_admin,
-            new_trusted_relayers,
-            new_registered_validators,
-            new_gas_managers,
-            new_swap_managers,
-            new_token_managers,
-        )
-    }
+    // pub fn change_this_power_user(
+    //     ctx: Context<ChangePowerUser>,
+    //     new_admin: Pubkey,
+    //     new_engine_admin: Pubkey,
+    //     new_station_admin: Pubkey,
+    //     new_gas_pool_admin: Pubkey,
+    //     new_trusted_relayers: Vec<Pubkey>,
+    //     new_registered_validators: Vec<Pubkey>,
+    //     new_gas_managers: Vec<Pubkey>,
+    //     new_swap_managers: Vec<Pubkey>,
+    //     new_token_managers: Vec<Pubkey>,
+    // ) -> Result<()> {
+    //     ChangePowerUser::change_power_user(
+    //         ctx,
+    //         new_admin,
+    //         new_engine_admin,
+    //         new_station_admin,
+    //         new_gas_pool_admin,
+    //         new_trusted_relayers,
+    //         new_registered_validators,
+    //         new_gas_managers,
+    //         new_swap_managers,
+    //         new_token_managers,
+    //     )
+    // }
 
     // pub fn transfer_sol_valut(ctx: Context<SolTransfer>, amount: u64) ->Result<()>{
     //     SolTransfer::sol_transfer(

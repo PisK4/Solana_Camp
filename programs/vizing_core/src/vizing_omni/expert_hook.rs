@@ -1,13 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 
-// use crate::error::ErrorCode;
-// use crate::message_monitor_lib::*;
-// use crate::message_type_lib::*;
-// use crate::state::*;
-
 use crate::library::*;
 use crate::state::*;
+use crate::governance::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct TokenBase {
@@ -138,10 +134,10 @@ impl InitTokenInfoBase<'_> {
         decimals: u8,
         max_price: u64,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &ctx.accounts.user.key();
-        let if_power_user = power_user.token_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonTokenManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &ctx.accounts.user.key();
+        // let if_power_user = power_user.token_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonTokenManager);
 
         let token_config = &mut ctx.accounts.token_config;
         let symbol_config = &mut ctx.accounts.symbol_config;
@@ -152,35 +148,35 @@ impl InitTokenInfoBase<'_> {
     }
 }
 
-impl ChangePowerUser<'_> {
-    pub fn change_power_user(
-        ctx: Context<ChangePowerUser>,
-        new_admin: Pubkey,
-        new_engine_admin: Pubkey,
-        new_station_admin: Pubkey,
-        new_gas_pool_admin: Pubkey,
-        new_trusted_relayers: Vec<Pubkey>,
-        new_registered_validators: Vec<Pubkey>,
-        new_gas_managers: Vec<Pubkey>,
-        new_swap_managers: Vec<Pubkey>,
-        new_token_managers: Vec<Pubkey>,
-    ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = ctx.accounts.user.key();
-        require!(user_key == power_user.admin, errors::ErrorCode::NonAdmin);
+// impl ChangePowerUser<'_> {
+//     pub fn change_power_user(
+//         ctx: Context<ChangePowerUser>,
+//         new_admin: Pubkey,
+//         new_engine_admin: Pubkey,
+//         new_station_admin: Pubkey,
+//         new_gas_pool_admin: Pubkey,
+//         new_trusted_relayers: Vec<Pubkey>,
+//         new_registered_validators: Vec<Pubkey>,
+//         new_gas_managers: Vec<Pubkey>,
+//         new_swap_managers: Vec<Pubkey>,
+//         new_token_managers: Vec<Pubkey>,
+//     ) -> Result<()> {
+//         let power_user = &mut ctx.accounts.power_user;
+//         let user_key = ctx.accounts.user.key();
+//         require!(user_key == power_user.admin, errors::ErrorCode::NonAdmin);
 
-        power_user.admin = new_admin;
-        power_user.engine_admin = new_engine_admin;
-        power_user.station_admin = new_station_admin;
-        power_user.gas_pool_admin = new_gas_pool_admin;
-        power_user.trusted_relayers = new_trusted_relayers;
-        power_user.registered_validators = new_registered_validators;
-        power_user.gas_managers = new_gas_managers;
-        power_user.swap_managers = new_swap_managers;
-        power_user.token_managers = new_token_managers;
-        Ok(())
-    }
-}
+//         power_user.admin = new_admin;
+//         power_user.engine_admin = new_engine_admin;
+//         power_user.station_admin = new_station_admin;
+//         power_user.gas_pool_admin = new_gas_pool_admin;
+//         power_user.trusted_relayers = new_trusted_relayers;
+//         power_user.registered_validators = new_registered_validators;
+//         power_user.gas_managers = new_gas_managers;
+//         power_user.swap_managers = new_swap_managers;
+//         power_user.token_managers = new_token_managers;
+//         Ok(())
+//     }
+// }
 
 impl WithdrawSplToken<'_> {
     pub fn withdraw_spl_token(
@@ -188,10 +184,10 @@ impl WithdrawSplToken<'_> {
         withdraw_amount: u64,
         this_bump: u8,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &ctx.accounts.user.key();
-        let if_power_user = power_user.token_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonTokenManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &ctx.accounts.user.key();
+        // let if_power_user = power_user.token_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonTokenManager);
 
         let seeds = &[b"vizing_vault".as_ref(), &[this_bump]];
         let signer_seeds = &[&seeds[..]];
@@ -211,10 +207,10 @@ impl WithdrawSplToken<'_> {
 
 impl WithdrawSol<'_> {
     pub fn withdraw_sol(ctx: Context<WithdrawSol>, withdraw_amount: u64) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &ctx.accounts.user.key();
-        let if_power_user = power_user.token_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonTokenManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &ctx.accounts.user.key();
+        // let if_power_user = power_user.token_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonTokenManager);
 
         let source = ctx.accounts.source.to_account_info();
         let destination = ctx.accounts.destination.to_account_info();
@@ -240,10 +236,10 @@ impl SetTokenInfoBase<'_> {
         decimals: u8,
         max_price: u64,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &ctx.accounts.user.key();
-        let if_power_user = power_user.token_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonTokenManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &ctx.accounts.user.key();
+        // let if_power_user = power_user.token_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonTokenManager);
 
         let token_config = &mut ctx.accounts.token_config;
         let symbol_config = &mut ctx.accounts.symbol_config;
@@ -262,10 +258,10 @@ impl SetTokenTradeFeeMap<'_> {
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
     ) -> Result<()> {
-        let power_user = &mut ctx.accounts.power_user;
-        let user_key = &ctx.accounts.user.key();
-        let if_power_user = power_user.token_managers.contains(user_key);
-        require!(if_power_user, errors::ErrorCode::NonTokenManager);
+        // let power_user = &mut ctx.accounts.power_user;
+        // let user_key = &ctx.accounts.user.key();
+        // let if_power_user = power_user.token_managers.contains(user_key);
+        // require!(if_power_user, errors::ErrorCode::NonTokenManager);
 
         let token_config = &mut ctx.accounts.token_config;
         require!(
@@ -372,12 +368,15 @@ pub fn compute_amount_composition(
 pub struct InitTokenInfoBase<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(
@@ -419,12 +418,15 @@ pub struct ChangePowerUser<'info> {
 pub struct WithdrawSplToken<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(mut)]
@@ -444,12 +446,12 @@ pub struct WithdrawSplToken<'info> {
 pub struct WithdrawSol<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(mut)]
@@ -463,12 +465,15 @@ pub struct WithdrawSol<'info> {
 pub struct SetTokenInfoBase<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(
@@ -490,12 +495,15 @@ pub struct SetTokenInfoBase<'info> {
 pub struct SetTokenTradeFeeMap<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
+    // #[account(
+    //     mut,
+    //     seeds = [b"init_power_user".as_ref()],
+    //     bump
+    // )]
+    // pub power_user: Account<'info, PowerUser>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(

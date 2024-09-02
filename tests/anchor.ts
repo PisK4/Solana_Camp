@@ -312,7 +312,7 @@ describe("Test", () => {
       owner: user,
       feeReceiver: feeReceiverKeyPair.publicKey,
       engineAdmin: engineAdminKeyPairs.map((keypair) => keypair.publicKey)[0],
-      gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
+      gasPoolAdmin: user,
       stationAdmin: stationAdminKeyPair.publicKey,
       trustedRelayers: trustedRelayerKeyPairs.map(
         (keypair) => keypair.publicKey
@@ -362,20 +362,24 @@ describe("Test", () => {
     // }
 
     function encodeEthereumAddressToU8Array(ethAddress: string): number[] {
-      const address = Buffer.from(ethAddress);
+      const remove0xAddress = ethAddress.slice(2);
+      const address = Buffer.from(remove0xAddress);
+      console.log("ethAddress:",ethAddress,"\n","Buffer address:",address);
       console.log("address length:",address.length);
       const result = new Uint8Array(32);
       for (let i = 0; i < 32; i++) {
         result[i] = address[i];
       }
       const addressArray: number[] = Array.from(result);
+      console.log("ethAddress:",ethAddress,"\n","addressArray:",addressArray);
       return addressArray;
     }
 
     function decodeU8ArrayToEthereumAddress(message) {
       const asciiData = message.slice(0, 32); // ASCII数据
+      console.log("asciiData:",asciiData);
       let hexAddress = "0x";
-      for (let i = 0; i < 40; i++) {
+      for (let i = 0; i < 31; i++) {
         const charCode = asciiData[i];
         hexAddress += String.fromCharCode(charCode);
       }
@@ -485,9 +489,7 @@ describe("Test", () => {
       saveDestChainIdAccount.publicKey.toBase58()
     );
 
-    let dapp = encodeEthereumAddressToU8Array(
-      "0xaE67336f06B10fbbb26F31d31AbEA897290109B9"
-    );
+    let dapp = encodeEthereumAddressToU8Array("0xaE67336f06B10fbbb26F31d31AbEA897290109B9");
 
     //initializeVizingPad
     async function InitializeVizingPad() {
@@ -510,48 +512,6 @@ describe("Test", () => {
     }
     await InitializeVizingPad();
 
-    //init_this_power_user
-    let new_engine_admins = user;
-    let new_station_admins = user;
-    let new_gas_pool_admins = user;
-    let new_trusted_relayers = [user];
-    let new_registered_validators = [user];
-    let gas_managers = [user];
-    let swap_managers = [user];
-    let token_managers = [user];
-    async function InitPowerUser() {
-      try {
-        const powerUser = await pg.program.account.powerUser.fetch(
-          powerUserAuthority
-        );
-        console.log("powerUser:", powerUser);
-      } catch (e) {
-        const initPowerUser = await pg.program.methods
-          .initPowerUser(
-            user,
-            new_engine_admins,
-            new_station_admins,
-            new_gas_pool_admins,
-            new_trusted_relayers,
-            new_registered_validators,
-            gas_managers,
-            swap_managers,
-            token_managers
-          )
-          .accounts({
-            powerUser: powerUserAuthority,
-            user: user,
-            systemProgram: systemId,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`initPowerUser:${initPowerUser}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(initPowerUser);
-      }
-    }
-    await InitPowerUser();
-
     //saveChainId
     async function SaveChainId() {
       try {
@@ -559,7 +519,7 @@ describe("Test", () => {
           .saveChainId(chainId)
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             user: user,
             systemProgram: systemId,
           })
@@ -635,7 +595,7 @@ describe("Test", () => {
             )
             .accounts({
               saveChainId: saveDestChainIdAccount.publicKey,
-              powerUser: powerUserAuthority,
+              vizing: vizingPadSettings,
               mappingFeeConfig: mappingFeeConfigAuthority,
               user: user,
               systemProgram: systemId,
@@ -674,7 +634,7 @@ describe("Test", () => {
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             gasSystemGlobal: gasSystemGlobalAuthority,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             user: user,
             systemProgram: systemId,
           })
@@ -690,38 +650,6 @@ describe("Test", () => {
       }
     }
     await InitGasGlobal();
-
-    //init_amount_in_thresholds
-    async function InitAmountInThresholds() {
-      try {
-        const mappingAmountInThresholds =
-          await pg.program.account.mappingAmountInThresholds.fetch(
-            amountInThresholdsAuthority
-          );
-        console.log("mappingAmountInThresholds:", mappingAmountInThresholds);
-      } catch (e) {
-        const initAmountInThresholds = await pg.program.methods
-          .initAmountInThresholds(id, amount_in_threshold)
-          .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
-            amountInThresholds: amountInThresholdsAuthority,
-            user: user,
-            systemProgram: systemId,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`initAmountInThresholds:${initAmountInThresholds}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(initAmountInThresholds);
-        const mappingAmountInThresholds =
-          await pg.program.account.mappingAmountInThresholds.fetch(
-            amountInThresholdsAuthority
-          );
-        console.log("mappingAmountInThresholds:", mappingAmountInThresholds);
-      }
-    }
-    await InitAmountInThresholds();
 
     //init_native_token_trade_fee_config
     let native_molecular = new anchor.BN(5);
@@ -746,7 +674,7 @@ describe("Test", () => {
           )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             nativeTokenTradeFeeConfig: nativeTokenTradeFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
@@ -801,7 +729,7 @@ describe("Test", () => {
           )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             user: user,
             tokenConfig: initTokenConfigAuthority,
             symbolConfig: initSymbolConfigAuthority,
@@ -821,7 +749,7 @@ describe("Test", () => {
       owner: user,
       feeReceiver: feeReceiverKeyPair.publicKey,
       engineAdmin: engineAdminKeyPairs.map((keypair) => keypair.publicKey)[0],
-      gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
+      gasPoolAdmin: user,
       stationAdmin: stationAdminKeyPair.publicKey,
       trustedRelayers: trustedRelayerKeyPairs.map(
         (keypair) => keypair.publicKey
@@ -872,7 +800,7 @@ describe("Test", () => {
     //setThisGasGlobal
     let new_global_base_price = new anchor.BN(500);
     let new_default_gas_limit = new anchor.BN(1000);
-    let new_amount_in_threshold = new anchor.BN(500000000);
+    let new_amount_in_threshold = new anchor.BN(100000000);
     async function SetThisGasGlobal() {
       try {
         const setThisGasGlobal = await pg.program.methods
@@ -886,7 +814,7 @@ describe("Test", () => {
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             gasSystemGlobal: gasSystemGlobalAuthority,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             user: user,
             systemProgram: systemId,
           })
@@ -921,7 +849,7 @@ describe("Test", () => {
           )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
@@ -944,7 +872,7 @@ describe("Test", () => {
           .setThisTokenFeeConfig(id, molecular, denominator)
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             gasSystemGlobal: gasSystemGlobalAuthority,
             nativeTokenTradeFeeConfig: nativeTokenTradeFeeConfigAuthority,
             user: user,
@@ -967,7 +895,7 @@ describe("Test", () => {
           .setThisDappPriceConfig(id, dapp, base_price)
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
@@ -1004,7 +932,7 @@ describe("Test", () => {
           )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
@@ -1030,7 +958,7 @@ describe("Test", () => {
           .batchSetThisTokenFeeConfig(destChainIds, moleculars, denominators)
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             nativeTokenTradeFeeConfig: nativeTokenTradeFeeConfigAuthority,
             user: user,
@@ -1062,7 +990,7 @@ describe("Test", () => {
           )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             nativeTokenTradeFeeConfig: nativeTokenTradeFeeConfigAuthority,
             user: user,
@@ -1081,32 +1009,6 @@ describe("Test", () => {
     }
     await BatchSetThisTradeFeeConfigMap();
 
-    //batch_set_amount_in_threshold
-    let new_values = [new anchor.BN(1000000000)];
-    async function BatchSetThisAmountInThreshold() {
-      try {
-        const batchSetThisAmountInThreshold = await pg.program.methods
-          .batchSetThisAmountInThreshold(destChainIds, new_values)
-          .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
-            amountInThresholds: amountInThresholdsAuthority,
-            user: user,
-            systemProgram: systemId,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(
-          `batchSetThisAmountInThreshold:${batchSetThisAmountInThreshold}'`
-        );
-        // Confirm transaction
-        await pg.connection.confirmTransaction(batchSetThisAmountInThreshold);
-      } catch (e) {
-        console.log("BatchSetThisAmountInThreshold error:", e);
-      }
-    }
-    await BatchSetThisAmountInThreshold();
-
     //batch_set_this_dapp_price_config_in_diff_chain
     let base_prices = [new anchor.BN(1000)];
     async function BatchSetThisDappPriceConfigInDiffChain() {
@@ -1119,7 +1021,7 @@ describe("Test", () => {
           )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
@@ -1146,7 +1048,7 @@ describe("Test", () => {
           .batchSetThisDappPriceConfigInSameChain(id, dapps, base_prices)
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
@@ -1167,7 +1069,7 @@ describe("Test", () => {
     await BatchSetThisDappPriceConfigInSameChain();
 
     //get
-    async function GetDappBasepPrice(dest_chain_id, chain_base_price, dapp) {
+    async function GetDappBasePrice(dest_chain_id, chain_base_price, dapp) {
       let dapp_base_price;
       const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
         mappingFeeConfigAuthority
@@ -1179,7 +1081,7 @@ describe("Test", () => {
       } else {
         dapp_base_price = chain_base_price;
       }
-      console.log("GetDappBasepPrice:", dapp_base_price);
+      console.log("GetDappBasePrice:", dapp_base_price);
       return dapp_base_price;
     }
 
@@ -1321,8 +1223,8 @@ describe("Test", () => {
     }
 
     let testAmountOut = new anchor.BN(1000);
-    const testExecuteGasLimit = new BN(10);
-    const testMaxFeePerGas = new BN(10000);
+    const testExecuteGasLimit = new anchor.BN(6);
+    const testMaxFeePerGas = new anchor.BN(2000);
     const newMessage = {
       mode: 1,
       targetContract: dapp,
@@ -1349,7 +1251,7 @@ describe("Test", () => {
         base_price = global_base_price;
       }
       if (this_message.mode == 1 || this_message.mode == 2) {
-        let dapp_base_price = await GetDappBasepPrice(
+        let dapp_base_price = await GetDappBasePrice(
           dest_chain_id,
           base_price,
           this_message.targetContract
@@ -1395,13 +1297,7 @@ describe("Test", () => {
         gasSystemGlobalAuthority
       );
 
-      const mappingAmountInThresholds =
-        await pg.program.account.mappingAmountInThresholds.fetch(
-          amountInThresholdsAuthority
-        );
-      const amountInThresholdsMappings =
-        mappingAmountInThresholds.amountInThresholdsMappings;
-      const token_amount_limit = amountInThresholdsMappings[0].value.toNumber();
+      const token_amount_limit = gasSystemGlobal.amountInThreshold.toNumber();
 
       const feeConfigBasePrice = feeConfigMappings[0].basePrice.toNumber();
       const global_base_price = gasSystemGlobal.globalBasePrice.toNumber();
@@ -1416,13 +1312,15 @@ describe("Test", () => {
       }
 
       if (this_message.mode == 1 || this_message.mode == 2) {
-        let dapp_base_price = await GetDappBasepPrice(
+        let dapp_base_price = await GetDappBasePrice(
           dest_chain_id,
           base_price,
           this_message.targetContract
         );
+        console.log("this_message.maxFeePerGas:",this_message.maxFeePerGas);
         if (this_message.maxFeePerGas < dapp_base_price) {
-          throw "dapp_base_price > price";
+          console.log("price < dapp_base_price");
+          return 0;
         }
         fee = this_message.maxFeePerGas * this_message.executeGasLimit;
       } else if (this_message.mode == 4) {
@@ -1431,11 +1329,13 @@ describe("Test", () => {
         fee = base_price * default_gas_limit;
       }
 
-      let output_amount_in = amount_out.toNumber();
-      if (output_amount_in > 0) {
+      let output_amount_in = amount_out;
+      console.log("fee:",fee);
+      let finalFee;
+      if (amount_out.toNumber() > 0) {
         let fee_config_molecular = feeConfigMappings[0].molecular.toNumber();
         if (fee_config_molecular != 0) {
-          output_amount_in = await ExactOutput(dest_chain_id, output_amount_in);
+          output_amount_in = await ExactOutput(dest_chain_id, amount_out.toNumber());
         }
 
         let trade_fee2 = await ComputeTradeFee2(
@@ -1443,15 +1343,15 @@ describe("Test", () => {
           dest_chain_id,
           output_amount_in
         );
-        fee += trade_fee2 + output_amount_in + fee;
+        finalFee = trade_fee2 + output_amount_in + fee;
       }
       if (output_amount_in > token_amount_limit) {
         throw "Overflow token amount limit!";
       }
-      console.log("EstimateTotalFee:", fee);
-      return fee;
+      console.log("EstimateTotalFee:", finalFee);
+      return finalFee;
     }
-    await EstimateTotalFee(testAmountOut, id, newMessage);
+    await EstimateTotalFee(id, testAmountOut , newMessage);
 
     //batch_set_exchange_rate
     let molecular_decimals = Buffer.from([6]);
@@ -1468,7 +1368,7 @@ describe("Test", () => {
           )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
@@ -1485,39 +1385,39 @@ describe("Test", () => {
     await BatchSetThisExchangeRate();
 
     //ChangeThisPowerUser
-    async function ChangeThisPowerUser() {
-      try {
-        const changeThisPowerUser = await pg.program.methods
-          .changeThisPowerUser(
-            user,
-            new_engine_admins,
-            new_station_admins,
-            new_gas_pool_admins,
-            new_trusted_relayers,
-            new_registered_validators,
-            gas_managers,
-            swap_managers,
-            token_managers
-          )
-          .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
-            user: user,
-            systemProgram: systemId,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`changeThisPowerUser:${changeThisPowerUser}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(changeThisPowerUser);
-      } catch (e) {
-        const powerUser = await pg.program.account.powerUser.fetch(
-          powerUserAuthority
-        );
-        console.log("powerUser:", powerUser);
-      }
-    }
-    await ChangeThisPowerUser();
+    // async function ChangeThisPowerUser() {
+    //   try {
+    //     const changeThisPowerUser = await pg.program.methods
+    //       .changeThisPowerUser(
+    //         user,
+    //         new_engine_admins,
+    //         new_station_admins,
+    //         new_gas_pool_admins,
+    //         new_trusted_relayers,
+    //         new_registered_validators,
+    //         gas_managers,
+    //         swap_managers,
+    //         token_managers
+    //       )
+    //       .accounts({
+    //         saveChainId: saveDestChainIdAccount.publicKey,
+    //         vizing: vizingPadSettings,
+    //         user: user,
+    //         systemProgram: systemId,
+    //       })
+    //       .signers([signer])
+    //       .rpc();
+    //     console.log(`changeThisPowerUser:${changeThisPowerUser}'`);
+    //     // Confirm transaction
+    //     await pg.connection.confirmTransaction(changeThisPowerUser);
+    //   } catch (e) {
+    //     const powerUser = await pg.program.account.powerUser.fetch(
+    //       powerUserAuthority
+    //     );
+    //     console.log("powerUser:", powerUser);
+    //   }
+    // }
+    // await ChangeThisPowerUser();
 
     //vizingVaultAssociatedToken
     let vizingVaultAssociatedToken = await GetOrcreateAssociatedToken(
@@ -1540,7 +1440,7 @@ describe("Test", () => {
           .withdrawVaultSplToken(withdraw_amount, vizingVaultBump)
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             user: user,
             source: vizingVaultAssociatedToken,
             destination: userAssociatedAccount,
@@ -1587,7 +1487,7 @@ describe("Test", () => {
     //       .withdrawVaultSol(amount)
     //       .accounts({
     //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         powerUser: powerUserAuthority,
+    //         vizing: vizingPadSettings,
     //         user: user,
     //         source: sender,
     //         destination: receiver,
@@ -1615,7 +1515,7 @@ describe("Test", () => {
           .setThisTokenInfoBase(symbol, tokenAddress, decimals, max_price)
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             user: user,
             tokenConfig: initTokenConfigAuthority,
             symbolConfig: initSymbolConfigAuthority,
@@ -1643,7 +1543,7 @@ describe("Test", () => {
           )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
-            powerUser: powerUserAuthority,
+            vizing: vizingPadSettings,
             user: user,
             tokenConfig: initTokenConfigAuthority,
             systemProgram: systemId,
@@ -1661,7 +1561,7 @@ describe("Test", () => {
 
     // launch
     const executeGasLimit = new BN(6);
-    const maxFeePerGas = new BN(100);
+    const maxFeePerGas = new BN(2000);
 
     const message = {
       mode: 1,
@@ -1728,6 +1628,9 @@ describe("Test", () => {
       }
     }
     await GetEstimateGas(testAmountOut, id, newMessage);
+
+
   });
 });
+
 

@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{instruction::Instruction, program::invoke_signed};
 use anchor_lang::system_program::{transfer, Transfer};
-use crate::gas_system::vizing_gas_system::MappingFeeConfig;
 use crate::gas_system::*;
 use crate::governance::*;
 use crate::library::*;
@@ -65,12 +64,6 @@ impl LaunchOp<'_> {
 
         msg!("addition_params: {:?}", params.addition_params);
 
-        msg!("mode: {}", params.message.mode);
-
-        msg!("execute_gas_limit: {}", params.message.execute_gas_limit);
-
-        msg!("max_fee_per_gas: {}", params.message.max_fee_per_gas);
-
         msg!("signature: {:?}", params.message.signature);
 
         let message = &params.message;
@@ -94,20 +87,21 @@ impl LaunchOp<'_> {
             .get_dapp_config(dest_chain_id, *dapp)
             .ok_or(errors::ErrorCode::DappConfigNotFound)?;
 
-        let fee = vizing_gas_system::estimate_gas(
-            gas_system_global.global_base_price,
-            get_fee_config.base_price,
-            get_dapp_config.value,
-            get_fee_config.molecular_decimal,
-            get_fee_config.denominator_decimal,
-            get_fee_config.molecular,
+        let fee = vizing_gas_system::estimate_total_fee(
+            gas_system_global.amount_in_threshold,
             get_trade_fee_config.molecular,
             get_trade_fee_config.denominator,
             gas_system_global.molecular,
             gas_system_global.denominator,
+            get_dapp_config.value,
+            get_fee_config.molecular_decimal,
+            get_fee_config.denominator_decimal,
+            get_fee_config.molecular,
             gas_system_global.default_gas_limit,
-            params.value,
+            gas_system_global.global_base_price,
+            get_fee_config.base_price,
             dest_chain_id,
+            params.value,
             &serialized_data,
         ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
 
@@ -405,12 +399,6 @@ pub struct EstimateTotalFee<'info> {
         bump
     )]
     pub gas_system_global: Account<'info, GasSystemGlobal>,
-    #[account(
-        mut,
-        seeds = [b"amount_in_thresholds".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub amount_in_thresholds: Account<'info, MappingAmountInThresholds>,
 }
 impl EstimateTotalFee<'_> {
     pub fn get_estimate_total_fee(
@@ -421,7 +409,6 @@ impl EstimateTotalFee<'_> {
     ) -> Result<u64> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let gas_system_global = &mut ctx.accounts.gas_system_global;
-        let mapping_amount_in_thresholds = &mut ctx.accounts.amount_in_thresholds;
 
         let serialized_data: Vec<u8> = message.try_to_vec()?;
         let Some((_, dapp, _, _, _))=message_monitor::slice_message(&serialized_data) else { todo!() };
@@ -429,10 +416,9 @@ impl EstimateTotalFee<'_> {
         let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
         let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,dapp).ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
         let dapp_config = mapping_fee_config.get_dapp_config(dest_chain_id,dapp).ok_or(errors::ErrorCode::DappConfigNotFound)?;
-        let token_amount_limit=mapping_amount_in_thresholds.get_amount_in_thresholds(dest_chain_id).ok_or(errors::ErrorCode::AmountInThresholdsNotFound)?;
 
         let fee: u64 = vizing_gas_system::estimate_total_fee(
-            token_amount_limit,
+            gas_system_global.amount_in_threshold,
             trade_fee_config.molecular,
             trade_fee_config.denominator,
             gas_system_global.molecular,
