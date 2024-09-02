@@ -9,34 +9,34 @@ use anchor_lang::system_program::{transfer, Transfer};
 pub struct LaunchOp<'info> {
     /// CHECK: We need signer to claim ownership
     #[account(mut, signer)]
-    pub fee_payer: AccountInfo<'info>,
-
+    pub vizing_app_fee_payer: AccountInfo<'info>,
     /// CHECK: We need signer to claim ownership
     #[account(signer)]
-    pub message_authority: AccountInfo<'info>,
+    pub vizing_app_message_authority: AccountInfo<'info>,
 
-    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
-        , constraint = vizing.is_paused != true @VizingError::VizingNotActivated)]
-    pub vizing: Account<'info, VizingPadSettings>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing_pad_config.bump
+        , constraint = vizing_pad_config.is_paused != true @VizingError::VizingNotActivated)]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
 
     /// CHECK: We need this account as to receive the fee
-    #[account(mut, address = vizing.fee_receiver @VizingError::FeeCollectorInvalid)]
-    pub fee_collector: AccountInfo<'info>,
+    #[account(mut, address = vizing_pad_config.fee_collector @VizingError::FeeCollectorInvalid)]
+    pub vizing_pad_fee_collector: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
 }
+
 
 impl LaunchOp<'_> {
     pub fn vizing_launch(ctx: &mut Context<LaunchOp>, params: LaunchParams) -> Result<()> {
         msg!("####Launch in vizing core");
 
-        msg!("fee_payer is signer: {}", ctx.accounts.fee_payer.is_signer);
+        msg!("vizing_app_fee_payer is signer: {}", ctx.accounts.vizing_app_fee_payer.is_signer);
 
-        msg!("message_authority is signer: {}", ctx.accounts.message_authority.is_signer);
+        msg!("vizing_app_message_authority is signer: {}", ctx.accounts.vizing_app_message_authority.is_signer);
         
         msg!(
-            "message_authority: {}",
-            ctx.accounts.message_authority.key()
+            "vizing_app_message_authority: {}",
+            ctx.accounts.vizing_app_message_authority.key()
         );
 
         msg!(
@@ -55,7 +55,7 @@ impl LaunchOp<'_> {
 
         msg!("mode: {}", params.message.mode);
 
-        msg!("target_program: {}", params.message.target_program);
+        // msg!("target_program: {}", params.message.target_program);
 
         msg!("execute_gas_limit: {}", params.message.execute_gas_limit);
 
@@ -63,13 +63,13 @@ impl LaunchOp<'_> {
 
         msg!("signature: {:?}", params.message.signature);
 
-        msg!("fee payer: {}", ctx.accounts.fee_payer.key());
+        msg!("fee payer: {}", ctx.accounts.vizing_app_fee_payer.key());
 
-        msg!("fee collector: {}", ctx.accounts.fee_collector.key());
+        msg!("fee collector: {}", ctx.accounts.vizing_pad_fee_collector.key());
 
-        msg!("fee_payer is writeable: {}", ctx.accounts.fee_payer.is_writable);
+        msg!("vizing_app_fee_payer is writeable: {}", ctx.accounts.vizing_app_fee_payer.is_writable);
 
-        msg!("fee_collector is writeable: {}", ctx.accounts.fee_collector.is_writable);
+        msg!("vizing_pad_fee_collector is writeable: {}", ctx.accounts.vizing_pad_fee_collector.is_writable);
 
 
         // mock fee
@@ -78,8 +78,8 @@ impl LaunchOp<'_> {
             CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
                 Transfer {
-                    from: ctx.accounts.fee_payer.to_account_info(),
-                    to: ctx.accounts.fee_collector.to_account_info(),
+                    from: ctx.accounts.vizing_app_fee_payer.to_account_info(),
+                    to: ctx.accounts.vizing_pad_fee_collector.to_account_info(),
                 },
             ),
             fee,
@@ -90,7 +90,7 @@ impl LaunchOp<'_> {
             latest_arrival_timestamp: params.latest_arrival_timestamp,
             relayer: params.relayer,
             sender: params.sender,
-            src_contract: ctx.accounts.message_authority.key(),
+            src_contract: ctx.accounts.vizing_app_message_authority.key(),
             value: params.value,
             fee: fee,
             dest_chainid: params.dest_chainid,
@@ -115,7 +115,7 @@ pub struct LandingOp<'info> {
         constraint = vizing.trusted_relayers.contains(&relayer.key()) @VizingError::NotRelayer, 
         constraint = vizing.is_paused != true @VizingError::VizingNotActivated
     )]
-    pub vizing: Account<'info, VizingPadSettings>,
+    pub vizing: Account<'info, VizingPadConfigs>,
 
     /// CHECK: We need this PDA as a signer
     #[account(seeds = [contants::VIZING_AUTHORITY_SEED],bump = vizing_authority.bump)]

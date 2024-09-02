@@ -21,7 +21,7 @@ describe("Vizing Test", () => {
   const vizingAppProgram = anchor.workspace.VizingApp as Program<VizingApp>;
   const vizingAppMockProgram = anchor.workspace
     .VizingAppMock as Program<VizingAppMock>;
-  const vizingPadSettingsSeed = Buffer.from("Vizing_Pad_Settings_Seed");
+  const VizingPadConfigsSeed = Buffer.from("Vizing_Pad_Settings_Seed");
   const vizingAuthoritySeed = Buffer.from("Vizing_Authority_Seed");
   const vizingAppConfigSeed = Buffer.from("Vizing_App_Config_Seed");
   const vizingAppSolReceiverSeed = Buffer.from("Vizing_App_Sol_Receiver_Seed");
@@ -30,15 +30,14 @@ describe("Vizing Test", () => {
     "Vizing_Message_Authority_Seed"
   );
 
-  let vizingPadSettings: anchor.web3.PublicKey;
-  let relayerSettings: anchor.web3.PublicKey;
+  let vizingPadConfigs: anchor.web3.PublicKey;
   let vizingAuthority: anchor.web3.PublicKey;
   let vizingAppConfig: anchor.web3.PublicKey;
   let vizingFeeRouter: anchor.web3.PublicKey;
   let vizingMessageAuthority: anchor.web3.PublicKey;
 
-  const feeReceiverKeyPair = anchor.web3.Keypair.fromSeed(
-    Buffer.from(padStringTo32Bytes("fee_receiver"))
+  const feeCollectorKeyPair = anchor.web3.Keypair.fromSeed(
+    Buffer.from(padStringTo32Bytes("fee_collector"))
   );
 
   const feePayerKeyPair = anchor.web3.Keypair.fromSeed(
@@ -81,7 +80,7 @@ describe("Vizing Test", () => {
   ];
 
   it("account setup", async () => {
-    console.log("feeCollector: ", feeReceiverKeyPair.publicKey.toBase58());
+    console.log("feeCollector: ", feeCollectorKeyPair.publicKey.toBase58());
 
     // get airdrop
     await provider.connection.confirmTransaction(
@@ -105,13 +104,13 @@ describe("Vizing Test", () => {
     let vizingPadBump: number;
     let relayerBump: number;
     {
-      const seed = [vizingPadSettingsSeed];
+      const seed = [VizingPadConfigsSeed];
       const [vizingPad, bump] = anchor.web3.PublicKey.findProgramAddressSync(
         seed,
         vizingProgram.programId
       );
 
-      vizingPadSettings = vizingPad;
+      vizingPadConfigs = vizingPad;
       vizingPadBump = bump;
 
       console.log(`vizingPad: ${vizingPad.toBase58()}, bump: ${bump}`);
@@ -119,7 +118,7 @@ describe("Vizing Test", () => {
 
     const initParams = {
       owner: provider.wallet.publicKey,
-      feeReceiver: feeReceiverKeyPair.publicKey,
+      feeCollector: feeCollectorKeyPair.publicKey,
       engineAdmin: engineAdminKeyPairs.map((keypair) => keypair.publicKey)[0],
       gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
       stationAdmin: stationAdminKeyPair.publicKey,
@@ -152,8 +151,8 @@ describe("Vizing Test", () => {
       const tx = await vizingProgram.methods
         .initializeVizingPad(initParams)
         .accounts({
-          vizing: vizingPadSettings,
-          vizingAuthority: vizingAuthority,
+          vizingPadConfig: vizingPadConfigs,
+          vizingPadAuthority: vizingAuthority,
           payer: provider.wallet.publicKey,
           systemProgram: anchor.web3.SystemProgram.programId,
         })
@@ -161,7 +160,7 @@ describe("Vizing Test", () => {
       console.log(`initialize: ${tx}`);
 
       const vizingPadAccount =
-        await vizingProgram.account.vizingPadSettings.fetch(vizingPadSettings);
+        await vizingProgram.account.vizingPadConfigs.fetch(vizingPadConfigs);
 
       expect(vizingPadAccount.owner.toBase58()).to.equal(
         provider.wallet.publicKey.toBase58()
@@ -169,8 +168,8 @@ describe("Vizing Test", () => {
       expect(vizingPadAccount.engineAdmin.toBase58()).to.equal(
         initParams.engineAdmin.toBase58()
       );
-      expect(vizingPadAccount.feeReceiver.toBase58()).to.equal(
-        initParams.feeReceiver.toBase58()
+      expect(vizingPadAccount.feeCollector.toBase58()).to.equal(
+        initParams.feeCollector.toBase58()
       );
       expect(vizingPadAccount.stationAdmin.toBase58()).to.equal(
         initParams.stationAdmin.toBase58()
@@ -191,8 +190,8 @@ describe("Vizing Test", () => {
         await vizingProgram.methods
           .initializeVizingPad(initParams)
           .accounts({
-            vizing: vizingPadSettings,
-            vizingAuthority: vizingAuthority,
+            vizingPadConfig: vizingPadConfigs,
+            vizingPadAuthority: vizingAuthority,
             payer: provider.wallet.publicKey,
             systemProgram: anchor.web3.SystemProgram.programId,
           })
@@ -210,7 +209,7 @@ describe("Vizing Test", () => {
   it("modify Vizing Pad", async () => {
     const modifyParams = {
       owner: provider.wallet.publicKey,
-      feeReceiver: feeReceiverKeyPair.publicKey,
+      feeCollector: feeCollectorKeyPair.publicKey,
       engineAdmin: engineAdminKeyPairs.map((keypair) => keypair.publicKey)[0],
       gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
       stationAdmin: stationAdminKeyPair.publicKey,
@@ -228,7 +227,7 @@ describe("Vizing Test", () => {
           .modifySettings(modifyParams)
           .accounts({
             owner: fakeOwner.publicKey,
-            vizing: vizingPadSettings,
+            vizing: vizingPadConfigs,
           })
           .signers([fakeOwner])
           .rpc();
@@ -243,19 +242,19 @@ describe("Vizing Test", () => {
         .modifySettings(modifyParams)
         .accounts({
           owner: provider.wallet.publicKey,
-          vizing: vizingPadSettings,
+          vizing: vizingPadConfigs,
         })
         .rpc();
       console.log(`modify: ${tx}`);
 
       const vizingPadAccount =
-        await vizingProgram.account.vizingPadSettings.fetch(vizingPadSettings);
+        await vizingProgram.account.vizingPadConfigs.fetch(vizingPadConfigs);
 
       expect(vizingPadAccount.owner.toBase58()).to.equal(
         provider.wallet.publicKey.toBase58()
       );
-      expect(vizingPadAccount.feeReceiver.toBase58()).to.equal(
-        modifyParams.feeReceiver.toBase58()
+      expect(vizingPadAccount.feeCollector.toBase58()).to.equal(
+        modifyParams.feeCollector.toBase58()
       );
       expect(vizingPadAccount.engineAdmin.toBase58()).to.equal(
         modifyParams.engineAdmin.toBase58()
@@ -279,7 +278,7 @@ describe("Vizing Test", () => {
           .grantFeeCollector(newFeeCollector.publicKey)
           .accounts({
             gasPoolAdmin: fakeGasPoolAdmin.publicKey,
-            vizing: vizingPadSettings,
+            vizing: vizingPadConfigs,
           })
           .signers([fakeGasPoolAdmin])
           .rpc();
@@ -296,34 +295,35 @@ describe("Vizing Test", () => {
         .grantFeeCollector(newFeeCollector.publicKey)
         .accounts({
           gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
-          vizing: vizingPadSettings,
+          vizing: vizingPadConfigs,
         })
         .signers([gasPoolAdminKeyPair])
         .rpc();
       console.log(`grant fee collector: ${tx}`);
 
-      let vizingPadAccount =
-        await vizingProgram.account.vizingPadSettings.fetch(vizingPadSettings);
+      let vizingPadAccount = await vizingProgram.account.vizingPadConfigs.fetch(
+        vizingPadConfigs
+      );
 
-      expect(vizingPadAccount.feeReceiver.toBase58()).to.equal(
+      expect(vizingPadAccount.feeCollector.toBase58()).to.equal(
         newFeeCollector.publicKey.toBase58()
       );
 
       await vizingProgram.methods
-        .grantFeeCollector(feeReceiverKeyPair.publicKey)
+        .grantFeeCollector(feeCollectorKeyPair.publicKey)
         .accounts({
           gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
-          vizing: vizingPadSettings,
+          vizing: vizingPadConfigs,
         })
         .signers([gasPoolAdminKeyPair])
         .rpc();
 
-      vizingPadAccount = await vizingProgram.account.vizingPadSettings.fetch(
-        vizingPadSettings
+      vizingPadAccount = await vizingProgram.account.vizingPadConfigs.fetch(
+        vizingPadConfigs
       );
 
-      expect(vizingPadAccount.feeReceiver.toBase58()).to.equal(
-        feeReceiverKeyPair.publicKey.toBase58()
+      expect(vizingPadAccount.feeCollector.toBase58()).to.equal(
+        feeCollectorKeyPair.publicKey.toBase58()
       );
     }
   });
@@ -393,10 +393,10 @@ describe("Vizing Test", () => {
         await vizingProgram.methods
           .launch(launchParams)
           .accounts({
-            feePayer: provider.wallet.publicKey,
-            messageAuthority: provider.wallet.publicKey,
-            vizing: vizingPadSettings,
-            feeCollector: anchor.web3.Keypair.generate().publicKey,
+            vizingAppFeePayer: provider.wallet.publicKey,
+            vizingAppMessageAuthority: provider.wallet.publicKey,
+            vizingPadConfig: vizingPadConfigs,
+            vizingPadFeeCollector: anchor.web3.Keypair.generate().publicKey,
           })
           .rpc();
         throw new Error("should not come here");
@@ -409,22 +409,22 @@ describe("Vizing Test", () => {
 
     {
       const feeReceiverBalanceBefore = await provider.connection.getBalance(
-        feeReceiverKeyPair.publicKey
+        feeCollectorKeyPair.publicKey
       );
 
       const tx = await vizingProgram.methods
         .launch(launchParams)
         .accounts({
-          feePayer: provider.wallet.publicKey,
-          messageAuthority: provider.wallet.publicKey,
-          vizing: vizingPadSettings,
-          feeCollector: feeReceiverKeyPair.publicKey,
+          vizingAppFeePayer: provider.wallet.publicKey,
+          vizingAppMessageAuthority: provider.wallet.publicKey,
+          vizingPadConfig: vizingPadConfigs,
+          vizingPadFeeCollector: feeCollectorKeyPair.publicKey,
         })
         .rpc();
       console.log(`launch: ${tx}`);
 
       const feeReceiverBalanceAfter = await provider.connection.getBalance(
-        feeReceiverKeyPair.publicKey
+        feeCollectorKeyPair.publicKey
       );
 
       console.log(
@@ -442,22 +442,22 @@ describe("Vizing Test", () => {
       console.log("launchVizing");
       // vizing app launch
       const feeReceiverBalanceBefore = await provider.connection.getBalance(
-        feeReceiverKeyPair.publicKey
+        feeCollectorKeyPair.publicKey
       );
       const tx = await vizingAppMockProgram.methods
         .launchVizing()
         .accounts({
           user: provider.wallet.publicKey,
-          messagePdaAuthority: vizingMessageAuthority,
-          vizing: vizingPadSettings,
-          vizingFeeCollector: feeReceiverKeyPair.publicKey,
-          vizingPad: vizingProgram.programId,
+          vizingAppMessageAuthority: vizingMessageAuthority,
+          vizingPadConfig: vizingPadConfigs,
+          vizingPadFeeCollector: feeCollectorKeyPair.publicKey,
+          vizingPadProgram: vizingProgram.programId,
         })
         .rpc();
       console.log(`launchVizing: ${tx}`);
 
       const feeReceiverBalanceAfter = await provider.connection.getBalance(
-        feeReceiverKeyPair.publicKey
+        feeCollectorKeyPair.publicKey
       );
 
       console.log(
@@ -610,7 +610,7 @@ describe("Vizing Test", () => {
           .landing(landingParams)
           .accounts({
             relayer: mockRelayer.publicKey,
-            vizing: vizingPadSettings,
+            vizing: vizingPadConfigs,
             vizingAuthority: vizingAuthority,
             targetProgram: targetProgram,
             vizingAppConfigs: vizingAppConfig,
@@ -630,7 +630,7 @@ describe("Vizing Test", () => {
           .landing(landingParams)
           .accounts({
             relayer: trustedRelayerKeyPairs[0].publicKey,
-            vizing: vizingPadSettings,
+            vizing: vizingPadConfigs,
             vizingAuthority: vizingAuthority,
             targetProgram: targetProgram,
             vizingAppConfigs: vizingAppConfig,
@@ -652,7 +652,7 @@ describe("Vizing Test", () => {
           .landing(landingParams)
           .accounts({
             relayer: trustedRelayerKeyPairs[0].publicKey,
-            vizing: vizingPadSettings,
+            vizing: vizingPadConfigs,
             vizingAuthority: vizingAuthority,
             targetProgram: targetProgram,
             vizingAppConfigs: null,
@@ -685,7 +685,7 @@ describe("Vizing Test", () => {
         .landing(landingParams)
         .accounts({
           relayer: relayer.publicKey,
-          vizing: vizingPadSettings,
+          vizing: vizingPadConfigs,
           vizingAuthority: vizingAuthority,
           targetProgram: targetProgram,
           vizingAppConfigs: vizingAppConfig,
@@ -698,7 +698,7 @@ describe("Vizing Test", () => {
             isWritable: false,
           },
           {
-            pubkey: vizingPadSettings,
+            pubkey: vizingPadConfigs,
             isSigner: false,
             isWritable: true,
           },

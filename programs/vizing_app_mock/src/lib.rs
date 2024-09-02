@@ -52,20 +52,18 @@ pub mod vizing_app_mock {
         let signer = &[&seeds[..]];
 
         let cpi_ctx = CpiContext::new_with_signer(
-            ctx.accounts.vizing_pad.to_account_info(),
+            ctx.accounts.vizing_pad_program.to_account_info(),
             LaunchOp {
-                fee_payer: ctx.accounts.user.to_account_info(),
-                message_authority: ctx.accounts.message_pda_authority.to_account_info(),
-                vizing: ctx.accounts.vizing.to_account_info(),
-                fee_collector: ctx.accounts.vizing_fee_collector.to_account_info(),
+                vizing_app_fee_payer: ctx.accounts.user.to_account_info(),
+                vizing_app_message_authority: ctx
+                    .accounts
+                    .vizing_app_message_authority
+                    .to_account_info(),
+                vizing_pad_config: ctx.accounts.vizing_pad_config.to_account_info(),
+                vizing_pad_fee_collector: ctx.accounts.vizing_pad_fee_collector.to_account_info(),
                 system_program: ctx.accounts.system_program.to_account_info(),
             },
             signer,
-        );
-
-        msg!(
-            "fee_collector is writeable: {}",
-            ctx.accounts.vizing_fee_collector.is_writable
         );
 
         let res = launch(cpi_ctx, params);
@@ -110,18 +108,18 @@ pub struct LaunchAppOpTemplate<'info> {
     #[account(mut, signer)]
     pub user: AccountInfo<'info>,
 
-    #[account(seeds = [VIZING_MESSAGE_AUTHORITY_SEED], bump = message_pda_authority.bump)]
-    pub message_pda_authority: Account<'info, VizingMessageAuthority>,
+    #[account(seeds = [VIZING_MESSAGE_AUTHORITY_SEED], bump = vizing_app_message_authority.bump)]
+    pub vizing_app_message_authority: Account<'info, VizingMessageAuthority>,
 
     /// CHECK: 1. Vizing config account
-    pub vizing: AccountInfo<'info>,
+    pub vizing_pad_config: AccountInfo<'info>,
 
     /// CHECK: 2. Vizing fee collector account
     #[account(mut)]
-    pub vizing_fee_collector: AccountInfo<'info>,
+    pub vizing_pad_fee_collector: AccountInfo<'info>,
 
     /// CHECK: 3. Vizing Pad
-    pub vizing_pad: AccountInfo<'info>,
+    pub vizing_pad_program: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
 }
