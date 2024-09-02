@@ -1,5 +1,49 @@
 use anchor_lang::prelude::*;
 
+pub const VIZING_FEE_ROUTER_SEED: &[u8] = b"Vizing_Fee_Router_Seed";
+pub const VIZING_MESSAGE_AUTHORITY_SEED: &[u8] = b"Vizing_Message_Authority_Seed";
+pub const VIZING_ERLIEST_ARRIVAL_TIMESTAMP_DEFAULT: u64 = 0;
+pub const VIZING_LATEST_ARRIVAL_TIMESTAMP_DEFAULT: u64 = 0;
+pub const VIZING_RELAYER_DEFAULT: Pubkey = Pubkey::new_from_array([
+    137, 71, 54, 167, 199, 236, 39, 80, 113, 216, 76, 7, 85, 39, 112, 180, 125, 214, 156, 170, 202,
+    74, 57, 119, 4, 40, 1, 88, 236, 158, 120, 105,
+]);
+pub const VIZING_GASLIMIT_DEFAULT: u64 = 0;
+
+#[derive(Accounts)]
+pub struct VizingEmitterInitialize<'info> {
+    #[account(init, payer = payer, space = 8 + VizingFeeRouter::INIT_SPACE, seeds = [VIZING_FEE_ROUTER_SEED], bump)]
+    pub fee_pda_router: Account<'info, VizingFeeRouter>,
+
+    #[account(init, payer = payer, space = 8 + VizingMessageAuthority::INIT_SPACE, seeds = [VIZING_MESSAGE_AUTHORITY_SEED], bump)]
+    pub message_pda_authority: Account<'info, VizingMessageAuthority>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct VizingFeeRouter {
+    pub bump: u8,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct VizingMessageAuthority {
+    pub bump: u8,
+}
+
+impl VizingEmitterInitialize<'_> {
+    pub fn handler(ctx: Context<Self>) -> Result<()> {
+        ctx.accounts.fee_pda_router.bump = *ctx.bumps.get("fee_pda_router").unwrap();
+        ctx.accounts.message_pda_authority.bump = *ctx.bumps.get("message_pda_authority").unwrap();
+        Ok(())
+    }
+}
+
 #[account]
 #[derive(InitSpace)]
 pub struct LaunchParams {
@@ -17,7 +61,7 @@ pub struct LaunchParams {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct Message {
     pub mode: u8,
-    pub target_program: Pubkey,
+    pub target_program: [u8; 32],
     pub execute_gas_limit: u64,
     pub max_fee_per_gas: u64,
     #[max_len(256)]

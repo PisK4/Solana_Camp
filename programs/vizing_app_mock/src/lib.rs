@@ -1,8 +1,7 @@
 pub mod vizing_omni;
 use anchor_lang::prelude::*;
 use vizing_omni::*;
-use vizing_pad::program::VizingPad;
-use vizing_pad::{self, cpi::accounts::LaunchOp};
+use vizing_pad::{self, cpi::accounts::LaunchOp, cpi::launch};
 
 declare_id!("2xiuj4ozxygvkmC1WKJTGZyJXSD8dtbFxWkuJiMLzrTg");
 
@@ -23,12 +22,12 @@ pub mod vizing_app_mock {
         VizingSolReceiverInitialize::handler(ctx)
     }
 
-    pub fn initialize_vizing_sender(ctx: Context<VizingEmitterInitialize>) -> Result<()> {
+    pub fn initialize_vizing_emitter(ctx: Context<VizingEmitterInitialize>) -> Result<()> {
         VizingEmitterInitialize::handler(ctx)
     }
 
-    pub fn launch2vizing(ctx: Context<LaunchAppOpTemplate>) -> Result<()> {
-        let params = LaunchParams {
+    pub fn launch_vizing(ctx: Context<LaunchAppOpTemplate>) -> Result<()> {
+        let params = vizing_pad::vizing_omni::LaunchParams {
             erliest_arrival_timestamp: VIZING_ERLIEST_ARRIVAL_TIMESTAMP_DEFAULT,
             latest_arrival_timestamp: VIZING_LATEST_ARRIVAL_TIMESTAMP_DEFAULT,
             relayer: VIZING_RELAYER_DEFAULT,
@@ -36,7 +35,7 @@ pub mod vizing_app_mock {
             value: 0,
             dest_chainid: 1,
             addition_params: vec![],
-            message: Message {
+            message: vizing_pad::vizing_omni::Message {
                 mode: 1,
                 target_program: [0; 32],
                 execute_gas_limit: VIZING_GASLIMIT_DEFAULT,
@@ -44,7 +43,38 @@ pub mod vizing_app_mock {
                 signature: vec![],
             },
         };
-        Ok(())
+
+        let (_, bump_authority) =
+            Pubkey::find_program_address(&[VIZING_MESSAGE_AUTHORITY_SEED], &ctx.program_id);
+
+        let seeds = &[VIZING_MESSAGE_AUTHORITY_SEED, &[bump_authority]];
+
+        let signer = &[&seeds[..]];
+
+        let cpi_ctx = CpiContext::new_with_signer(
+            ctx.accounts.vizing_pad.to_account_info(),
+            LaunchOp {
+                fee_payer: ctx.accounts.user.to_account_info(),
+                message_authority: ctx.accounts.message_pda_authority.to_account_info(),
+                vizing: ctx.accounts.vizing.to_account_info(),
+                fee_collector: ctx.accounts.vizing_fee_collector.to_account_info(),
+                system_program: ctx.accounts.system_program.to_account_info(),
+            },
+            signer,
+        );
+
+        msg!(
+            "fee_collector is writeable: {}",
+            ctx.accounts.vizing_fee_collector.is_writable
+        );
+
+        let res = launch(cpi_ctx, params);
+
+        if res.is_ok() {
+            return Ok(());
+        } else {
+            return err!(AppErrors::VizingCallFailed);
+        }
     }
 
     #[access_control(assert_vizing_authority(&ctx.accounts.vizing_authority))]
@@ -77,7 +107,7 @@ pub mod vizing_app_mock {
 #[derive(Accounts)]
 pub struct LaunchAppOpTemplate<'info> {
     /// CHECK: 0. dapp Authority account
-    #[account(signer)]
+    #[account(mut, signer)]
     pub user: AccountInfo<'info>,
 
     #[account(seeds = [VIZING_MESSAGE_AUTHORITY_SEED], bump = message_pda_authority.bump)]
@@ -87,7 +117,11 @@ pub struct LaunchAppOpTemplate<'info> {
     pub vizing: AccountInfo<'info>,
 
     /// CHECK: 2. Vizing fee collector account
+    #[account(mut)]
     pub vizing_fee_collector: AccountInfo<'info>,
+
+    /// CHECK: 3. Vizing Pad
+    pub vizing_pad: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
 }
@@ -124,4 +158,10 @@ pub struct Initialize<'info> {
 pub struct ResultData {
     pub result: u64,
     pub bump: u8,
+}
+
+#[error_code]
+pub enum AppErrors {
+    #[msg("vizing call failed")]
+    VizingCallFailed,
 }

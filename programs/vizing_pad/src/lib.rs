@@ -15,8 +15,8 @@ pub mod vizing_pad {
 
     // **********  channel start ************
 
-    pub fn launch(mut ctx: Context<LaunchOp>, params: LaunchParams) -> Result<()> {
-        LaunchOp::vizing_launch(&mut ctx, params)
+    pub fn launch(mut _ctx: Context<LaunchOp>, _params: LaunchParams) -> Result<()> {
+        Ok(())
     }
 
     // **********  channel end ************

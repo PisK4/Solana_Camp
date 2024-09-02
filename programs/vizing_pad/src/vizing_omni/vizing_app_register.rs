@@ -103,6 +103,14 @@ impl VizingAppManagement<'_> {
         ctx.accounts.vizing_app_configs.admin = new_admin.key();
         Ok(())
     }
+
+    pub fn modify_sol_pda_receiver(
+        ctx: &mut Context<VizingAppManagement>,
+        new_sol_pda_receiver: Pubkey,
+    ) -> Result<()> {
+        ctx.accounts.vizing_app_configs.sol_pda_receiver = new_sol_pda_receiver.key();
+        Ok(())
+    }
 }
 
 #[event]

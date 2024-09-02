@@ -8,7 +8,7 @@ use anchor_lang::system_program::{transfer, Transfer};
 #[derive(Accounts)]
 pub struct LaunchOp<'info> {
     /// CHECK: We need signer to claim ownership
-    #[account(signer)]
+    #[account(mut, signer)]
     pub fee_payer: AccountInfo<'info>,
 
     /// CHECK: We need signer to claim ownership
@@ -28,6 +28,12 @@ pub struct LaunchOp<'info> {
 
 impl LaunchOp<'_> {
     pub fn vizing_launch(ctx: &mut Context<LaunchOp>, params: LaunchParams) -> Result<()> {
+        msg!("####Launch in vizing core");
+
+        msg!("fee_payer is signer: {}", ctx.accounts.fee_payer.is_signer);
+
+        msg!("message_authority is signer: {}", ctx.accounts.message_authority.is_signer);
+        
         msg!(
             "message_authority: {}",
             ctx.accounts.message_authority.key()
@@ -56,6 +62,15 @@ impl LaunchOp<'_> {
         msg!("max_fee_per_gas: {}", params.message.max_fee_per_gas);
 
         msg!("signature: {:?}", params.message.signature);
+
+        msg!("fee payer: {}", ctx.accounts.fee_payer.key());
+
+        msg!("fee collector: {}", ctx.accounts.fee_collector.key());
+
+        msg!("fee_payer is writeable: {}", ctx.accounts.fee_payer.is_writable);
+
+        msg!("fee_collector is writeable: {}", ctx.accounts.fee_collector.is_writable);
+
 
         // mock fee
         let fee: u64 = 1000000000;

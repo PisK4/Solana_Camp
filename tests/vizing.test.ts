@@ -22,15 +22,20 @@ describe("Vizing Test", () => {
   const vizingAppMockProgram = anchor.workspace
     .VizingAppMock as Program<VizingAppMock>;
   const vizingPadSettingsSeed = Buffer.from("Vizing_Pad_Settings_Seed");
-  // const relayerSettingsSeed = Buffer.from("Relayer_Settings_Seed");
   const vizingAuthoritySeed = Buffer.from("Vizing_Authority_Seed");
   const vizingAppConfigSeed = Buffer.from("Vizing_App_Config_Seed");
   const vizingAppSolReceiverSeed = Buffer.from("Vizing_App_Sol_Receiver_Seed");
+  const vizingFeeRouterSeed = Buffer.from("Vizing_Fee_Router_Seed");
+  const vizingMessageAuthoritySeed = Buffer.from(
+    "Vizing_Message_Authority_Seed"
+  );
 
   let vizingPadSettings: anchor.web3.PublicKey;
   let relayerSettings: anchor.web3.PublicKey;
   let vizingAuthority: anchor.web3.PublicKey;
   let vizingAppConfig: anchor.web3.PublicKey;
+  let vizingFeeRouter: anchor.web3.PublicKey;
+  let vizingMessageAuthority: anchor.web3.PublicKey;
 
   const feeReceiverKeyPair = anchor.web3.Keypair.fromSeed(
     Buffer.from(padStringTo32Bytes("fee_receiver"))
@@ -76,6 +81,8 @@ describe("Vizing Test", () => {
   ];
 
   it("account setup", async () => {
+    console.log("feeCollector: ", feeReceiverKeyPair.publicKey.toBase58());
+
     // get airdrop
     await provider.connection.confirmTransaction(
       await provider.connection.requestAirdrop(
@@ -342,6 +349,46 @@ describe("Vizing Test", () => {
     };
 
     {
+      // vizing app settings
+      const [feeRouter, bump2] = anchor.web3.PublicKey.findProgramAddressSync(
+        [vizingFeeRouterSeed],
+        vizingAppMockProgram.programId
+      );
+
+      vizingFeeRouter = feeRouter;
+
+      console.log(`feeRouter: ${feeRouter.toBase58()}, bump: ${bump2}`);
+
+      const [messageAuthority, bump3] =
+        anchor.web3.PublicKey.findProgramAddressSync(
+          [vizingMessageAuthoritySeed],
+          vizingAppMockProgram.programId
+        );
+
+      vizingMessageAuthority = messageAuthority;
+
+      console.log(
+        `messageAuthority: ${messageAuthority.toBase58()}, bump: ${bump3}`
+      );
+
+      await provider.connection.confirmTransaction(
+        await provider.connection.requestAirdrop(
+          vizingFeeRouter,
+          1_000_000_000
+        ),
+        "confirmed"
+      );
+
+      await vizingAppMockProgram.methods
+        .initializeVizingEmitter()
+        .accounts({
+          messagePdaAuthority: vizingMessageAuthority,
+          payer: provider.wallet.publicKey,
+        })
+        .rpc();
+    }
+
+    {
       try {
         await vizingProgram.methods
           .launch(launchParams)
@@ -375,6 +422,39 @@ describe("Vizing Test", () => {
         })
         .rpc();
       console.log(`launch: ${tx}`);
+
+      const feeReceiverBalanceAfter = await provider.connection.getBalance(
+        feeReceiverKeyPair.publicKey
+      );
+
+      console.log(
+        `feeReceiverBalanceBefore: ${
+          feeReceiverBalanceBefore / anchor.web3.LAMPORTS_PER_SOL
+        }, feeReceiverBalanceAfter: ${
+          feeReceiverBalanceAfter / anchor.web3.LAMPORTS_PER_SOL
+        }`
+      );
+
+      expect(feeReceiverBalanceAfter).to.greaterThan(feeReceiverBalanceBefore);
+    }
+
+    {
+      console.log("launchVizing");
+      // vizing app launch
+      const feeReceiverBalanceBefore = await provider.connection.getBalance(
+        feeReceiverKeyPair.publicKey
+      );
+      const tx = await vizingAppMockProgram.methods
+        .launchVizing()
+        .accounts({
+          user: provider.wallet.publicKey,
+          messagePdaAuthority: vizingMessageAuthority,
+          vizing: vizingPadSettings,
+          vizingFeeCollector: feeReceiverKeyPair.publicKey,
+          vizingPad: vizingProgram.programId,
+        })
+        .rpc();
+      console.log(`launchVizing: ${tx}`);
 
       const feeReceiverBalanceAfter = await provider.connection.getBalance(
         feeReceiverKeyPair.publicKey
@@ -482,10 +562,10 @@ describe("Vizing Test", () => {
       .rpc();
 
     await vizingAppMockProgram.methods
-      .initializeVizing()
+      .initializeVizingReceiver()
       .accounts({
         solPdaReceiver: solPdaReceiver,
-        admin: provider.wallet.publicKey,
+        payer: provider.wallet.publicKey,
       })
       .rpc();
 
