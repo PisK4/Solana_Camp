@@ -21,6 +21,8 @@ import {
 } from "@solana/web3.js";
 import { web3 } from "@project-serum/anchor";
 
+import assert from "assert";
+
 const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
 let token_programId = TOKEN_PROGRAM_ID;
 let associated_token_programId = ASSOCIATED_TOKEN_PROGRAM_ID;
@@ -105,6 +107,16 @@ const registeredValidatorKeyPairs = [
 //   }
 // }
 // await requestAirdrop(user);
+
+async function getSolBalance(checkAddress: PublicKey) {
+  try {
+    const balance = await connection.getBalance(checkAddress);
+    console.log("sol balance:",balance);
+    return balance;
+  } catch (err) {
+    console.error("Failed to get balance:", err);
+  }
+}
 
 //createMint
 async function create_mint() {
@@ -258,7 +270,9 @@ await mint_to(newTokenMes.publicKey, userAssociatedAccount);
 async function getTokenBalance(checkAddress: PublicKey) {
   try {
     const tokenAccountInfo = await getAccount(connection, checkAddress);
+    let tokenBalance=tokenAccountInfo.amount;
     console.log(`This Account Token balance: ${tokenAccountInfo.amount}`);
+    return tokenBalance;
   } catch (err) {
     console.error("Failed to get token balance:", err);
   }
@@ -615,7 +629,7 @@ describe("Test", () => {
     //init_gas_global
     let global_base_price = new anchor.BN(500);
     let default_gas_limit = new anchor.BN(1000);
-    let amount_in_threshold = new anchor.BN(10000000000000);
+    let amount_in_threshold = new anchor.BN(1000000000);
     async function InitGasGlobal() {
       try {
         const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
@@ -801,15 +815,15 @@ describe("Test", () => {
     let new_global_base_price = new anchor.BN(500);
     let new_default_gas_limit = new anchor.BN(1000);
     let new_amount_in_threshold = new anchor.BN(100000000);
-    async function SetThisGasGlobal() {
+    async function SetThisGasGlobal(thisGlobalBasePrice,thisDefaultGasLimit,thisAmountInThreshold,thisMolecular,thisDenominator) {
       try {
         const setThisGasGlobal = await pg.program.methods
           .setThisGasGlobal(
-            new_global_base_price,
-            new_default_gas_limit,
-            new_amount_in_threshold,
-            molecular,
-            denominator
+            thisGlobalBasePrice,
+            thisDefaultGasLimit,
+            thisAmountInThreshold,
+            thisMolecular,
+            thisDenominator
           )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
@@ -832,7 +846,8 @@ describe("Test", () => {
         console.log("SetThisGasGlobal error:", e);
       }
     }
-    await SetThisGasGlobal();
+    
+    await SetThisGasGlobal(new_global_base_price,new_default_gas_limit,new_amount_in_threshold,molecular,denominator);
 
     //set_this_fee_config
     async function SetThisFeeConfig() {
@@ -1317,7 +1332,6 @@ describe("Test", () => {
           base_price,
           this_message.targetContract
         );
-        console.log("this_message.maxFeePerGas:",this_message.maxFeePerGas);
         if (this_message.maxFeePerGas < dapp_base_price) {
           console.log("price < dapp_base_price");
           return 0;
@@ -1330,7 +1344,6 @@ describe("Test", () => {
       }
 
       let output_amount_in = amount_out;
-      console.log("fee:",fee);
       let finalFee;
       if (amount_out.toNumber() > 0) {
         let fee_config_molecular = feeConfigMappings[0].molecular.toNumber();
@@ -1581,10 +1594,10 @@ describe("Test", () => {
       additionParams: Buffer.alloc(0),
       message: message,
     };
-    async function Launch() {
+    async function Launch(thisLaunchParams) {
       try {
         let launch = await pg.program.methods
-          .launch(launchParams)
+          .launch(thisLaunchParams)
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             feePayer: user,
@@ -1604,33 +1617,144 @@ describe("Test", () => {
         console.log("launch error:", e);
       }
     }
-    await Launch();
+    //success launch
+    let thisTestValue=new anchor.BN(1000);
+    let thisFee1=await EstimateTotalFee(id, thisTestValue , message);
+    let solBefore1=await getSolBalance(user);
+    await Launch(launchParams);
+    let solAfter1=await getSolBalance(user);
+    let differ1=solBefore1-solAfter1;
+    if(differ1>=thisFee1){
+      console.log("launch1 success",differ1);
+    }else{
+      console.log("launch1 amount error",differ1);
+    }
 
-    //landing
+    //big number value launch
+    let thisTestValue2=new anchor.BN(1000000);
+    let thisFee2=await EstimateTotalFee(id, thisTestValue2 , message);
+    let solBefore2=await getSolBalance(user);
+    const newLaunchParams1 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: user,
+      sender: user,
+      value: thisTestValue2,
+      destChainid: new anchor.BN(4),
+      additionParams: Buffer.alloc(0),
+      message: message,
+    };
+    await Launch(newLaunchParams1);
+    let solafter2=await getSolBalance(user);
+    let differ2=solBefore2-solafter2;
+    if(differ2>=thisFee2){
+      console.log("launch2 success",differ2);
+    }else{
+      console.log("launch2 amount error",differ2);
+    }
+
+    // expect(vizingPadAccount.owner.toBase58()).to.equal(
+    //     provider.wallet.publicKey.toBase58()
+    // );
+
+
+    //error amount_in_threshold
+    let this_amount_in_threshold=new anchor.BN(100);
+    await SetThisGasGlobal(new_global_base_price,new_default_gas_limit,this_amount_in_threshold,molecular,denominator);
+    await Launch(launchParams);
+    await SetThisGasGlobal(new_global_base_price,new_default_gas_limit,amount_in_threshold,molecular,denominator);
+
+    //error not relayer
+    let newRelayer=new web3.Keypair();
+    const newLaunchParams2 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: newRelayer.publicKey,
+      sender: user,
+      value: thisTestValue2,
+      destChainid: new anchor.BN(4),
+      additionParams: Buffer.alloc(0),
+      message: message,
+    };
+    await Launch(newLaunchParams2);
+
+    //error message
+    function encodeEthereumAddressTo40U8Array(ethAddress: string): number[] {
+      const address = ethAddress.slice(2); // Remove the '0x' prefix
+      const result = new Uint8Array(40);
+      for (let i = 0; i < 40; i++) {
+        let charAddressI = address[i].charCodeAt(0);
+        result[i] = charAddressI;
+      }
+
+      const addressArray: number[] = Array.from(result);
+      return addressArray;
+    }
+    let by40Dapp = encodeEthereumAddressTo40U8Array("0xaE67336f06B10fbbb26F31d31AbEA897290109B9");
+    const errorDappMessage = {
+      mode: 1,
+      targetContract: by40Dapp,
+      executeGasLimit: executeGasLimit,
+      maxFeePerGas: maxFeePerGas,
+      signature: Buffer.from("000000001"),
+    };
+    const newLaunchParams3 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: newRelayer,
+      sender: user,
+      value: thisTestValue2,
+      destChainid: new anchor.BN(4),
+      additionParams: Buffer.alloc(0),
+      message: errorDappMessage,
+    };
+    await Launch(newLaunchParams3);
+
+    //error invalid eth address
+    let invalidDapp = encodeEthereumAddressTo40U8Array("0xAAA777733332222bb26F31d31AbEA897290109B9");
+    const errorDappMessage2= {
+      mode: 1,
+      targetContract: invalidDapp,
+      executeGasLimit: executeGasLimit,
+      maxFeePerGas: maxFeePerGas,
+      signature: Buffer.from("000000001"),
+    };
+    const newLaunchParams4 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: newRelayer,
+      sender: user,
+      value: thisTestValue2,
+      destChainid: new anchor.BN(4),
+      additionParams: Buffer.alloc(0),
+      message: errorDappMessage2,
+    };
+    await Launch(newLaunchParams4);
 
     //get
-    async function GetEstimateGas(amount_out, dest_chain_id, this_message) {
-      try {
-        const estimateGas = await pg.program.methods
-          .estimateGas(amount_out, dest_chain_id, this_message)
-          .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
-            mappingFeeConfig: mappingFeeConfigAuthority,
-            gasSystemGlobal: gasSystemGlobalAuthority,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`estimateGas:${estimateGas}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(estimateGas);
-      } catch (e) {
-        console.log("estimateGas error:", e);
-      }
-    }
-    await GetEstimateGas(testAmountOut, id, newMessage);
+    // async function GetEstimateGas(amount_out, dest_chain_id, this_message) {
+    //   try {
+    //     const estimateGas = await pg.program.methods
+    //       .estimateGas(amount_out, dest_chain_id, this_message)
+    //       .accounts({
+    //         saveChainId: saveDestChainIdAccount.publicKey,
+    //         mappingFeeConfig: mappingFeeConfigAuthority,
+    //         gasSystemGlobal: gasSystemGlobalAuthority,
+    //       })
+    //       .signers([signer])
+    //       .rpc();
+    //     console.log(`estimateGas:${estimateGas}'`);
+    //     // Confirm transaction
+    //     await pg.connection.confirmTransaction(estimateGas);
+    //   } catch (e) {
+    //     console.log("estimateGas error:", e);
+    //   }
+    // }
+    // await GetEstimateGas(testAmountOut, id, newMessage);
 
 
   });
 });
+
 
 
