@@ -335,24 +335,45 @@ describe("Test", () => {
       vizingAuthority = authority;
     }
 
-    function encodeEthereumAddressToU8Array(ethAddress: string): number[] {
-      const address = ethAddress.slice(2); // Remove the '0x' prefix
-      const result = new Uint8Array(60);
-      result[0] = 2;
-      for (let i = 0; i < 40; i++) {
-        let charAddressI = address[i].charCodeAt(0);
-        result[i + 1] = charAddressI;
-      }
+    // function encodeEthereumAddressToU8Array(ethAddress: string): number[] {
+    //   const address = ethAddress.slice(2); // Remove the '0x' prefix
+    //   const result = new Uint8Array(60);
+    //   result[0] = 2;
+    //   for (let i = 0; i < 40; i++) {
+    //     let charAddressI = address[i].charCodeAt(0);
+    //     result[i + 1] = charAddressI;
+    //   }
 
-      for (let i = 41; i < 60; i++) {
-        result[i] = result[((i - 1) % 10) + 1];
+    //   for (let i = 41; i < 60; i++) {
+    //     result[i] = result[((i - 1) % 10) + 1];
+    //   }
+    //   const addressArray: number[] = Array.from(result);
+    //   return addressArray;
+    // }
+
+    // function decodeU8ArrayToEthereumAddress(message) {
+    //   const asciiData = message.slice(0, 40); // ASCII数据
+    //   let hexAddress = "0x";
+    //   for (let i = 0; i < 40; i++) {
+    //     const charCode = asciiData[i];
+    //     hexAddress += String.fromCharCode(charCode);
+    //   }
+    //   return hexAddress;
+    // }
+
+    function encodeEthereumAddressToU8Array(ethAddress: string): number[] {
+      const address = Buffer.from(ethAddress);
+      console.log("address length:",address.length);
+      const result = new Uint8Array(32);
+      for (let i = 0; i < 32; i++) {
+        result[i] = address[i];
       }
       const addressArray: number[] = Array.from(result);
       return addressArray;
     }
 
     function decodeU8ArrayToEthereumAddress(message) {
-      const asciiData = message.slice(0, 40); // ASCII数据
+      const asciiData = message.slice(0, 32); // ASCII数据
       let hexAddress = "0x";
       for (let i = 0; i < 40; i++) {
         const charCode = asciiData[i];
@@ -362,7 +383,7 @@ describe("Test", () => {
     }
 
     let id = new anchor.BN(4);
-    let chainId = new Buffer(`${id}`);
+    let chainId = Buffer.from([4]);
     console.log("chainId buffer:", chainId);
 
     //pda
@@ -755,6 +776,7 @@ describe("Test", () => {
     let tokenAddress = encodeEthereumAddressToU8Array(
       "0xdAC17F958D2ee523a2206206994597C13D831ec7"
     );
+
     let init_decimals = 6;
     let init_max_price = new anchor.BN(1000);
     async function InitTokenInfoBase() {
@@ -999,7 +1021,7 @@ describe("Test", () => {
     await SetThisExchangeRate();
 
     //batch_set_token_fee_config
-    let destChainIds = [new anchor.BN(id)];
+    let destChainIds = [id];
     let moleculars = [new anchor.BN(5)];
     let denominators = [new anchor.BN(10)];
     async function BatchSetThisTokenFeeConfig() {
@@ -1118,15 +1140,10 @@ describe("Test", () => {
     await BatchSetThisDappPriceConfigInDiffChain();
 
     //batch_set_this_dapp_price_config_in_same_chain
-    let thisChainId = new anchor.BN(id);
     async function BatchSetThisDappPriceConfigInSameChain() {
       try {
         const batchSetThisDappPriceConfigInSameChain = await pg.program.methods
-          .batchSetThisDappPriceConfigInSameChain(
-            thisChainId,
-            dapps,
-            base_prices
-          )
+          .batchSetThisDappPriceConfigInSameChain(id, dapps, base_prices)
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             powerUser: powerUserAuthority,
@@ -1437,8 +1454,8 @@ describe("Test", () => {
     await EstimateTotalFee(testAmountOut, id, newMessage);
 
     //batch_set_exchange_rate
-    let molecular_decimals = Buffer.from("6");
-    let denominator_decimals = Buffer.from("6");
+    let molecular_decimals = Buffer.from([6]);
+    let denominator_decimals = Buffer.from([6]);
     async function BatchSetThisExchangeRate() {
       try {
         const batchSetThisExchangeRate = await pg.program.methods
@@ -1692,12 +1709,6 @@ describe("Test", () => {
     //landing
 
     //get
-    let [testAuthority, testBump] = await PublicKey.findProgramAddress(
-      [Buffer.from("test"), chainId],
-      pg.PROGRAM_ID
-    );
-    console.log("testAuthority:", testAuthority.toString());
-    console.log("testBump:", testBump);
     async function GetEstimateGas(amount_out, dest_chain_id, this_message) {
       try {
         const estimateGas = await pg.program.methods
@@ -1706,19 +1717,12 @@ describe("Test", () => {
             saveChainId: saveDestChainIdAccount.publicKey,
             mappingFeeConfig: mappingFeeConfigAuthority,
             gasSystemGlobal: gasSystemGlobalAuthority,
-            newAccount: testAuthority,
-            user: user,
-            systemProgram: systemId,
           })
           .signers([signer])
           .rpc();
         console.log(`estimateGas:${estimateGas}'`);
         // Confirm transaction
         await pg.connection.confirmTransaction(estimateGas);
-        const estimateGasResult =
-          await pg.program.account.estimateGasResult.fetch(testAuthority);
-        const result = estimateGasResult.result.toNumber();
-        console.log("result:", result);
       } catch (e) {
         console.log("estimateGas error:", e);
       }
@@ -1726,3 +1730,4 @@ describe("Test", () => {
     await GetEstimateGas(testAmountOut, id, newMessage);
   });
 });
+

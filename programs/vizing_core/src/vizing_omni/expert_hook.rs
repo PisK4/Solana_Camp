@@ -11,7 +11,7 @@ use crate::state::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct TokenBase {
-    pub key: [u8; 40],
+    pub key: [u8; 32],
     pub symbol: Vec<u8>,
     pub decimals: u8,
     pub max_price: u64,
@@ -19,7 +19,7 @@ pub struct TokenBase {
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct TokenTradeFeeConfig {
-    pub key1: [u8; 40],
+    pub key1: [u8; 32],
     pub key2: u64,
     pub molecular: u64,
     pub denominator: u64,
@@ -28,7 +28,7 @@ pub struct TokenTradeFeeConfig {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct SymbolConfig {
     pub key: Vec<u8>,
-    pub address: [u8; 40],
+    pub address: [u8; 32],
 }
 
 #[account]
@@ -43,7 +43,7 @@ pub struct MappingSymbolConfig {
 }
 
 impl MappingTokenConfig {
-    pub fn set_token_base(&mut self, key: [u8; 40], symbol: Vec<u8>, decimals: u8, max_price: u64) {
+    pub fn set_token_base(&mut self, key: [u8; 32], symbol: Vec<u8>, decimals: u8, max_price: u64) {
         if let Some(pair) = self
             .token_base_mappings
             .iter_mut()
@@ -64,7 +64,7 @@ impl MappingTokenConfig {
 
     pub fn set_token_trade_fee_config(
         &mut self,
-        key1: [u8; 40],
+        key1: [u8; 32],
         key2: u64,
         molecular: u64,
         denominator: u64,
@@ -88,7 +88,7 @@ impl MappingTokenConfig {
         }
     }
 
-    pub fn get_token_base(&self, key: [u8; 40]) -> Option<TokenBase> {
+    pub fn get_token_base(&self, key: [u8; 32]) -> Option<TokenBase> {
         self.token_base_mappings
             .iter()
             .find(|pair| pair.key == key)
@@ -97,7 +97,7 @@ impl MappingTokenConfig {
 
     pub fn get_token_trade_fee_config(
         &self,
-        key1: [u8; 40],
+        key1: [u8; 32],
         key2: u64,
     ) -> Option<TokenTradeFeeConfig> {
         self.token_trade_fee_config_mappings
@@ -108,7 +108,7 @@ impl MappingTokenConfig {
 }
 
 impl MappingSymbolConfig {
-    pub fn set(&mut self, key: Vec<u8>, address: [u8; 40]) {
+    pub fn set(&mut self, key: Vec<u8>, address: [u8; 32]) {
         if let Some(pair) = self
             .symbol_config_mappings
             .iter_mut()
@@ -130,11 +130,11 @@ impl MappingSymbolConfig {
 }
 
 //init
-impl InitTokenInfoBase<'_>{
+impl InitTokenInfoBase<'_> {
     pub fn initialize_token_info_base(
         ctx: Context<InitTokenInfoBase>,
         symbol: Vec<u8>,
-        token_address: [u8; 40],
+        token_address: [u8; 32],
         decimals: u8,
         max_price: u64,
     ) -> Result<()> {
@@ -167,10 +167,7 @@ impl ChangePowerUser<'_> {
     ) -> Result<()> {
         let power_user = &mut ctx.accounts.power_user;
         let user_key = ctx.accounts.user.key();
-        require!(
-            user_key == power_user.admin,
-            errors::ErrorCode::NonAdmin
-        );
+        require!(user_key == power_user.admin, errors::ErrorCode::NonAdmin);
 
         power_user.admin = new_admin;
         power_user.engine_admin = new_engine_admin;
@@ -239,7 +236,7 @@ impl SetTokenInfoBase<'_> {
     pub fn set_token_info_base(
         ctx: Context<SetTokenInfoBase>,
         symbol: Vec<u8>,
-        token_address: [u8; 40],
+        token_address: [u8; 32],
         decimals: u8,
         max_price: u64,
     ) -> Result<()> {
@@ -260,7 +257,7 @@ impl SetTokenInfoBase<'_> {
 impl SetTokenTradeFeeMap<'_> {
     pub fn set_token_trade_fee_map(
         ctx: Context<SetTokenTradeFeeMap>,
-        token_address: [u8; 40],
+        token_address: [u8; 32],
         chain_ids: Vec<u64>,
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
@@ -293,7 +290,7 @@ pub fn compute_trade_fee(
     token_fee_config_molecular: u64,
     token_fee_config_denominator: u64,
     _dest_chain_id: u64,
-    _token: [u8; 40],
+    _token: [u8; 32],
     expect_amount_receive: u64,
 ) -> Option<u64> {
     let fee;
@@ -319,7 +316,7 @@ pub fn compute_total_amont(
     token_fee_config_molecular: u64,
     token_fee_config_denominator: u64,
     dest_chain_id: u64,
-    token: [u8; 40],
+    token: [u8; 32],
     expect_amount_receive: u64,
 ) -> Option<u64> {
     let total_amount;
@@ -344,7 +341,7 @@ pub fn compute_amount_composition(
     token_fee_config_molecular: u64,
     token_fee_config_denominator: u64,
     _dest_chain_id: u64,
-    _token: [u8; 40],
+    _token: [u8; 32],
     total_amount: u64,
 ) -> Option<(u64, u64)> {
     let real_amount;

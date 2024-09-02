@@ -280,7 +280,7 @@ pub struct ComputeTradeFee2<'info> {
 impl ComputeTradeFee2<'_> {
     pub fn get_compute_trade_fee2(
         ctx: Context<ComputeTradeFee2>,
-        target_contract: [u8; 40],
+        target_contract: [u8; 32],
         dest_chain_id: u64,
         amount_out: u64,
     ) -> Result<u64> {
@@ -334,10 +334,6 @@ impl EstimatePrice2<'_> {
         Ok(base_price)
     }
 }
-#[account]
-pub struct EstimateGasResult{
-    pub result: u64
-}
 
 #[derive(Accounts)]
 pub struct EstimateGas<'info> {
@@ -354,18 +350,7 @@ pub struct EstimateGas<'info> {
         seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
         bump
     )]
-    pub gas_system_global: Account<'info, GasSystemGlobal>,
-    #[account(
-        init,
-        payer = user, 
-        space = 8 + 256,
-        seeds = [b"test".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub new_account: Account<'info, EstimateGasResult>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
+    pub gas_system_global: Account<'info, GasSystemGlobal>
 }
 impl EstimateGas<'_> {
     pub fn get_estimate_gas(
@@ -384,8 +369,6 @@ impl EstimateGas<'_> {
         let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,dapp).ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
         let dapp_config = mapping_fee_config.get_dapp_config(dest_chain_id,dapp).ok_or(errors::ErrorCode::DappConfigNotFound)?;
 
-        let new_account=&mut ctx.accounts.new_account;
-
         let fee: u64 = vizing_gas_system::estimate_gas(
             gas_system_global.global_base_price,
             fee_config.base_price,
@@ -402,7 +385,6 @@ impl EstimateGas<'_> {
             dest_chain_id,
             &serialized_data,
         ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
-        new_account.result=fee;
         Ok(fee)
     }
 }

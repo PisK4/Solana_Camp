@@ -37,7 +37,7 @@ pub struct TradeFee {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct TradeFeeConfig {
     pub key: u64,
-    pub dapp: [u8; 40], //address
+    pub dapp: [u8; 32], //address
     pub molecular: u64,
     pub denominator: u64,
 }
@@ -45,7 +45,7 @@ pub struct TradeFeeConfig {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct DappConfig {
     pub key: u64,
-    pub dapp: [u8; 40], //address
+    pub dapp: [u8; 32], //address
     pub value: u64,
 }
 
@@ -129,7 +129,7 @@ impl MappingFeeConfig {
     pub fn set_trade_fee_config(
         &mut self,
         key: u64,
-        dapp: [u8; 40],
+        dapp: [u8; 32],
         molecular: u64,
         denominator: u64,
     ) {
@@ -151,7 +151,7 @@ impl MappingFeeConfig {
         }
     }
 
-    pub fn set_dapp_config(&mut self, key: u64, dapp: [u8; 40], value: u64) {
+    pub fn set_dapp_config(&mut self, key: u64, dapp: [u8; 32], value: u64) {
         if let Some(pair) = self
             .dapp_config_mappings
             .iter_mut()
@@ -179,14 +179,14 @@ impl MappingFeeConfig {
             .cloned()
     }
 
-    pub fn get_trade_fee_config(&self, key: u64, dapp: [u8; 40]) -> Option<TradeFeeConfig> {
+    pub fn get_trade_fee_config(&self, key: u64, dapp: [u8; 32]) -> Option<TradeFeeConfig> {
         self.trade_fee_config_mappings
             .iter()
             .find(|pair| pair.key == key && pair.dapp == dapp)
             .cloned()
     }
 
-    pub fn get_dapp_config(&mut self, key: u64, dapp: [u8; 40]) -> Option<DappConfig> {
+    pub fn get_dapp_config(&mut self, key: u64, dapp: [u8; 32]) -> Option<DappConfig> {
         self.dapp_config_mappings
             .iter()
             .find(|pair| pair.key == key && pair.dapp == dapp)
@@ -475,7 +475,7 @@ impl SetDappPriceConfig<'_>{
     pub fn set_dapp_price_config(
         ctx: Context<SetDappPriceConfig>,
         chain_id: u64,
-        dapp: [u8; 40],
+        dapp: [u8; 32],
         base_price: u64,
     ) -> Result<()> {
         let power_user = &mut ctx.accounts.power_user;
@@ -554,7 +554,7 @@ impl BatchSetTokenFeeConfig<'_>{
 impl BatchSetTradeFeeConfigMap<'_>{
     pub fn batch_set_trade_fee_config_map(
         ctx: Context<BatchSetTradeFeeConfigMap>,
-        dapps: Vec<[u8; 40]>,
+        dapps: Vec<[u8; 32]>,
         dest_chain_ids: Vec<u64>,
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
@@ -604,7 +604,7 @@ impl BatchSetDappPriceConfigInDiffChain<'_>{
     pub fn batch_set_dapp_price_config_in_diff_chain(
         ctx: Context<BatchSetDappPriceConfigInDiffChain>,
         chain_ids: Vec<u64>,
-        dapps: Vec<[u8; 40]>,
+        dapps: Vec<[u8; 32]>,
         base_prices: Vec<u64>,
     ) -> Result<()> {
         let power_user = &mut ctx.accounts.power_user;
@@ -628,7 +628,7 @@ impl BatchSetDappPriceConfigInSameChain<'_>{
     pub fn batch_set_dapp_price_config_in_same_chain(
         ctx: Context<BatchSetDappPriceConfigInSameChain>,
         chain_id: u64,
-        dapps: Vec<[u8; 40]>,
+        dapps: Vec<[u8; 32]>,
         base_prices: Vec<u64>,
     ) -> Result<()> {
         let power_user = &mut ctx.accounts.power_user;
@@ -730,7 +730,7 @@ impl BatchSetExchangeRate<'_>{
         trade_fee_config_denominator: u64,
         gas_system_global_molecular: u64,
         gas_system_global_denominator: u64,
-        _target_contract: [u8; 40],
+        _target_contract: [u8; 32],
         _dest_chain_id: u64,
         amount_out: u64,
     ) -> Option<u64> {
@@ -765,7 +765,7 @@ impl BatchSetExchangeRate<'_>{
     ) -> Option<u64> {
         let base_price: u64;
         let fee: u64;
-        let mut this_dapp: [u8; 40]=[0; 40];
+        let mut this_dapp: [u8; 32]=[0; 32];
 
         if fee_config_base_price > 0 {
             base_price=fee_config_base_price;
@@ -831,7 +831,7 @@ impl BatchSetExchangeRate<'_>{
         dapp_config_value: u64,
         _dest_chain_id: u64,
         chain_base_price: u64,
-        _dapp: [u8; 40],
+        _dapp: [u8; 32],
     ) -> Option<u64> {
         let this_dapp_base_price: u64;
         if dapp_config_value > 0 {
@@ -845,7 +845,7 @@ impl BatchSetExchangeRate<'_>{
     pub fn estimate_price1(
         gas_system_global_base_price: u64,
         dapp_config_value: u64,
-        _target_contract: [u8; 40],
+        _target_contract: [u8; 32],
         _dest_chain_id: u64,
     ) -> Option<u64> {
         let dapp_base_price: u64;
@@ -935,7 +935,7 @@ impl BatchSetExchangeRate<'_>{
         } else {
             base_price = gas_system_global_global_base_price;
         }
-        let mut this_dapp: [u8; 40]=[0; 40];
+        let mut this_dapp: [u8; 32]=[0; 32];
         let fee: u64;
         let mode = MessageType::fetch_msg_mode(&message);
 

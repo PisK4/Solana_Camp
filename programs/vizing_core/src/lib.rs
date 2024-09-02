@@ -13,7 +13,7 @@ use state::*;
 use vizing_channel::*;
 use vizing_omni::*;
 
-declare_id!("JCQEehh629t3qcuooiRTfkJHk2QDCqbrYGEC9AxMvFB");
+declare_id!("F4syPi7pUoujHYMDGWhHLPJKSqLxi7r6Jff6RLqYiWhp");
 
 #[program]
 pub mod vizing_core {
@@ -206,7 +206,7 @@ pub mod vizing_core {
     pub fn init_token_info_base(
         ctx: Context<InitTokenInfoBase>,
         symbol: Vec<u8>,
-        token_address: [u8; 40],
+        token_address: [u8; 32],
         decimals: u8,
         max_price: u64,
     ) -> Result<()> {
@@ -276,7 +276,7 @@ pub mod vizing_core {
     pub fn set_this_dapp_price_config(
         ctx: Context<SetDappPriceConfig>,
         chain_id: u64,
-        dapp: [u8; 40],
+        dapp: [u8; 32],
         base_price: u64,
     ) -> Result<()> {
         SetDappPriceConfig::set_dapp_price_config(ctx, chain_id, dapp, base_price)
@@ -319,7 +319,7 @@ pub mod vizing_core {
     //batch_set_trade_fee_config_map
     pub fn batch_set_this_trade_fee_config_map(
         ctx: Context<BatchSetTradeFeeConfigMap>,
-        dapps: Vec<[u8; 40]>,
+        dapps: Vec<[u8; 32]>,
         dest_chain_ids: Vec<u64>,
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
@@ -346,7 +346,7 @@ pub mod vizing_core {
     pub fn batch_set_this_dapp_price_config_in_diff_chain(
         ctx: Context<BatchSetDappPriceConfigInDiffChain>,
         chain_ids: Vec<u64>,
-        dapps: Vec<[u8; 40]>,
+        dapps: Vec<[u8; 32]>,
         base_prices: Vec<u64>,
     ) -> Result<()> {
         BatchSetDappPriceConfigInDiffChain::batch_set_dapp_price_config_in_diff_chain(
@@ -361,7 +361,7 @@ pub mod vizing_core {
     pub fn batch_set_this_dapp_price_config_in_same_chain(
         ctx: Context<BatchSetDappPriceConfigInSameChain>,
         chain_id: u64,
-        dapps: Vec<[u8; 40]>,
+        dapps: Vec<[u8; 32]>,
         base_prices: Vec<u64>,
     ) -> Result<()> {
         BatchSetDappPriceConfigInSameChain::batch_set_dapp_price_config_in_same_chain(
@@ -443,7 +443,7 @@ pub mod vizing_core {
     pub fn set_this_token_info_base(
         ctx: Context<SetTokenInfoBase>,
         symbol: Vec<u8>,
-        token_address: [u8; 40],
+        token_address: [u8; 32],
         decimals: u8,
         max_price: u64,
     ) -> Result<()> {
@@ -453,7 +453,7 @@ pub mod vizing_core {
     //set_token_trade_fee_map
     pub fn set_this_token_trade_fee_map(
         ctx: Context<SetTokenTradeFeeMap>,
-        token_address: [u8; 40],
+        token_address: [u8; 32],
         chain_ids: Vec<u64>,
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
@@ -486,7 +486,7 @@ pub mod vizing_core {
 
     pub fn compute_trade_fee2(
         ctx: Context<ComputeTradeFee2>,
-        target_contract: [u8; 40],
+        target_contract: [u8; 32],
         dest_chain_id: u64,
         amount_out: u64,
     ) -> Result<u64> {
