@@ -884,7 +884,7 @@ pub struct InitGasGlobal<'info> {
     #[account(
         init,
         payer = user, 
-        space = 8 + 128,
+        space = 8 + GasSystemGlobal::INIT_SPACE,
         seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
         bump
     )]

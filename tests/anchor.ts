@@ -115,7 +115,7 @@ const registeredValidatorKeyPairs = [
 async function getSolBalance(checkAddress: PublicKey) {
   try {
     const balance = await connection.getBalance(checkAddress);
-    console.log("sol balance:",balance);
+    console.log("sol balance:", balance);
     return balance;
   } catch (err) {
     console.error("Failed to get balance:", err);
@@ -274,7 +274,7 @@ await mint_to(newTokenMes.publicKey, userAssociatedAccount);
 async function getTokenBalance(checkAddress: PublicKey) {
   try {
     const tokenAccountInfo = await getAccount(connection, checkAddress);
-    let tokenBalance=tokenAccountInfo.amount;
+    let tokenBalance = tokenAccountInfo.amount;
     console.log(`This Account Token balance: ${tokenAccountInfo.amount}`);
     return tokenBalance;
   } catch (err) {
@@ -387,8 +387,8 @@ describe("Test", () => {
     function encodeEthereumAddressToU8Array(ethAddress: string): number[] {
       const remove0xAddress = ethAddress.slice(2);
       const address = Buffer.from(remove0xAddress);
-      console.log("ethAddress:",ethAddress,"\n","Buffer address:",address);
-      console.log("address length:",address.length);
+      console.log("ethAddress:", ethAddress, "\n", "Buffer address:", address);
+      console.log("address length:", address.length);
       const result = new Uint8Array(32);
       for (let i = 0; i < 32; i++) {
         result[i] = address[i];
@@ -397,9 +397,20 @@ describe("Test", () => {
       return addressArray;
     }
 
+    function ethereumAddressToU8Array(address: string): number[] {
+      const cleanAddress = address.startsWith('0x') ? address.slice(2) : address;
+      const bytes = new Uint8Array(32);
+      for (let i = 0; i < 32; i++) {
+        const byte = parseInt(cleanAddress.substr(i * 2, 2), 16);
+        bytes[31 - i] = byte;
+      }
+      const addressArray: number[] = Array.from(bytes);
+      return addressArray;
+    }
+
     function decodeU8ArrayToEthereumAddress(message) {
       const asciiData = message.slice(0, 32); // ASCII数据
-      console.log("asciiData:",asciiData);
+      console.log("asciiData:", asciiData);
       let hexAddress = "0x";
       for (let i = 0; i < 31; i++) {
         const charCode = asciiData[i];
@@ -511,11 +522,15 @@ describe("Test", () => {
       saveDestChainIdAccount.publicKey.toBase58()
     );
 
-    let dapp = encodeEthereumAddressToU8Array("0xaE67336f06B10fbbb26F31d31AbEA897290109B9");
-    let dapp2 = encodeEthereumAddressToU8Array("0xE3020Ac60f45842A747F6008390d0D28dDbBD98D");
-    let dapp3 = encodeEthereumAddressToU8Array("0xd1A48613D41E7BB2C68aD90D5fE5e7041ebA5111");
-
-
+    let dapp = ethereumAddressToU8Array(
+      "0xaE67336f06B10fbbb26F31d31AbEA897290109B9"
+    );
+    let dapp2 = ethereumAddressToU8Array(
+      "0xE3020Ac60f45842A747F6008390d0D28dDbBD98D"
+    );
+    let dapp3 = ethereumAddressToU8Array(
+      "0xd1A48613D41E7BB2C68aD90D5fE5e7041ebA5111"
+    );
 
     //initializeVizingPad
     async function InitializeVizingPad() {
@@ -727,7 +742,7 @@ describe("Test", () => {
     await InitNativeTokenTradeFeeConfig();
 
     let symbol = "usdt";
-    let tokenAddress = encodeEthereumAddressToU8Array(
+    let tokenAddress = ethereumAddressToU8Array(
       "0xdAC17F958D2ee523a2206206994597C13D831ec7"
     );
 
@@ -827,7 +842,13 @@ describe("Test", () => {
     let new_global_base_price = new anchor.BN(500);
     let new_default_gas_limit = new anchor.BN(1000);
     let new_amount_in_threshold = new anchor.BN(100000000);
-    async function SetThisGasGlobal(thisGlobalBasePrice,thisDefaultGasLimit,thisAmountInThreshold,thisMolecular,thisDenominator) {
+    async function SetThisGasGlobal(
+      thisGlobalBasePrice,
+      thisDefaultGasLimit,
+      thisAmountInThreshold,
+      thisMolecular,
+      thisDenominator
+    ) {
       try {
         const setThisGasGlobal = await program.methods
           .setThisGasGlobal(
@@ -858,12 +879,25 @@ describe("Test", () => {
         console.log("SetThisGasGlobal error:", e);
       }
     }
-    
-    await SetThisGasGlobal(new_global_base_price,new_default_gas_limit,new_amount_in_threshold,molecular,denominator);
 
-    
+    await SetThisGasGlobal(
+      new_global_base_price,
+      new_default_gas_limit,
+      new_amount_in_threshold,
+      molecular,
+      denominator
+    );
+
     //set_this_fee_config
-    async function SetThisFeeConfig(thisChainId,thisBasePrice,thisReserve,thisMolecular,thisDenominator,thisMolecularDecimal,thisDenominatorDecimal) {
+    async function SetThisFeeConfig(
+      thisChainId,
+      thisBasePrice,
+      thisReserve,
+      thisMolecular,
+      thisDenominator,
+      thisMolecularDecimal,
+      thisDenominatorDecimal
+    ) {
       try {
         const setThisFeeConfig = await program.methods
           .setThisFeeConfig(
@@ -892,13 +926,13 @@ describe("Test", () => {
       }
     }
     await SetThisFeeConfig(
-            id,
-            base_price,
-            reserve,
-            molecular,
-            denominator,
-            molecular_decimal,
-            denominator_decimal
+      id,
+      base_price,
+      reserve,
+      molecular,
+      denominator,
+      molecular_decimal,
+      denominator_decimal
     );
 
     //set_token_fee_config
@@ -1014,11 +1048,11 @@ describe("Test", () => {
     await BatchSetThisTokenFeeConfig();
 
     //batch_set_this_trade_fee_config_map
-    let dapps = [dapp,dapp2];
-    let tradeFeeConfig_dapps = [dapp,dapp];
-    let tradeFeeConfig_destChainIds=[new anchor.BN(4),new anchor.BN(5)];
-    let tradeFeeConfig_moleculars=[new anchor.BN(5),new anchor.BN(5)];
-    let tradeFeeConfig_denominators=[new anchor.BN(10),new anchor.BN(10)];
+    let dapps = [dapp, dapp2];
+    let tradeFeeConfig_dapps = [dapp, dapp];
+    let tradeFeeConfig_destChainIds = [new anchor.BN(4), new anchor.BN(5)];
+    let tradeFeeConfig_moleculars = [new anchor.BN(5), new anchor.BN(5)];
+    let tradeFeeConfig_denominators = [new anchor.BN(10), new anchor.BN(10)];
     async function BatchSetThisTradeFeeConfigMap() {
       try {
         const batchSetThisTradeFeeConfigMap = await program.methods
@@ -1051,9 +1085,9 @@ describe("Test", () => {
 
     //batch_set_this_dapp_price_config_in_diff_chain
     let base_prices = [new anchor.BN(1000)];
-    let diff_destChainIds = [new anchor.BN(4),new anchor.BN(5)];
-    let diff_dapps = [dapp,dapp];
-    let diff_base_prices = [new anchor.BN(1000),new anchor.BN(2000)];
+    let diff_destChainIds = [new anchor.BN(4), new anchor.BN(5)];
+    let diff_dapps = [dapp, dapp];
+    let diff_base_prices = [new anchor.BN(1000), new anchor.BN(2000)];
     async function BatchSetThisDappPriceConfigInDiffChain() {
       try {
         const batchSetThisDappPriceConfigInDiffChain = await program.methods
@@ -1085,12 +1119,19 @@ describe("Test", () => {
     await BatchSetThisDappPriceConfigInDiffChain();
 
     //batch_set_this_dapp_price_config_in_same_chain
-    let DappPriceConfig_dapps=[dapp,dapp];
-    let DappPriceConfig_base_prices=[new anchor.BN(1000),new anchor.BN(1000)];
+    let DappPriceConfig_dapps = [dapp, dapp];
+    let DappPriceConfig_base_prices = [
+      new anchor.BN(1000),
+      new anchor.BN(1000),
+    ];
     async function BatchSetThisDappPriceConfigInSameChain() {
       try {
         const batchSetThisDappPriceConfigInSameChain = await program.methods
-          .batchSetThisDappPriceConfigInSameChain(id, DappPriceConfig_dapps, DappPriceConfig_base_prices)
+          .batchSetThisDappPriceConfigInSameChain(
+            id,
+            DappPriceConfig_dapps,
+            DappPriceConfig_base_prices
+          )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             vizing: vizingPadSettings,
@@ -1363,8 +1404,7 @@ describe("Test", () => {
           this_message.targetContract
         );
         if (this_message.maxFeePerGas < dapp_base_price) {
-          console.log("price < dapp_base_price");
-          return 0;
+          throw("price < dapp_base_price");
         }
         fee = this_message.maxFeePerGas * this_message.executeGasLimit;
       } else if (this_message.mode == 4) {
@@ -1378,7 +1418,10 @@ describe("Test", () => {
       if (amount_out.toNumber() > 0) {
         let fee_config_molecular = feeConfigMappings[0].molecular.toNumber();
         if (fee_config_molecular != 0) {
-          output_amount_in = await ExactOutput(dest_chain_id, amount_out.toNumber());
+          output_amount_in = await ExactOutput(
+            dest_chain_id,
+            amount_out.toNumber()
+          );
         }
 
         let trade_fee2 = await ComputeTradeFee2(
@@ -1394,24 +1437,27 @@ describe("Test", () => {
       console.log("EstimateTotalFee:", finalFee);
       return finalFee;
     }
-    await EstimateTotalFee(id, testAmountOut , newMessage);
+    await EstimateTotalFee(id, testAmountOut, newMessage);
 
     await SetThisFeeConfig(
-            new anchor.BN(5),
-            base_price,
-            reserve,
-            molecular,
-            denominator,
-            molecular_decimal,
-            denominator_decimal
+      new anchor.BN(5),
+      base_price,
+      reserve,
+      molecular,
+      denominator,
+      molecular_decimal,
+      denominator_decimal
     );
 
     //batch_set_exchange_rate
-    let batchExchangeRate_destChainIds=[new anchor.BN(4),new anchor.BN(5)];
-    let batchExchangeRate_moleculars=[new anchor.BN(10),new anchor.BN(20)];
-    let batchExchangeRate_denominators=[new anchor.BN(50),new anchor.BN(100)];
-    let molecular_decimals = Buffer.from([6,6]);
-    let denominator_decimals = Buffer.from([6,6]);
+    let batchExchangeRate_destChainIds = [new anchor.BN(4), new anchor.BN(5)];
+    let batchExchangeRate_moleculars = [new anchor.BN(10), new anchor.BN(20)];
+    let batchExchangeRate_denominators = [
+      new anchor.BN(50),
+      new anchor.BN(100),
+    ];
+    let molecular_decimals = Buffer.from([6, 6]);
+    let denominator_decimals = Buffer.from([6, 6]);
     async function BatchSetThisExchangeRate() {
       try {
         const batchSetThisExchangeRate = await program.methods
@@ -1660,22 +1706,22 @@ describe("Test", () => {
       }
     }
     //success launch
-    let thisTestValue=new anchor.BN(1000);
-    let thisFee1=await EstimateTotalFee(id, thisTestValue , message);
-    let solBefore1=await getSolBalance(user);
+    let thisTestValue = new anchor.BN(1000);
+    let thisFee1 = await EstimateTotalFee(id, thisTestValue, message);
+    let solBefore1 = await getSolBalance(user);
     await Launch(launchParams);
-    let solAfter1=await getSolBalance(user);
-    let differ1=solBefore1-solAfter1;
-    if(differ1>=thisFee1){
-      console.log("launch1 success",differ1);
-    }else{
-      console.log("launch1 amount error",differ1);
+    let solAfter1 = await getSolBalance(user);
+    let differ1 = solBefore1 - solAfter1;
+    if (differ1 >= thisFee1) {
+      console.log("launch1 success", differ1);
+    } else {
+      console.log("launch1 amount error", differ1);
     }
 
     //big number value launch
-    let thisTestValue2=new anchor.BN(1000000);
-    let thisFee2=await EstimateTotalFee(id, thisTestValue2 , message);
-    let solBefore2=await getSolBalance(user);
+    let thisTestValue2 = new anchor.BN(1000000);
+    let thisFee2 = await EstimateTotalFee(id, thisTestValue2, message);
+    let solBefore2 = await getSolBalance(user);
     const newLaunchParams1 = {
       erliestArrivalTimestamp: new anchor.BN(1),
       latestArrivalTimestamp: new anchor.BN(2),
@@ -1687,28 +1733,39 @@ describe("Test", () => {
       message: message,
     };
     await Launch(newLaunchParams1);
-    let solafter2=await getSolBalance(user);
-    let differ2=solBefore2-solafter2;
-    if(differ2>=thisFee2){
-      console.log("launch2 success",differ2);
-    }else{
-      console.log("launch2 amount error",differ2);
+    let solafter2 = await getSolBalance(user);
+    let differ2 = solBefore2 - solafter2;
+    if (differ2 >= thisFee2) {
+      console.log("launch2 success", differ2);
+    } else {
+      console.log("launch2 amount error", differ2);
     }
 
     // expect(vizingPadAccount.owner.toBase58()).to.equal(
     //     provider.wallet.publicKey.toBase58()
     // );
 
-
     //error amount_in_threshold
-    let this_amount_in_threshold=new anchor.BN(100);
-    await SetThisGasGlobal(new_global_base_price,new_default_gas_limit,this_amount_in_threshold,molecular,denominator);
+    let this_amount_in_threshold = new anchor.BN(100);
+    await SetThisGasGlobal(
+      new_global_base_price,
+      new_default_gas_limit,
+      this_amount_in_threshold,
+      molecular,
+      denominator
+    );
     await Launch(launchParams);
-    await SetThisGasGlobal(new_global_base_price,new_default_gas_limit,amount_in_threshold,molecular,denominator);
+    await SetThisGasGlobal(
+      new_global_base_price,
+      new_default_gas_limit,
+      amount_in_threshold,
+      molecular,
+      denominator
+    );
 
     //success random relayer
-    let newRelayer=new web3.Keypair();
-    console.log("newRelayer:",newRelayer.publicKey.toBase58());
+    let newRelayer = new web3.Keypair();
+    console.log("newRelayer:", newRelayer.publicKey.toBase58());
     const newLaunchParams2 = {
       erliestArrivalTimestamp: new anchor.BN(1),
       latestArrivalTimestamp: new anchor.BN(2),
@@ -1733,7 +1790,9 @@ describe("Test", () => {
       const addressArray: number[] = Array.from(result);
       return addressArray;
     }
-    let by40Dapp = encodeEthereumAddressTo40U8Array("0xaE67336f06B10fbbb26F31d31AbEA897290109B9");
+    let by40Dapp = encodeEthereumAddressTo40U8Array(
+      "0xaE67336f06B10fbbb26F31d31AbEA897290109B9"
+    );
     const errorDappMessage = {
       mode: 1,
       targetContract: by40Dapp,
@@ -1754,8 +1813,10 @@ describe("Test", () => {
     await Launch(newLaunchParams3);
 
     //error invalid eth address
-    let invalidDapp = encodeEthereumAddressTo40U8Array("0xAAA777733332222bb26F31d31AbEA897290109B9");
-    const errorDappMessage2= {
+    let invalidDapp = encodeEthereumAddressTo40U8Array(
+      "0xAAA777733332222bb26F31d31AbEA897290109B9"
+    );
+    const errorDappMessage2 = {
       mode: 1,
       targetContract: invalidDapp,
       executeGasLimit: executeGasLimit,
@@ -1794,7 +1855,5 @@ describe("Test", () => {
     //   }
     // }
     // await GetEstimateGas(testAmountOut, id, newMessage);
-
-
   });
 });
