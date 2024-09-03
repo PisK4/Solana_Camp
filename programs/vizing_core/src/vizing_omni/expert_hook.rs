@@ -5,41 +5,48 @@ use crate::library::*;
 use crate::state::*;
 use crate::governance::*;
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct TokenBase {
-    pub key: [u8; 32],
-    pub symbol: Vec<u8>,
+    pub key: [u8; 32],  //token address
+    #[max_len(6)]
+    pub symbol: String, //token symbol
     pub decimals: u8,
     pub max_price: u64,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct TokenTradeFeeConfig {
-    pub key1: [u8; 32],
-    pub key2: u64,
+    pub key1: [u8; 32], //token address
+    pub key2: u64,   //destChainId 
     pub molecular: u64,
     pub denominator: u64,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct SymbolConfig {
-    pub key: Vec<u8>,
-    pub address: [u8; 32],
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+pub struct SymbolConfig {  
+    #[max_len(6)]
+    pub key: String,  //token symbol
+    pub address: [u8; 32],   //token address
 }
 
 #[account]
+#[derive(InitSpace)]
 pub struct MappingTokenConfig {
+    #[max_len(90)]
     pub token_base_mappings: Vec<TokenBase>,
+    #[max_len(90)]
     pub token_trade_fee_config_mappings: Vec<TokenTradeFeeConfig>,
 }
 
 #[account]
+#[derive(InitSpace)]
 pub struct MappingSymbolConfig {
+    #[max_len(25)]
     pub symbol_config_mappings: Vec<SymbolConfig>,
 }
 
 impl MappingTokenConfig {
-    pub fn set_token_base(&mut self, key: [u8; 32], symbol: Vec<u8>, decimals: u8, max_price: u64) {
+    pub fn set_token_base(&mut self, key: [u8; 32], symbol: String, decimals: u8, max_price: u64) {
         if let Some(pair) = self
             .token_base_mappings
             .iter_mut()
@@ -104,7 +111,7 @@ impl MappingTokenConfig {
 }
 
 impl MappingSymbolConfig {
-    pub fn set(&mut self, key: Vec<u8>, address: [u8; 32]) {
+    pub fn set(&mut self, key: String, address: [u8; 32]) {
         if let Some(pair) = self
             .symbol_config_mappings
             .iter_mut()
@@ -117,7 +124,7 @@ impl MappingSymbolConfig {
         }
     }
 
-    pub fn get(&self, key: Vec<u8>) -> Option<SymbolConfig> {
+    pub fn get(&self, key: String) -> Option<SymbolConfig> {
         self.symbol_config_mappings
             .iter()
             .find(|pair| pair.key == key)
@@ -129,54 +136,19 @@ impl MappingSymbolConfig {
 impl InitTokenInfoBase<'_> {
     pub fn initialize_token_info_base(
         ctx: Context<InitTokenInfoBase>,
-        symbol: Vec<u8>,
+        symbol: String,
         token_address: [u8; 32],
         decimals: u8,
         max_price: u64,
     ) -> Result<()> {
-        // let power_user = &mut ctx.accounts.power_user;
-        // let user_key = &ctx.accounts.user.key();
-        // let if_power_user = power_user.token_managers.contains(user_key);
-        // require!(if_power_user, errors::ErrorCode::NonTokenManager);
-
         let token_config = &mut ctx.accounts.token_config;
         let symbol_config = &mut ctx.accounts.symbol_config;
-        let symbol_clone: Vec<u8> = symbol.clone();
+        let symbol_clone = symbol.clone();
         token_config.set_token_base(token_address, symbol, decimals, max_price);
         symbol_config.set(symbol_clone, token_address);
         Ok(())
     }
 }
-
-// impl ChangePowerUser<'_> {
-//     pub fn change_power_user(
-//         ctx: Context<ChangePowerUser>,
-//         new_admin: Pubkey,
-//         new_engine_admin: Pubkey,
-//         new_station_admin: Pubkey,
-//         new_gas_pool_admin: Pubkey,
-//         new_trusted_relayers: Vec<Pubkey>,
-//         new_registered_validators: Vec<Pubkey>,
-//         new_gas_managers: Vec<Pubkey>,
-//         new_swap_managers: Vec<Pubkey>,
-//         new_token_managers: Vec<Pubkey>,
-//     ) -> Result<()> {
-//         let power_user = &mut ctx.accounts.power_user;
-//         let user_key = ctx.accounts.user.key();
-//         require!(user_key == power_user.admin, errors::ErrorCode::NonAdmin);
-
-//         power_user.admin = new_admin;
-//         power_user.engine_admin = new_engine_admin;
-//         power_user.station_admin = new_station_admin;
-//         power_user.gas_pool_admin = new_gas_pool_admin;
-//         power_user.trusted_relayers = new_trusted_relayers;
-//         power_user.registered_validators = new_registered_validators;
-//         power_user.gas_managers = new_gas_managers;
-//         power_user.swap_managers = new_swap_managers;
-//         power_user.token_managers = new_token_managers;
-//         Ok(())
-//     }
-// }
 
 impl WithdrawSplToken<'_> {
     pub fn withdraw_spl_token(
@@ -184,11 +156,6 @@ impl WithdrawSplToken<'_> {
         withdraw_amount: u64,
         this_bump: u8,
     ) -> Result<()> {
-        // let power_user = &mut ctx.accounts.power_user;
-        // let user_key = &ctx.accounts.user.key();
-        // let if_power_user = power_user.token_managers.contains(user_key);
-        // require!(if_power_user, errors::ErrorCode::NonTokenManager);
-
         let seeds = &[b"vizing_vault".as_ref(), &[this_bump]];
         let signer_seeds = &[&seeds[..]];
 
@@ -207,11 +174,6 @@ impl WithdrawSplToken<'_> {
 
 impl WithdrawSol<'_> {
     pub fn withdraw_sol(ctx: Context<WithdrawSol>, withdraw_amount: u64) -> Result<()> {
-        // let power_user = &mut ctx.accounts.power_user;
-        // let user_key = &ctx.accounts.user.key();
-        // let if_power_user = power_user.token_managers.contains(user_key);
-        // require!(if_power_user, errors::ErrorCode::NonTokenManager);
-
         let source = ctx.accounts.source.to_account_info();
         let destination = ctx.accounts.destination.to_account_info();
 
@@ -231,19 +193,14 @@ impl WithdrawSol<'_> {
 impl SetTokenInfoBase<'_> {
     pub fn set_token_info_base(
         ctx: Context<SetTokenInfoBase>,
-        symbol: Vec<u8>,
+        symbol: String,
         token_address: [u8; 32],
         decimals: u8,
         max_price: u64,
     ) -> Result<()> {
-        // let power_user = &mut ctx.accounts.power_user;
-        // let user_key = &ctx.accounts.user.key();
-        // let if_power_user = power_user.token_managers.contains(user_key);
-        // require!(if_power_user, errors::ErrorCode::NonTokenManager);
-
         let token_config = &mut ctx.accounts.token_config;
         let symbol_config = &mut ctx.accounts.symbol_config;
-        let symbol_clone: Vec<u8> = symbol.clone();
+        let symbol_clone = symbol.clone();
         token_config.set_token_base(token_address, symbol, decimals, max_price);
         symbol_config.set(symbol_clone, token_address);
         Ok(())
@@ -258,11 +215,6 @@ impl SetTokenTradeFeeMap<'_> {
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
     ) -> Result<()> {
-        // let power_user = &mut ctx.accounts.power_user;
-        // let user_key = &ctx.accounts.user.key();
-        // let if_power_user = power_user.token_managers.contains(user_key);
-        // require!(if_power_user, errors::ErrorCode::NonTokenManager);
-
         let token_config = &mut ctx.accounts.token_config;
         require!(
             chain_ids.len() == moleculars.len() && chain_ids.len() == denominators.len(),
@@ -368,12 +320,6 @@ pub fn compute_amount_composition(
 pub struct InitTokenInfoBase<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info, SaveChainId>,
-    // #[account(
-    //     mut,
-    //     seeds = [b"init_power_user".as_ref()],
-    //     bump
-    // )]
-    // pub power_user: Account<'info, PowerUser>,
     #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
         , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing: Account<'info, VizingPadSettings>,
@@ -382,7 +328,7 @@ pub struct InitTokenInfoBase<'info> {
     #[account(
         init, 
         payer = user, 
-        space = 8 + 256,
+        space = 8 + MappingTokenConfig::INIT_SPACE,
         seeds = [b"init_token_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
         bump
     )]
@@ -390,7 +336,7 @@ pub struct InitTokenInfoBase<'info> {
     #[account(
         init, 
         payer = user, 
-        space = 8 + 256,
+        space = 8 + MappingSymbolConfig::INIT_SPACE,
         seeds = [b"init_symbol_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
         bump
     )]
@@ -399,31 +345,11 @@ pub struct InitTokenInfoBase<'info> {
 }
 
 //set
-#[derive(Accounts)]
-pub struct ChangePowerUser<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(
-        mut,
-        seeds = [b"init_power_user".as_ref()],
-        bump
-    )]
-    pub power_user: Account<'info, PowerUser>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
 
 #[derive(Accounts)]
 pub struct WithdrawSplToken<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info, SaveChainId>,
-    // #[account(
-    //     mut,
-    //     seeds = [b"init_power_user".as_ref()],
-    //     bump
-    // )]
-    // pub power_user: Account<'info, PowerUser>,
     #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
         , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing: Account<'info, VizingPadSettings>,
@@ -446,12 +372,6 @@ pub struct WithdrawSplToken<'info> {
 pub struct WithdrawSol<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info, SaveChainId>,
-    // #[account(
-    //     mut,
-    //     seeds = [b"init_power_user".as_ref()],
-    //     bump
-    // )]
-    // pub power_user: Account<'info, PowerUser>,
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(mut)]
@@ -465,12 +385,6 @@ pub struct WithdrawSol<'info> {
 pub struct SetTokenInfoBase<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info, SaveChainId>,
-    // #[account(
-    //     mut,
-    //     seeds = [b"init_power_user".as_ref()],
-    //     bump
-    // )]
-    // pub power_user: Account<'info, PowerUser>,
     #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
         , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing: Account<'info, VizingPadSettings>,
@@ -495,12 +409,6 @@ pub struct SetTokenInfoBase<'info> {
 pub struct SetTokenTradeFeeMap<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info, SaveChainId>,
-    // #[account(
-    //     mut,
-    //     seeds = [b"init_power_user".as_ref()],
-    //     bump
-    // )]
-    // pub power_user: Account<'info, PowerUser>,
     #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
         , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing: Account<'info, VizingPadSettings>,

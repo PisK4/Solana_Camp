@@ -98,32 +98,6 @@ pub mod vizing_core {
     // ***********  governance end ************
 
     //init
-    // pub fn init_power_user(
-    //     ctx: Context<InitPowerUser>,
-    //     new_admin: Pubkey,
-    //     new_engine_admin: Pubkey,
-    //     new_station_admin: Pubkey,
-    //     new_gas_pool_admin: Pubkey,
-    //     new_trusted_relayers: Vec<Pubkey>,
-    //     new_registered_validators: Vec<Pubkey>,
-    //     new_gas_managers: Vec<Pubkey>,
-    //     new_swap_managers: Vec<Pubkey>,
-    //     new_token_managers: Vec<Pubkey>,
-    // ) -> Result<()> {
-    //     InitPowerUser::initialize_power_user(
-    //         ctx,
-    //         new_admin,
-    //         new_engine_admin,
-    //         new_station_admin,
-    //         new_gas_pool_admin,
-    //         new_trusted_relayers,
-    //         new_registered_validators,
-    //         new_gas_managers,
-    //         new_swap_managers,
-    //         new_token_managers
-    //     )
-    // }
-
     pub fn save_chain_id(ctx: Context<SaveDestChainId>, dest_chain_id: Vec<u8>) -> Result<()> {
         SaveDestChainId::set_chain_id(
             ctx,
@@ -177,18 +151,6 @@ pub mod vizing_core {
         )
     }
 
-    // pub fn init_amount_in_thresholds(
-    //     ctx: Context<InitAmountInThresholds>,
-    //     key: u64,
-    //     value: u64,
-    // ) -> Result<()> {
-    //     InitAmountInThresholds::initialize_amount_in_thresholds(
-    //         ctx,
-    //         key,
-    //         value
-    //     )
-    // }
-
     pub fn init_native_token_trade_fee_config(
         ctx: Context<InitNativeTokenTradeFeeConfig>,
         key: u64,
@@ -205,7 +167,7 @@ pub mod vizing_core {
 
     pub fn init_token_info_base(
         ctx: Context<InitTokenInfoBase>,
-        symbol: Vec<u8>,
+        symbol: String,
         token_address: [u8; 32],
         decimals: u8,
         max_price: u64,
@@ -221,6 +183,14 @@ pub mod vizing_core {
 
     //set
     //set_gas_global
+    /*
+        /// @notice gas_pool_admin set global params in GasSystemGlobal
+        /// @param global_base_price global base price
+        /// @param default_gas_limit  global default gas limit
+        /// @param amount_in_threshold  global amountIn threshold
+        /// @param molecular  global molecular
+        /// @param denominator  global denominator
+    */
     pub fn set_this_gas_global(
         ctx: Context<SetGasGlobal>,
         global_base_price: u64,
@@ -240,6 +210,16 @@ pub mod vizing_core {
     }
 
     //set_fee_config
+    /*
+        /// @notice gas_pool_admin set fee config mapping in MappingFeeConfig
+        /// @param key evm chainId
+        /// @param basePrice  base price
+        /// @param reserve  reserve
+        /// @param molecular  molecular
+        /// @param denominator  denominator
+        /// @param molecularDecimal  molecular decimal
+        /// @param denominatorDecimal  denominator decimal
+    */
     pub fn set_this_fee_config(
         ctx: Context<SetFeeConfig>,
         key: u64,
@@ -263,6 +243,12 @@ pub mod vizing_core {
     }
 
     //set_token_fee_config
+    /*
+        /// @notice gas_pool_admin set fee for native token exchange mapping in MappingNativeTokenTradeFeeConfig
+        /// @param key evm chainId
+        /// @param molecular  evm dapp address
+        /// @param denominator  base price
+    */
     pub fn set_this_token_fee_config(
         ctx: Context<SetTokenFeeConfig>,
         key: u64,
@@ -273,6 +259,12 @@ pub mod vizing_core {
     }
 
     //set_dapp_price_config
+    /*
+        /// @notice gas_pool_admin set dapp price config in MappingFeeConfig
+        /// @param chainId evm chainId
+        /// @param dapp  evm dapp address
+        /// @param basePrice  base price
+    */
     pub fn set_this_dapp_price_config(
         ctx: Context<SetDappPriceConfig>,
         chain_id: u64,
@@ -283,6 +275,14 @@ pub mod vizing_core {
     }
 
     //set_exchange_rate
+    /*
+        /// @notice gas_pool_admin set exchange rate in MappingFeeConfig
+        /// @param chainId evm chainId
+        /// @param molecular  molecular
+        /// @param denominator  denominator
+        /// @param molecularDecimal  molecular decimal
+        /// @param denominatorDecimal  denominator decimal
+    */
     pub fn set_this_exchange_rate(
         ctx: Context<SetExchangeRate>,
         chain_id: u64,
@@ -302,6 +302,13 @@ pub mod vizing_core {
     }
 
     //batch_set_token_fee_config
+    /*
+        /// @notice gas_pool_admin set trade fee config mapping in MappingFeeConfig and MappingNativeTokenTradeFeeConfig
+        /// @param dapps multi dapp address
+        /// @param destChainIds  multi evm dest chainId
+        /// @param moleculars  molecular group
+        /// @param denominators  denominator group
+    */
     pub fn batch_set_this_token_fee_config(
         ctx: Context<BatchSetTokenFeeConfig>,
         dest_chain_ids: Vec<u64>,
@@ -317,6 +324,13 @@ pub mod vizing_core {
     }
 
     //batch_set_trade_fee_config_map
+    /*
+        /// @notice gas_pool_admin set trade fee config mapping in MappingFeeConfig and MappingNativeTokenTradeFeeConfig
+        /// @param dapps multi dapp address
+        /// @param destChainIds  multi evm dest chainId
+        /// @param moleculars  molecular group
+        /// @param denominators  denominator group
+    */
     pub fn batch_set_this_trade_fee_config_map(
         ctx: Context<BatchSetTradeFeeConfigMap>,
         dapps: Vec<[u8; 32]>,
@@ -333,16 +347,13 @@ pub mod vizing_core {
         )
     }
 
-    //batch_set_amount_in_threshold
-    // pub fn batch_set_this_amount_in_threshold(
-    //     ctx: Context<BatchSetAmountInThreshold>,
-    //     chain_ids: Vec<u64>,
-    //     new_values: Vec<u64>,
-    // ) -> Result<()> {
-    //     BatchSetAmountInThreshold::batch_set_amount_in_threshold(ctx, chain_ids, new_values)
-    // }
-
     //batch_set_dapp_price_config_in_diff_chain
+    /*
+        /// @notice gas_pool_admin batch set dapp price config different chain in MappingFeeConfig
+        /// @param chainIds multi evm chainId
+        /// @param dapps  multi dapp address
+        /// @param basePrices  basePrice group
+    */
     pub fn batch_set_this_dapp_price_config_in_diff_chain(
         ctx: Context<BatchSetDappPriceConfigInDiffChain>,
         chain_ids: Vec<u64>,
@@ -358,6 +369,12 @@ pub mod vizing_core {
     }
 
     //batch_set_dapp_price_config_in_same_chain
+    /*
+        /// @notice gas_pool_admin batch set dapp price config same chain in MappingFeeConfig
+        /// @param chainId evm chainId
+        /// @param dapps  multi dapp address
+        /// @param basePrices  basePrice group
+    */
     pub fn batch_set_this_dapp_price_config_in_same_chain(
         ctx: Context<BatchSetDappPriceConfigInSameChain>,
         chain_id: u64,
@@ -373,6 +390,14 @@ pub mod vizing_core {
     }
 
     //batch_set_exchange_rate
+    /*
+        /// @notice gas_pool_admin batch set exchange rate in MappingFeeConfig
+        /// @param chainIds multi evm chainId
+        /// @param moleculars  molecular group
+        /// @param denominators  denominator group
+        /// @param molecularDecimals molecular decimals group
+        /// @param denominatorDecimals  denominator decimals group
+    */
     pub fn batch_set_this_exchange_rate(
         ctx: Context<BatchSetExchangeRate>,
         chain_ids: Vec<u64>,
@@ -391,33 +416,10 @@ pub mod vizing_core {
         )
     }
 
-    //change_power_user
-    // pub fn change_this_power_user(
-    //     ctx: Context<ChangePowerUser>,
-    //     new_admin: Pubkey,
-    //     new_engine_admin: Pubkey,
-    //     new_station_admin: Pubkey,
-    //     new_gas_pool_admin: Pubkey,
-    //     new_trusted_relayers: Vec<Pubkey>,
-    //     new_registered_validators: Vec<Pubkey>,
-    //     new_gas_managers: Vec<Pubkey>,
-    //     new_swap_managers: Vec<Pubkey>,
-    //     new_token_managers: Vec<Pubkey>,
-    // ) -> Result<()> {
-    //     ChangePowerUser::change_power_user(
-    //         ctx,
-    //         new_admin,
-    //         new_engine_admin,
-    //         new_station_admin,
-    //         new_gas_pool_admin,
-    //         new_trusted_relayers,
-    //         new_registered_validators,
-    //         new_gas_managers,
-    //         new_swap_managers,
-    //         new_token_managers,
-    //     )
-    // }
-
+    /*
+        /// @notice user transfer sol to vizing_vault
+        /// @param amount transfer sol amount
+    */
     // pub fn transfer_sol_valut(ctx: Context<SolTransfer>, amount: u64) ->Result<()>{
     //     SolTransfer::sol_transfer(
     //         ctx,
@@ -426,6 +428,11 @@ pub mod vizing_core {
     // }
 
     //withdraw_spl_token
+    /*
+        /// @notice owner withdraw spl token from vizing_vault pda address  
+        /// @param withdrawAmount withdraw amount
+        /// @param thisBump vizing_vault pda bump
+    */
     pub fn withdraw_vault_spl_token(
         ctx: Context<WithdrawSplToken>,
         withdraw_amount: u64,
@@ -435,14 +442,25 @@ pub mod vizing_core {
     }
 
     //withdraw_sol
+    /*
+        /// @notice owner withdraw sol from vizing_vault pda address  
+        /// @param withdrawAmount withdraw amount
+    */
     pub fn withdraw_vault_sol(ctx: Context<WithdrawSol>, withdraw_amount: u64) -> Result<()> {
         WithdrawSol::withdraw_sol(ctx, withdraw_amount)
     }
 
     //set_token_info_base
+    /*
+        /// @notice set token config mapping in MappingTokenConfig and MappingSymbolConfig
+        /// @param symbol evm token symbol
+        /// @param tokenAddress evm token address
+        /// @param decimals  token decimals
+        /// @param maxPrice  max price
+    */
     pub fn set_this_token_info_base(
         ctx: Context<SetTokenInfoBase>,
-        symbol: Vec<u8>,
+        symbol: String,
         token_address: [u8; 32],
         decimals: u8,
         max_price: u64,
@@ -451,6 +469,13 @@ pub mod vizing_core {
     }
 
     //set_token_trade_fee_map
+    /*
+        /// @notice set token trade fee mapping in MappingTokenConfig
+        /// @param tokenAddress evm token address
+        /// @param chainIds evm chainId group
+        /// @param moleculars  molecular group
+        /// @param denominators  denominator group
+    */
     pub fn set_this_token_trade_fee_map(
         ctx: Context<SetTokenTradeFeeMap>,
         token_address: [u8; 32],
@@ -470,7 +495,8 @@ pub mod vizing_core {
     //get
     /*
         /// @notice Calculate the fee for the native token transfer
-        /// @param amount The value we spent in the source chain
+        /// @param destChainid The chain id of the destination chain
+        /// @param amountOut The value we spent in the source chain
     */
     pub fn compute_trade_fee1(
         ctx: Context<ComputeTradeFee1>,
@@ -484,6 +510,12 @@ pub mod vizing_core {
         )
     }
 
+    /*
+        /// @notice Calculate the fee for the native token transfer
+        /// @param targetContract contract address in the destination chain
+        /// @param destChainid The chain id of the destination chain
+        /// @param amountOut The value we spent in the source chain
+    */
     pub fn compute_trade_fee2(
         ctx: Context<ComputeTradeFee2>,
         target_contract: [u8; 32],
