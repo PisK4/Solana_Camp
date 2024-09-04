@@ -98,19 +98,29 @@ pub mod vizing_core {
     // ***********  governance end ************
 
     //init
+    /*
+    /// @notice owner save chainId (Set a chainId once to generate a new address)
+    /// @param dest_chain_id chainId
+     */
     pub fn save_chain_id(ctx: Context<SaveDestChainId>, dest_chain_id: Vec<u8>) -> Result<()> {
-        SaveDestChainId::set_chain_id(
-            ctx,
-            dest_chain_id
-        )
+        SaveDestChainId::set_chain_id(ctx, dest_chain_id)
     }
 
+    /*
+    /// @notice anyone can initialize vizing_vault pda for save money
+     */
     pub fn init_vizing_vault(ctx: Context<InitVizingVault>) -> Result<()> {
-        InitVizingVault::initialize_vizing_vault(
-            ctx
-        )
+        InitVizingVault::initialize_vizing_vault(ctx)
     }
 
+    /*
+    /// @notice owner initialize global params in GasSystemGlobal
+    /// @param global_base_price global base price
+    /// @param default_gas_limit  global default gas limit
+    /// @param amount_in_threshold  global amountIn threshold
+    /// @param molecular  global molecular
+    /// @param denominator  global denominator
+     */
     pub fn init_gas_global(
         ctx: Context<InitGasGlobal>,
         global_base_price: u64,
@@ -119,16 +129,26 @@ pub mod vizing_core {
         molecular: u64,
         denominator: u64,
     ) -> Result<()> {
-       InitGasGlobal::initialize_gas_global(
+        InitGasGlobal::initialize_gas_global(
             ctx,
             global_base_price,
             default_gas_limit,
             amount_in_threshold,
             molecular,
-            denominator
-       )
+            denominator,
+        )
     }
 
+    /*
+    /// @notice owner initialize fee config mapping in MappingFeeConfig
+    /// @param key evm chainId
+    /// @param basePrice  base price
+    /// @param reserve  reserve
+    /// @param molecular  molecular
+    /// @param denominator  denominator
+    /// @param molecularDecimal  molecular decimal
+    /// @param denominatorDecimal  denominator decimal
+     */
     pub fn init_fee_config(
         ctx: Context<InitFeeConfig>,
         key: u64,
@@ -147,10 +167,16 @@ pub mod vizing_core {
             molecular,
             denominator,
             molecular_decimal,
-            denominator_decimal
+            denominator_decimal,
         )
     }
 
+    /*
+    /// @notice owner initialize fee config mapping in MappingFeeConfig
+    /// @param key evm chainId
+    /// @param molecular  molecular
+    /// @param denominator  denominator
+     */
     pub fn init_native_token_trade_fee_config(
         ctx: Context<InitNativeTokenTradeFeeConfig>,
         key: u64,
@@ -161,10 +187,17 @@ pub mod vizing_core {
             ctx,
             key,
             molecular,
-            denominator
+            denominator,
         )
     }
 
+    /*
+    /// @notice owner initialize token_config symbol_config mapping
+    /// @param symbol evm token symbol
+    /// @param token_address  evm token address
+    /// @param decimals  evm token decimals
+    /// @param max_price max price
+     */
     pub fn init_token_info_base(
         ctx: Context<InitTokenInfoBase>,
         symbol: String,
@@ -177,28 +210,25 @@ pub mod vizing_core {
             symbol,
             token_address,
             decimals,
-            max_price
+            max_price,
         )
     }
 
-    pub fn init_record_message(
-        ctx: Context<InitCurrentRecordMessage>
-    ) -> Result<()> {
-        InitCurrentRecordMessage::init_current_record_message(
-            ctx
-        )
+    /// @notice owner initialize record_message for dev get data
+    pub fn init_record_message(ctx: Context<InitCurrentRecordMessage>) -> Result<()> {
+        InitCurrentRecordMessage::init_current_record_message(ctx)
     }
 
     //set
     //set_gas_global
     /*
-        /// @notice gas_pool_admin set global params in GasSystemGlobal
-        /// @param global_base_price global base price
-        /// @param default_gas_limit  global default gas limit
-        /// @param amount_in_threshold  global amountIn threshold
-        /// @param molecular  global molecular
-        /// @param denominator  global denominator
-    */
+    /// @notice gas pool admin set global params in GasSystemGlobal
+    /// @param global_base_price global base price
+    /// @param default_gas_limit  global default gas limit
+    /// @param amount_in_threshold  global amountIn threshold
+    /// @param molecular  global molecular
+    /// @param denominator  global denominator
+     */
     pub fn set_this_gas_global(
         ctx: Context<SetGasGlobal>,
         global_base_price: u64,
@@ -219,15 +249,15 @@ pub mod vizing_core {
 
     //set_fee_config
     /*
-        /// @notice gas_pool_admin set fee config mapping in MappingFeeConfig
-        /// @param key evm chainId
-        /// @param basePrice  base price
-        /// @param reserve  reserve
-        /// @param molecular  molecular
-        /// @param denominator  denominator
-        /// @param molecularDecimal  molecular decimal
-        /// @param denominatorDecimal  denominator decimal
-    */
+    /// @notice gas pool admin set fee config mapping in MappingFeeConfig
+    /// @param key evm chainId
+    /// @param basePrice  base price
+    /// @param reserve  reserve
+    /// @param molecular  molecular
+    /// @param denominator  denominator
+    /// @param molecularDecimal  molecular decimal
+    /// @param denominatorDecimal  denominator decimal
+     */
     pub fn set_this_fee_config(
         ctx: Context<SetFeeConfig>,
         key: u64,
@@ -252,11 +282,11 @@ pub mod vizing_core {
 
     //set_token_fee_config
     /*
-        /// @notice gas_pool_admin set fee for native token exchange mapping in MappingNativeTokenTradeFeeConfig
-        /// @param key evm chainId
-        /// @param molecular  evm dapp address
-        /// @param denominator  base price
-    */
+    /// @notice gas pool admin set fee for native token exchange mapping in MappingNativeTokenTradeFeeConfig
+    /// @param key evm chainId
+    /// @param molecular  evm dapp address
+    /// @param denominator  base price
+     */
     pub fn set_this_token_fee_config(
         ctx: Context<SetTokenFeeConfig>,
         key: u64,
@@ -268,11 +298,11 @@ pub mod vizing_core {
 
     //set_dapp_price_config
     /*
-        /// @notice gas_pool_admin set dapp price config in MappingFeeConfig
-        /// @param chainId evm chainId
-        /// @param dapp  evm dapp address
-        /// @param basePrice  base price
-    */
+    /// @notice gas pool admin set dapp price config in MappingFeeConfig
+    /// @param chainId evm chainId
+    /// @param dapp  evm dapp address
+    /// @param basePrice  base price
+     */
     pub fn set_this_dapp_price_config(
         ctx: Context<SetDappPriceConfig>,
         chain_id: u64,
@@ -284,13 +314,13 @@ pub mod vizing_core {
 
     //set_exchange_rate
     /*
-        /// @notice gas_pool_admin set exchange rate in MappingFeeConfig
-        /// @param chainId evm chainId
-        /// @param molecular  molecular
-        /// @param denominator  denominator
-        /// @param molecularDecimal  molecular decimal
-        /// @param denominatorDecimal  denominator decimal
-    */
+    /// @notice gas pool admin set exchange rate in MappingFeeConfig
+    /// @param chainId evm chainId
+    /// @param molecular  molecular
+    /// @param denominator  denominator
+    /// @param molecularDecimal  molecular decimal
+    /// @param denominatorDecimal  denominator decimal
+     */
     pub fn set_this_exchange_rate(
         ctx: Context<SetExchangeRate>,
         chain_id: u64,
@@ -311,12 +341,12 @@ pub mod vizing_core {
 
     //batch_set_token_fee_config
     /*
-        /// @notice gas_pool_admin set trade fee config mapping in MappingFeeConfig and MappingNativeTokenTradeFeeConfig
-        /// @param dapps multi dapp address
-        /// @param destChainIds  multi evm dest chainId
-        /// @param moleculars  molecular group
-        /// @param denominators  denominator group
-    */
+    /// @notice gas pool admin set trade fee config mapping in MappingFeeConfig and MappingNativeTokenTradeFeeConfig
+    /// @param dapps multi dapp address
+    /// @param destChainIds  multi evm dest chainId
+    /// @param moleculars  molecular group
+    /// @param denominators  denominator group
+     */
     pub fn batch_set_this_token_fee_config(
         ctx: Context<BatchSetTokenFeeConfig>,
         dest_chain_ids: Vec<u64>,
@@ -333,12 +363,12 @@ pub mod vizing_core {
 
     //batch_set_trade_fee_config_map
     /*
-        /// @notice gas_pool_admin set trade fee config mapping in MappingFeeConfig and MappingNativeTokenTradeFeeConfig
-        /// @param dapps multi dapp address
-        /// @param destChainIds  multi evm dest chainId
-        /// @param moleculars  molecular group
-        /// @param denominators  denominator group
-    */
+    /// @notice gas pool admin set trade fee config mapping in MappingFeeConfig and MappingNativeTokenTradeFeeConfig
+    /// @param dapps multi dapp address
+    /// @param destChainIds  multi evm dest chainId
+    /// @param moleculars  molecular group
+    /// @param denominators  denominator group
+     */
     pub fn batch_set_this_trade_fee_config_map(
         ctx: Context<BatchSetTradeFeeConfigMap>,
         dapps: Vec<[u8; 32]>,
@@ -357,11 +387,11 @@ pub mod vizing_core {
 
     //batch_set_dapp_price_config_in_diff_chain
     /*
-        /// @notice gas_pool_admin batch set dapp price config different chain in MappingFeeConfig
-        /// @param chainIds multi evm chainId
-        /// @param dapps  multi dapp address
-        /// @param basePrices  basePrice group
-    */
+    /// @notice gas pool admin batch set dapp price config different chain in MappingFeeConfig
+    /// @param chainIds multi evm chainId
+    /// @param dapps  multi dapp address
+    /// @param basePrices  basePrice group
+     */
     pub fn batch_set_this_dapp_price_config_in_diff_chain(
         ctx: Context<BatchSetDappPriceConfigInDiffChain>,
         chain_ids: Vec<u64>,
@@ -378,11 +408,11 @@ pub mod vizing_core {
 
     //batch_set_dapp_price_config_in_same_chain
     /*
-        /// @notice gas_pool_admin batch set dapp price config same chain in MappingFeeConfig
-        /// @param chainId evm chainId
-        /// @param dapps  multi dapp address
-        /// @param basePrices  basePrice group
-    */
+    /// @notice gas pool admin batch set dapp price config same chain in MappingFeeConfig
+    /// @param chainId evm chainId
+    /// @param dapps  multi dapp address
+    /// @param basePrices  basePrice group
+     */
     pub fn batch_set_this_dapp_price_config_in_same_chain(
         ctx: Context<BatchSetDappPriceConfigInSameChain>,
         chain_id: u64,
@@ -399,13 +429,13 @@ pub mod vizing_core {
 
     //batch_set_exchange_rate
     /*
-        /// @notice gas_pool_admin batch set exchange rate in MappingFeeConfig
-        /// @param chainIds multi evm chainId
-        /// @param moleculars  molecular group
-        /// @param denominators  denominator group
-        /// @param molecularDecimals molecular decimals group
-        /// @param denominatorDecimals  denominator decimals group
-    */
+    /// @notice gas pool admin batch set exchange rate in MappingFeeConfig
+    /// @param chainIds multi evm chainId
+    /// @param moleculars  molecular group
+    /// @param denominators  denominator group
+    /// @param molecularDecimals molecular decimals group
+    /// @param denominatorDecimals  denominator decimals group
+     */
     pub fn batch_set_this_exchange_rate(
         ctx: Context<BatchSetExchangeRate>,
         chain_ids: Vec<u64>,
@@ -425,9 +455,9 @@ pub mod vizing_core {
     }
 
     /*
-        /// @notice user transfer sol to vizing_vault
-        /// @param amount transfer sol amount
-    */
+    /// @notice user transfer sol to vizing_vault
+    /// @param amount transfer sol amount
+     */
     // pub fn transfer_sol_valut(ctx: Context<SolTransfer>, amount: u64) ->Result<()>{
     //     SolTransfer::sol_transfer(
     //         ctx,
@@ -437,10 +467,10 @@ pub mod vizing_core {
 
     //withdraw_spl_token
     /*
-        /// @notice owner withdraw spl token from vizing_vault pda address  
-        /// @param withdrawAmount withdraw amount
-        /// @param thisBump vizing_vault pda bump
-    */
+    /// @notice owner withdraw spl token from vizing_vault pda address
+    /// @param withdrawAmount withdraw amount
+    /// @param thisBump vizing_vault pda bump
+     */
     pub fn withdraw_vault_spl_token(
         ctx: Context<WithdrawSplToken>,
         withdraw_amount: u64,
@@ -451,21 +481,21 @@ pub mod vizing_core {
 
     //withdraw_sol
     /*
-        /// @notice owner withdraw sol from vizing_vault pda address  
-        /// @param withdrawAmount withdraw amount
-    */
+    /// @notice owner withdraw sol from vizing_vault pda address
+    /// @param withdrawAmount withdraw amount
+     */
     pub fn withdraw_vault_sol(ctx: Context<WithdrawSol>, withdraw_amount: u64) -> Result<()> {
         WithdrawSol::withdraw_sol(ctx, withdraw_amount)
     }
 
     //set_token_info_base
     /*
-        /// @notice set token config mapping in MappingTokenConfig and MappingSymbolConfig
-        /// @param symbol evm token symbol
-        /// @param tokenAddress evm token address
-        /// @param decimals  token decimals
-        /// @param maxPrice  max price
-    */
+    /// @notice set token config mapping in MappingTokenConfig and MappingSymbolConfig
+    /// @param symbol evm token symbol
+    /// @param tokenAddress evm token address
+    /// @param decimals  token decimals
+    /// @param maxPrice  max price
+     */
     pub fn set_this_token_info_base(
         ctx: Context<SetTokenInfoBase>,
         symbol: String,
@@ -478,12 +508,12 @@ pub mod vizing_core {
 
     //set_token_trade_fee_map
     /*
-        /// @notice set token trade fee mapping in MappingTokenConfig
-        /// @param tokenAddress evm token address
-        /// @param chainIds evm chainId group
-        /// @param moleculars  molecular group
-        /// @param denominators  denominator group
-    */
+    /// @notice set token trade fee mapping in MappingTokenConfig
+    /// @param tokenAddress evm token address
+    /// @param chainIds evm chainId group
+    /// @param moleculars  molecular group
+    /// @param denominators  denominator group
+     */
     pub fn set_this_token_trade_fee_map(
         ctx: Context<SetTokenTradeFeeMap>,
         token_address: [u8; 32],
@@ -502,133 +532,97 @@ pub mod vizing_core {
 
     //get
     /*
-        /// @notice Calculate the fee for the native token transfer
-        /// @param destChainid The chain id of the destination chain
-        /// @param amountOut The value we spent in the source chain
-    */
+    /// @notice Calculate the fee for the native token transfer
+    /// @param destChainid The chain id of the destination chain
+    /// @param amountOut The value we spent in the source chain
+     */
     pub fn compute_trade_fee1(
         ctx: Context<ComputeTradeFee1>,
         dest_chain_id: u64,
         amount_out: u64,
-    ) -> Result<u64>{
-        ComputeTradeFee1::get_compute_trade_fee1(
-            ctx,
-            dest_chain_id,
-            amount_out
-        )
+    ) -> Result<u64> {
+        ComputeTradeFee1::get_compute_trade_fee1(ctx, dest_chain_id, amount_out)
     }
 
     /*
-        /// @notice Calculate the fee for the native token transfer
-        /// @param targetContract contract address in the destination chain
-        /// @param destChainid The chain id of the destination chain
-        /// @param amountOut The value we spent in the source chain
-    */
+    /// @notice Calculate the fee for the native token transfer
+    /// @param targetContract contract address in the destination chain
+    /// @param destChainid The chain id of the destination chain
+    /// @param amountOut The value we spent in the source chain
+     */
     pub fn compute_trade_fee2(
         ctx: Context<ComputeTradeFee2>,
         target_contract: [u8; 32],
         dest_chain_id: u64,
         amount_out: u64,
     ) -> Result<u64> {
-        ComputeTradeFee2::get_compute_trade_fee2(
-            ctx,
-            target_contract,
-            dest_chain_id,
-            amount_out
-        )
+        ComputeTradeFee2::get_compute_trade_fee2(ctx, target_contract, dest_chain_id, amount_out)
     }
 
     /*
-        /// @notice Estimate the gas price we need to encode in message
-        /// @param destChainid The chain id of the destination chain
-    */
-    pub fn estimate_price2(
-        ctx: Context<EstimatePrice2>,
-        dest_chain_id: u64
-    ) -> Result<u64> {
-        EstimatePrice2::get_estimate_price2(
-            ctx,
-            dest_chain_id
-        )
+    /// @notice Estimate the gas price we need to encode in message
+    /// @param destChainid The chain id of the destination chain
+     */
+    pub fn estimate_price2(ctx: Context<EstimatePrice2>, dest_chain_id: u64) -> Result<u64> {
+        EstimatePrice2::get_estimate_price2(ctx, dest_chain_id)
     }
 
     /*
-        /// @notice Estimate the gas fee we should pay to vizing
-        /// @param amountOut amountOut in the destination chain
-        /// @param destChainid The chain id of the destination chain
-        /// @param message The message we want to send to the destination chain
-    */
+    /// @notice Estimate the gas fee we should pay to vizing
+    /// @param amountOut amountOut in the destination chain
+    /// @param destChainid The chain id of the destination chain
+    /// @param message The message we want to send to the destination chain
+     */
     pub fn estimate_gas(
         ctx: Context<EstimateGas>,
         amount_out: u64,
         dest_chain_id: u64,
-        message: Message
+        message: Message,
     ) -> Result<u64> {
-        EstimateGas::get_estimate_gas(
-            ctx,
-            amount_out,
-            dest_chain_id,
-            message
-        )
+        EstimateGas::get_estimate_gas(ctx, amount_out, dest_chain_id, message)
     }
 
     /*
-        /// @notice Estimate the total fee we should pay to vizing
-        /// @param amountOut amountOut in the destination chain
-        /// @param destChainid The chain id of the destination chain
-        /// @param message The message we want to send to the destination chain
-    */
+    /// @notice Estimate the total fee we should pay to vizing
+    /// @param amountOut amountOut in the destination chain
+    /// @param destChainid The chain id of the destination chain
+    /// @param message The message we want to send to the destination chain
+     */
     pub fn estimate_total_fee(
         ctx: Context<EstimateTotalFee>,
         dest_chain_id: u64,
         amount_out: u64,
-        message: Message
+        message: Message,
     ) -> Result<u64> {
-        EstimateTotalFee::get_estimate_total_fee(
-            ctx,
-            dest_chain_id,
-            amount_out,
-            message
-        )
+        EstimateTotalFee::get_estimate_total_fee(ctx, dest_chain_id, amount_out, message)
     }
 
     /*
-        /// @notice similar to uniswap Swap Router
-        /// @notice Estimate how many native token we should spend to exchange the amountOut in the destChainid
-        /// @param destChainid The chain id of the destination chain
-        /// @param amountOut The value we want to receive in the destination chain
-    */
+    /// @notice similar to uniswap Swap Router
+    /// @notice Estimate how many native token we should spend to exchange the amountOut in the destChainid
+    /// @param destChainid The chain id of the destination chain
+    /// @param amountOut The value we want to receive in the destination chain
+     */
     pub fn exact_output(
         ctx: Context<ExactOutput>,
         dest_chain_id: u64,
-        amount_out: u64,    
+        amount_out: u64,
     ) -> Result<u64> {
-        ExactOutput::get_exact_output(
-            ctx,
-            dest_chain_id,
-            amount_out
-        )
+        ExactOutput::get_exact_output(ctx, dest_chain_id, amount_out)
     }
 
     /*
-        /// @notice similar to uniswap Swap Router
-        /// @notice Estimate how many native token we could get in the destChainid if we input the amountIn
-        /// @param destChainid The chain id of the destination chain
-        /// @param amountIn The value we spent in the source chain
-    */
+    /// @notice similar to uniswap Swap Router
+    /// @notice Estimate how many native token we could get in the destChainid if we input the amountIn
+    /// @param destChainid The chain id of the destination chain
+    /// @param amountIn The value we spent in the source chain
+     */
     pub fn exact_input(
         ctx: Context<ExactInput>,
         dest_chain_id: u64,
         amount_in: u64,
     ) -> Result<u64> {
-        ExactInput::get_exact_input(
-            ctx,
-            dest_chain_id,
-            amount_in
-        )
+        ExactInput::get_exact_input(ctx, dest_chain_id, amount_in)
     }
 
 }
-
-
-

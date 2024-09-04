@@ -322,7 +322,7 @@ pub struct InitTokenInfoBase<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info, SaveChainId>,
     #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
-        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+        , constraint = vizing.owner == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing: Account<'info, VizingPadSettings>,
     #[account(mut)]
     pub user: Signer<'info>,
