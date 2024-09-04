@@ -585,8 +585,12 @@ describe("Vizing Test", () => {
       targetProgram: targetProgram,
       executeGasLimit: new anchor.BN(6),
       maxFeePerGas: new anchor.BN(7),
-      signature: Buffer.alloc(0),
+      signature: Buffer.concat([
+        Buffer.from([0, 0, 0, 0, 0, 0, 0, 2]),
+        Buffer.from([0, 0, 0, 0, 0, 0, 0, 3]),
+      ]),
     };
+    console.log(`signature: ${message.signature.toString("hex")}`);
 
     const landingParams = {
       messageId: Buffer.from([

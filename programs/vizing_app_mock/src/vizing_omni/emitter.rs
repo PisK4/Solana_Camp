@@ -52,7 +52,7 @@ pub struct LaunchParams {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct Message {
     pub mode: u8,
-    pub target_program: Pubkey,
+    pub target_program: [u8; 32],
     pub execute_gas_limit: u64,
     pub max_fee_per_gas: u64,
     #[max_len(1024)]

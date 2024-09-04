@@ -85,13 +85,24 @@ pub mod vizing_app_mock {
             ctx.accounts.vizing_authority.key()
         );
 
-        let a = 10;
-        let b = 20;
-        let c = a + b;
+        let sig_slice = &params.signature;
+        let a_slice = &sig_slice[..8];
+        let b_slice = &sig_slice[8..16];
+
+        let mut a = [0u8; 8];
+        a.copy_from_slice(a_slice);
+
+        let mut b = [0u8; 8];
+        b.copy_from_slice(b_slice);
+
+        let a_number = u64::from_be_bytes(a);
+        let b_number = u64::from_be_bytes(b);
+
+        let c = a_number + b_number;
 
         ctx.accounts.result_account.result = c;
 
-        msg!("{} + {} = {}", a, b, c);
+        msg!("{} + {} = {}", a_number, b_number, c);
 
         msg!("src_chainid: {}", params.src_chainid);
 
