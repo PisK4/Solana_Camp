@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::{instruction::Instruction, program::invoke_signed};
 use anchor_lang::system_program::{transfer, Transfer};
+use anchor_lang::solana_program::program::set_return_data;
 use crate::gas_system::*;
 use crate::governance::*;
 use crate::library::*;
@@ -290,9 +291,12 @@ impl ComputeTradeFee1<'_> {
             amount_out,
         ).ok_or(errors::ErrorCode::ComputeTradeFee1NotFound)?;
         current_record_message.compute_trade_fee1=fee;
+        //set return fee
+        set_return_data(&fee.to_le_bytes());
         Ok(fee)
     }
 }
+
 #[derive(Accounts)]
 pub struct ComputeTradeFee2<'info> {
     #[account(mut)]
@@ -337,6 +341,8 @@ impl ComputeTradeFee2<'_> {
             amount_out,
         ).ok_or(errors::ErrorCode::ComputeTradeFee2NotFound)?;
         current_record_message.compute_trade_fee2=fee;
+        //set return fee
+        set_return_data(&fee.to_le_bytes());
         Ok(fee)
     }
 }
@@ -380,6 +386,8 @@ impl EstimatePrice2<'_> {
             dest_chain_id,
         ).ok_or(errors::ErrorCode::EstimatePrice2NotFound)?;
         current_record_message.estimate_price2=base_price;
+        //set return base_price
+        set_return_data(&base_price.to_le_bytes());
         Ok(base_price)
     }
 }
@@ -442,10 +450,11 @@ impl EstimateGas<'_> {
             &serialized_data,
         ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
         current_record_message.estimate_gas=fee;
+        //set return fee
+        set_return_data(&fee.to_le_bytes());
         Ok(fee)
     }
 }
-
 
 #[derive(Accounts)]
 pub struct EstimateTotalFee<'info> {
@@ -506,6 +515,8 @@ impl EstimateTotalFee<'_> {
             &serialized_data,
         ).ok_or(errors::ErrorCode::EstimateTotalFeeNotFound)?;
         current_record_message.estimate_total_fee=fee;
+        //set return fee
+        set_return_data(&fee.to_le_bytes());
         Ok(fee)
     }
 }
@@ -544,6 +555,8 @@ impl ExactOutput<'_> {
             amount_out,
         ).ok_or(errors::ErrorCode::ExactOutputNotFound)?;
         current_record_message.exact_output=amount_in;
+        //set return amount_in
+        set_return_data(&amount_in.to_le_bytes());
         Ok(amount_in)
     }
 }
@@ -582,6 +595,8 @@ impl ExactInput<'_> {
             amount_in,
         ).ok_or(errors::ErrorCode::ExactInputputNotFound)?;
         current_record_message.exact_input=amount_out;
+        //set return amount_out
+        set_return_data(&amount_out.to_le_bytes());
         Ok(amount_out)
     }
 }

@@ -348,30 +348,9 @@ pub struct InitTokenInfoBase<'info> {
 //set
 
 #[derive(Accounts)]
-pub struct Withdraw<'info> {
-    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
-        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
-    pub vizing: Account<'info, VizingPadSettings>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    #[account(mut)]
-    pub source: Account<'info, TokenAccount>,
-    #[account(mut)]
-    pub destination: Account<'info, TokenAccount>,
-    #[account(
-        mut,
-        seeds = [b"vizing_vault".as_ref()],
-        bump
-    )]
-    pub contract_authority: Account<'info, VaultMes>,
-    pub token_program: Program<'info, Token>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
 pub struct WithdrawSplToken<'info> {
     #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
-        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+        , constraint = vizing.owner == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing: Account<'info, VizingPadSettings>,
     #[account(mut)]
     pub user: Signer<'info>,
@@ -390,8 +369,9 @@ pub struct WithdrawSplToken<'info> {
 
 #[derive(Accounts)]
 pub struct WithdrawSol<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info, SaveChainId>,
+     #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.owner == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(mut)]
     pub user: Signer<'info>,
     #[account(mut)]
