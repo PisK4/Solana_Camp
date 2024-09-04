@@ -713,12 +713,12 @@ describe("Vizing Test", () => {
             isWritable: false,
           },
           {
-            pubkey: vizingPadConfigs,
+            pubkey: solPdaReceiver,
             isSigner: false,
             isWritable: true,
           },
           {
-            pubkey: solPdaReceiver,
+            pubkey: vizingPadConfigs,
             isSigner: false,
             isWritable: true,
           },

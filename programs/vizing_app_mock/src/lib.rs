@@ -144,11 +144,11 @@ pub struct LandingAppOp<'info> {
     #[account(signer)]
     pub vizing_authority: AccountInfo<'info>,
 
-    /// CHECK: 2. Vizing config account
-    pub vizing: AccountInfo<'info>,
-
     #[account(seeds = [VIZING_APP_SOL_RECEIVER_SEED], bump = sol_pda_receiver.bump)]
     pub sol_pda_receiver: Account<'info, VizingSolReceiver>,
+
+    /// CHECK: 2. Vizing config account
+    pub vizing_pad_config: AccountInfo<'info>,
 
     #[account(seeds = [RESULT_DATA_SEED], bump = result_account.bump)]
     pub result_account: Account<'info, ResultData>,

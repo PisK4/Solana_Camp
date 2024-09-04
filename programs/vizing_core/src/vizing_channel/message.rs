@@ -154,7 +154,7 @@ impl LandingOp<'_> {
             .collect::<Vec<_>>();
 
             if params.value > 0 {
-                traget = ctx.remaining_accounts[2].to_account_info();
+                traget = ctx.remaining_accounts[1].to_account_info();
                 transfer(
                     CpiContext::new(
                         ctx.accounts.system_program.to_account_info(),
