@@ -33,7 +33,7 @@ impl InitVizingPad<'_> {
     pub fn initialize_vizing_pad(ctx: &mut Context<InitVizingPad>, params: InitVizingPadParams) -> Result<()> {
         // init vizing settings
         let (_, bump) = Pubkey::find_program_address(
-            &[contants::VIZING_PAD_SETTINGS_SEED],
+            &[VIZING_PAD_SETTINGS_SEED],
             &ctx.program_id,
         );
         ctx.accounts.vizing_pad_config.bump = bump;

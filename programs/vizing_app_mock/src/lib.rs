@@ -34,7 +34,10 @@ pub mod vizing_app_mock {
             sender: ctx.accounts.user.key(),
             value: 0,
             dest_chainid: 1,
-            addition_params: vec![],
+            addition_params: vizing_pad::vizing_omni::AdditionalParams {
+                mode: 0,
+                signature: vec![],
+            },
             message: vizing_pad::vizing_omni::Message {
                 mode: 1,
                 target_program: [0; 32],

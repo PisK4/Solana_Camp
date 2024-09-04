@@ -331,20 +331,31 @@ describe("Vizing Test", () => {
   it("Launch", async () => {
     const message = {
       mode: 5,
-      targetProgram: anchor.web3.Keypair.generate().publicKey,
+      targetProgram: Buffer.from([
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+        21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+      ]),
       executeGasLimit: new anchor.BN(6),
       maxFeePerGas: new anchor.BN(7),
       signature: Buffer.from("1234"),
     };
 
+    const additionParams = {
+      mode: 0,
+      signature: Buffer.alloc(0),
+    };
+
     const launchParams = {
       erliestArrivalTimestamp: new anchor.BN(1),
       latestArrivalTimestamp: new anchor.BN(2),
-      relayer: provider.wallet.publicKey,
+      relayer: Buffer.from([
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+        21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+      ]),
       sender: provider.wallet.publicKey,
       value: new anchor.BN(3),
       destChainid: new anchor.BN(4),
-      additionParams: Buffer.alloc(0),
+      additionParams: additionParams,
       message: message,
     };
 

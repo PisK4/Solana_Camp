@@ -51,7 +51,9 @@ impl LaunchOp<'_> {
 
         msg!("dest_chainid: {}", params.dest_chainid);
 
-        msg!("addition_params: {:?}", params.addition_params);
+        msg!("addition_params mode: {}", params.addition_params.mode);
+
+        msg!("addition_params signature: {:?}", params.addition_params.signature);
 
         msg!("mode: {}", params.message.mode);
 
@@ -118,7 +120,7 @@ pub struct LandingOp<'info> {
     pub vizing: Account<'info, VizingPadConfigs>,
 
     /// CHECK: We need this PDA as a signer
-    #[account(seeds = [contants::VIZING_AUTHORITY_SEED],bump = vizing_authority.bump)]
+    #[account(seeds = [VIZING_AUTHORITY_SEED],bump = vizing_authority.bump)]
     pub vizing_authority: Account<'info, VizingAuthorityParams>,
 
     /// CHECK: target contract
@@ -151,18 +153,19 @@ impl LandingOp<'_> {
             })
             .collect::<Vec<_>>();
 
-            traget = ctx.remaining_accounts[2].to_account_info();
-
-            transfer(
-                CpiContext::new(
-                    ctx.accounts.system_program.to_account_info(),
-                    Transfer {
-                        from: ctx.accounts.relayer.to_account_info(),
-                        to: traget
-                    },
-                ),
-                params.value,
-            )?;
+            if params.value > 0 {
+                traget = ctx.remaining_accounts[2].to_account_info();
+                transfer(
+                    CpiContext::new(
+                        ctx.accounts.system_program.to_account_info(),
+                        Transfer {
+                            from: ctx.accounts.relayer.to_account_info(),
+                            to: traget
+                        },
+                    ),
+                    params.value,
+                )?;
+            }
 
             let ix = Instruction {
                 program_id: ctx.accounts.target_program.key(),
@@ -178,16 +181,18 @@ impl LandingOp<'_> {
             .map_err(|_| VizingError::CallingFailed)?;
 
         }else{
-            transfer(
-                CpiContext::new(
-                    ctx.accounts.system_program.to_account_info(),
-                    Transfer {
-                        from: ctx.accounts.relayer.to_account_info(),
-                        to: traget
-                    },
-                ),
-                params.value,
-            )?;
+            if params.value > 0 {
+                transfer(
+                    CpiContext::new(
+                        ctx.accounts.system_program.to_account_info(),
+                        Transfer {
+                            from: ctx.accounts.relayer.to_account_info(),
+                            to: traget
+                        },
+                    ),
+                    params.value,
+                )?;
+            }
         }
 
         require!(
@@ -252,8 +257,7 @@ pub struct LandingParams {
     pub src_chain_nonce: u32,
     pub sender: [u8; 32],
     pub value: u64,
-    #[max_len(512)]
-    pub addition_params: Vec<u8>,
+    pub addition_params: AdditionalParams,
     pub message: LandingMessage,
 }
 
