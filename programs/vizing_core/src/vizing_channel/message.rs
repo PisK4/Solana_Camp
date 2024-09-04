@@ -217,6 +217,37 @@ fn build_landing_ix_data(params: &LandingParams) -> Result<Vec<u8>> {
 }
 
 //get
+
+#[derive(Accounts)]
+pub struct InitCurrentRecordMessage<'info> {
+    #[account(mut)]
+    pub save_chain_id: Account<'info,SaveChainId>,
+    #[account(
+        init,
+        payer = user,
+        space = 8 + CurrentRecordMessage::INIT_SPACE,
+        seeds = [b"init_current_record_message".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.owner == user.key() @VizingError::NotOwner)]
+    pub vizing: Account<'info, VizingPadSettings>,
+    #[account(mut)]
+    pub user: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+impl InitCurrentRecordMessage<'_> {
+    pub fn init_current_record_message(
+        ctx: Context<InitCurrentRecordMessage>
+    ) ->Result<()> {
+        let current_record_message = &mut ctx.accounts.current_record_message;
+        current_record_message.init_state = true;
+        Ok(())
+    }
+}
+
+
 #[derive(Accounts)]
 pub struct ComputeTradeFee1<'info> {
     #[account(mut)]
@@ -233,6 +264,12 @@ pub struct ComputeTradeFee1<'info> {
         bump
     )]
     pub gas_system_global: Account<'info, GasSystemGlobal>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
 }
 impl ComputeTradeFee1<'_> {
     pub fn get_compute_trade_fee1(
@@ -241,6 +278,7 @@ impl ComputeTradeFee1<'_> {
         amount_out: u64,
     ) -> Result<u64> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let current_record_message = &mut ctx.accounts.current_record_message;
         let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
         let gas_system_global = &mut ctx.accounts.gas_system_global;
         let fee: u64 = vizing_gas_system::compute_trade_fee1(
@@ -251,6 +289,7 @@ impl ComputeTradeFee1<'_> {
             dest_chain_id,
             amount_out,
         ).ok_or(errors::ErrorCode::ComputeTradeFee1NotFound)?;
+        current_record_message.compute_trade_fee1=fee;
         Ok(fee)
     }
 }
@@ -270,6 +309,12 @@ pub struct ComputeTradeFee2<'info> {
         bump
     )]
     pub gas_system_global: Account<'info, GasSystemGlobal>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
 }
 impl ComputeTradeFee2<'_> {
     pub fn get_compute_trade_fee2(
@@ -281,6 +326,7 @@ impl ComputeTradeFee2<'_> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,target_contract).ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
         let gas_system_global = &mut ctx.accounts.gas_system_global;
+        let current_record_message = &mut ctx.accounts.current_record_message;
         let fee: u64 = vizing_gas_system::compute_trade_fee2(
             trade_fee_config.molecular,
             trade_fee_config.denominator,
@@ -290,6 +336,7 @@ impl ComputeTradeFee2<'_> {
             dest_chain_id,
             amount_out,
         ).ok_or(errors::ErrorCode::ComputeTradeFee2NotFound)?;
+        current_record_message.compute_trade_fee2=fee;
         Ok(fee)
     }
 }
@@ -310,6 +357,12 @@ pub struct EstimatePrice2<'info> {
         bump
     )]
     pub gas_system_global: Account<'info, GasSystemGlobal>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
 }
 impl EstimatePrice2<'_> {
     pub fn get_estimate_price2(
@@ -319,12 +372,14 @@ impl EstimatePrice2<'_> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
         let gas_system_global = &mut ctx.accounts.gas_system_global;
+        let current_record_message = &mut ctx.accounts.current_record_message;
 
         let base_price: u64 = vizing_gas_system::estimate_price2(
             gas_system_global.global_base_price,
             fee_config.base_price,
             dest_chain_id,
         ).ok_or(errors::ErrorCode::EstimatePrice2NotFound)?;
+        current_record_message.estimate_price2=base_price;
         Ok(base_price)
     }
 }
@@ -344,7 +399,13 @@ pub struct EstimateGas<'info> {
         seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
         bump
     )]
-    pub gas_system_global: Account<'info, GasSystemGlobal>
+    pub gas_system_global: Account<'info, GasSystemGlobal>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
 }
 impl EstimateGas<'_> {
     pub fn get_estimate_gas(
@@ -355,6 +416,7 @@ impl EstimateGas<'_> {
     ) -> Result<u64> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let gas_system_global = &mut ctx.accounts.gas_system_global;
+        let current_record_message = &mut ctx.accounts.current_record_message;
 
         let serialized_data: Vec<u8> = message.try_to_vec()?;
         let Some((_, dapp, _, _, _))=message_monitor::slice_message(&serialized_data) else { todo!() };
@@ -379,9 +441,11 @@ impl EstimateGas<'_> {
             dest_chain_id,
             &serialized_data,
         ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
+        current_record_message.estimate_gas=fee;
         Ok(fee)
     }
 }
+
 
 #[derive(Accounts)]
 pub struct EstimateTotalFee<'info> {
@@ -399,6 +463,12 @@ pub struct EstimateTotalFee<'info> {
         bump
     )]
     pub gas_system_global: Account<'info, GasSystemGlobal>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
 }
 impl EstimateTotalFee<'_> {
     pub fn get_estimate_total_fee(
@@ -409,6 +479,7 @@ impl EstimateTotalFee<'_> {
     ) -> Result<u64> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let gas_system_global = &mut ctx.accounts.gas_system_global;
+        let current_record_message = &mut ctx.accounts.current_record_message;
 
         let serialized_data: Vec<u8> = message.try_to_vec()?;
         let Some((_, dapp, _, _, _))=message_monitor::slice_message(&serialized_data) else { todo!() };
@@ -434,6 +505,7 @@ impl EstimateTotalFee<'_> {
             amount_out,
             &serialized_data,
         ).ok_or(errors::ErrorCode::EstimateTotalFeeNotFound)?;
+        current_record_message.estimate_total_fee=fee;
         Ok(fee)
     }
 }
@@ -448,6 +520,12 @@ pub struct ExactOutput<'info> {
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
 }
 impl ExactOutput<'_> {
     pub fn get_exact_output(
@@ -457,6 +535,7 @@ impl ExactOutput<'_> {
     ) -> Result<u64> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+        let current_record_message = &mut ctx.accounts.current_record_message;
 
         let amount_in: u64 = vizing_gas_system::exact_output(
             fee_config.molecular_decimal,
@@ -464,6 +543,7 @@ impl ExactOutput<'_> {
             dest_chain_id,
             amount_out,
         ).ok_or(errors::ErrorCode::ExactOutputNotFound)?;
+        current_record_message.exact_output=amount_in;
         Ok(amount_in)
     }
 }
@@ -478,6 +558,12 @@ pub struct ExactInput<'info> {
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
 }
 impl ExactInput<'_> {
     pub fn get_exact_input(
@@ -487,13 +573,17 @@ impl ExactInput<'_> {
     ) -> Result<u64> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
-        
+        let current_record_message = &mut ctx.accounts.current_record_message;
+
         let amount_out: u64 = vizing_gas_system::exact_input(
             fee_config.molecular_decimal,
             fee_config.denominator_decimal,
             dest_chain_id,
             amount_in,
         ).ok_or(errors::ErrorCode::ExactInputputNotFound)?;
+        current_record_message.exact_input=amount_out;
         Ok(amount_out)
     }
 }
+
+

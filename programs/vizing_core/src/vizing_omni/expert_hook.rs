@@ -1,13 +1,13 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 
+use crate::governance::*;
 use crate::library::*;
 use crate::state::*;
-use crate::governance::*;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct TokenBase {
-    pub key: [u8; 32],  //token address
+    pub key: [u8; 32], //token address
     #[max_len(6)]
     pub symbol: String, //token symbol
     pub decimals: u8,
@@ -17,16 +17,16 @@ pub struct TokenBase {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct TokenTradeFeeConfig {
     pub key1: [u8; 32], //token address
-    pub key2: u64,   //destChainId 
+    pub key2: u64,      //destChainId
     pub molecular: u64,
     pub denominator: u64,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
-pub struct SymbolConfig {  
+pub struct SymbolConfig {
     #[max_len(6)]
-    pub key: String,  //token symbol
-    pub address: [u8; 32],   //token address
+    pub key: String, //token symbol
+    pub address: [u8; 32], //token address
 }
 
 #[account]
@@ -156,6 +156,7 @@ impl WithdrawSplToken<'_> {
         withdraw_amount: u64,
         this_bump: u8,
     ) -> Result<()> {
+
         let seeds = &[b"vizing_vault".as_ref(), &[this_bump]];
         let signer_seeds = &[&seeds[..]];
 
@@ -347,9 +348,28 @@ pub struct InitTokenInfoBase<'info> {
 //set
 
 #[derive(Accounts)]
-pub struct WithdrawSplToken<'info> {
+pub struct Withdraw<'info> {
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
     #[account(mut)]
-    pub save_chain_id: Account<'info, SaveChainId>,
+    pub user: Signer<'info>,
+    #[account(mut)]
+    pub source: Account<'info, TokenAccount>,
+    #[account(mut)]
+    pub destination: Account<'info, TokenAccount>,
+    #[account(
+        mut,
+        seeds = [b"vizing_vault".as_ref()],
+        bump
+    )]
+    pub contract_authority: Account<'info, VaultMes>,
+    pub token_program: Program<'info, Token>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct WithdrawSplToken<'info> {
     #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
         , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing: Account<'info, VizingPadSettings>,

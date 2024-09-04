@@ -13,7 +13,7 @@ use state::*;
 use vizing_channel::*;
 use vizing_omni::*;
 
-declare_id!("F4syPi7pUoujHYMDGWhHLPJKSqLxi7r6Jff6RLqYiWhp");
+declare_id!("GvFuDBYqvb2MheFdc7DmFqkg3ZvN7Ko4uGGsEvEpQsUY");
 
 #[program]
 pub mod vizing_core {
@@ -178,6 +178,14 @@ pub mod vizing_core {
             token_address,
             decimals,
             max_price
+        )
+    }
+
+    pub fn init_record_message(
+        ctx: Context<InitCurrentRecordMessage>
+    ) -> Result<()> {
+        InitCurrentRecordMessage::init_current_record_message(
+            ctx
         )
     }
 
