@@ -207,7 +207,9 @@ describe("Test", () => {
     }
 
     function ethereumAddressToU8Array(address: string): number[] {
-      const cleanAddress = address.startsWith('0x') ? address.slice(2) : address;
+      const cleanAddress = address.startsWith("0x")
+        ? address.slice(2)
+        : address;
       const bytes = new Uint8Array(32);
       for (let i = 0; i < 32; i++) {
         const byte = parseInt(cleanAddress.substr(i * 2, 2), 16);
@@ -215,16 +217,6 @@ describe("Test", () => {
       }
       const addressArray: number[] = Array.from(bytes);
       return addressArray;
-    }
-
-    function decodeU8ArrayToEthereumAddress(message) {
-      const asciiData = message.slice(0, 32); // ASCII数据
-      let hexAddress = "0x";
-      for (let i = 0; i < 31; i++) {
-        const charCode = asciiData[i];
-        hexAddress += String.fromCharCode(charCode);
-      }
-      return hexAddress;
     }
 
     let id = new anchor.BN(4);
@@ -235,7 +227,7 @@ describe("Test", () => {
     //init_mapping_fee_config
     let [mappingFeeConfigAuthority, mappingFeeConfigBump] =
       await PublicKey.findProgramAddress(
-        [Buffer.from("init_mapping_fee_config"), chainId],
+        [Buffer.from("init_mapping_fee_config")],
         pg.PROGRAM_ID
       );
     console.log(
@@ -247,41 +239,11 @@ describe("Test", () => {
     //init_current_record_message
     let [recordMessageAuthority, recordMessageBump] =
       await PublicKey.findProgramAddress(
-        [Buffer.from("init_current_record_message"), chainId],
+        [Buffer.from("init_current_record_message")],
         pg.PROGRAM_ID
       );
-    console.log(
-      "recordMessageAuthority:",
-      recordMessageAuthority.toString()
-    );
-    console.log(
-      "recordMessageBump:",
-      recordMessageBump
-    );
-
-    //init_token_config
-    let [initTokenConfigAuthority, initTokenConfigBump] =
-      await PublicKey.findProgramAddress(
-        [Buffer.from("init_token_config"), chainId],
-        pg.PROGRAM_ID
-      );
-    console.log(
-      "initTokenConfigAuthority:",
-      initTokenConfigAuthority.toString()
-    );
-    console.log("initTokenConfigBump:", initTokenConfigBump);
-
-    //init_symbol_config
-    let [initSymbolConfigAuthority, initSymbolConfigBump] =
-      await PublicKey.findProgramAddress(
-        [Buffer.from("init_symbol_config"), chainId],
-        pg.PROGRAM_ID
-      );
-    console.log(
-      "initSymbolConfigAuthority:",
-      initSymbolConfigAuthority.toString()
-    );
-    console.log("initSymbolConfigBump:", initSymbolConfigBump);
+    console.log("recordMessageAuthority:", recordMessageAuthority.toString());
+    console.log("recordMessageBump:", recordMessageBump);
 
     //save_dest_chain_Id
     let saveDestChainIdAccount = new web3.Keypair();
@@ -321,33 +283,6 @@ describe("Test", () => {
     }
     await InitializeVizingPad();
 
-    //saveChainId
-    async function SaveChainId() {
-      try {
-        const saveDestChainId = await pg.program.methods
-          .saveChainId(chainId)
-          .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
-            vizing: vizingPadSettings,
-            user: user,
-            systemProgram: systemId,
-          })
-          .signers([signer, saveDestChainIdAccount])
-          .rpc();
-        console.log(`saveDestChainId:${saveDestChainId}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(saveDestChainId);
-
-        const getChainId = await pg.program.account.saveChainId.fetch(
-          saveDestChainIdAccount.publicKey
-        );
-        console.log("getChainId:", getChainId);
-      } catch (e) {
-        console.log("saveDestChainId error:", e);
-      }
-    }
-    await SaveChainId();
-
     let base_price = new anchor.BN(500);
     let reserve = new anchor.BN(1000);
     let molecular = new anchor.BN(5);
@@ -375,7 +310,6 @@ describe("Test", () => {
               denominator_decimal
             )
             .accounts({
-              saveChainId: saveDestChainIdAccount.publicKey,
               vizing: vizingPadSettings,
               mappingFeeConfig: mappingFeeConfigAuthority,
               user: user,
@@ -398,7 +332,6 @@ describe("Test", () => {
     let default_gas_limit = new anchor.BN(1000);
     let amount_in_threshold = new anchor.BN(1000000000);
 
-
     //init_native_token_trade_fee_config
     let native_molecular = new anchor.BN(5);
     let native_denominator = new anchor.BN(10);
@@ -412,26 +345,24 @@ describe("Test", () => {
     let init_max_price = new anchor.BN(1000);
 
     //init_record_message
-    async function InitCurrentRecordMessage(){
-      try{
-        const recordValid=await pg.program.account.currentRecordMessage.fetch(
+    async function InitCurrentRecordMessage() {
+      try {
+        const recordValid = await pg.program.account.currentRecordMessage.fetch(
           recordMessageAuthority
         );
-        const valid=await recordValid.initState;
-        console.log("valid:",valid);
-        
-      }catch(e){
-        const initRecordMessage=await pg.program.methods.initRecordMessage(
-
-        ).accounts({
-          saveChainId: saveDestChainIdAccount.publicKey,
-          currentRecordMessage: recordMessageAuthority,
-          vizing: vizingPadSettings,
-          user: user,
-          systemProgram: systemId
-        })
-        .signers([signer])
-        .rpc();
+        const valid = await recordValid.initState;
+        console.log("valid:", valid);
+      } catch (e) {
+        const initRecordMessage = await pg.program.methods
+          .initRecordMessage()
+          .accounts({
+            currentRecordMessage: recordMessageAuthority,
+            vizing: vizingPadSettings,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
         console.log(`initRecordMessage:${initRecordMessage}'`);
         // Confirm transaction
         await pg.connection.confirmTransaction(initRecordMessage);
@@ -514,7 +445,6 @@ describe("Test", () => {
             thisDenominator
           )
           .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
             mappingFeeConfig: mappingFeeConfigAuthority,
             vizing: vizingPadSettings,
             user: user,
@@ -560,7 +490,6 @@ describe("Test", () => {
             thisDenominatorDecimal
           )
           .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
             vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
@@ -591,7 +520,6 @@ describe("Test", () => {
         const setThisTokenFeeConfig = await pg.program.methods
           .setThisTokenFeeConfig(id, molecular, denominator)
           .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
             vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
@@ -613,7 +541,6 @@ describe("Test", () => {
         const setThisDappPriceConfig = await pg.program.methods
           .setThisDappPriceConfig(id, dapp, base_price)
           .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
             vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
@@ -630,7 +557,7 @@ describe("Test", () => {
             mappingFeeConfigAuthority
           );
         const this_dapp_date = mappingFeeConfig.dappConfigMappings[0].dapp;
-        console.log("this_dapp_date:",this_dapp_date);
+        console.log("this_dapp_date:", this_dapp_date);
       } catch (e) {
         console.log("SetThisDappPriceConfig error:", e);
       }
@@ -649,7 +576,6 @@ describe("Test", () => {
             denominator_decimal
           )
           .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
             vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
@@ -675,7 +601,6 @@ describe("Test", () => {
         const batchSetThisTokenFeeConfig = await pg.program.methods
           .batchSetThisTokenFeeConfig(destChainIds, moleculars, denominators)
           .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
             vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
@@ -710,7 +635,6 @@ describe("Test", () => {
             tradeFeeConfig_denominators
           )
           .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
             vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
@@ -743,7 +667,6 @@ describe("Test", () => {
             diff_base_prices
           )
           .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
             vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
@@ -779,7 +702,6 @@ describe("Test", () => {
             DappPriceConfig_base_prices
           )
           .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
             vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
@@ -864,7 +786,8 @@ describe("Test", () => {
       let trade_fee_config_denominator =
         tradeFeeConfigMappings[0].denominator.toNumber();
       let global_trade_fee_molecular = gasSystemGlobal[0].molecular.toNumber();
-      let global_trade_fee_denominator = gasSystemGlobal[0].denominator.toNumber();
+      let global_trade_fee_denominator =
+        gasSystemGlobal[0].denominator.toNumber();
       let fee;
       if (trade_fee_config_denominator > 0) {
         fee =
@@ -885,7 +808,7 @@ describe("Test", () => {
       );
       const dappConfigMappings = mappingFeeConfig.dappConfigMappings;
       const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
-      
+
       let gas_system_global_base_price =
         await gasSystemGlobal[0].globalBasePrice.toNumber();
       let dapp_config_value = dappConfigMappings[0].value.toNumber();
@@ -1020,7 +943,8 @@ describe("Test", () => {
       const feeConfigMappings = mappingFeeConfig.feeConfigMappings;
       const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
 
-      const token_amount_limit = gasSystemGlobal[0].amountInThreshold.toNumber();
+      const token_amount_limit =
+        gasSystemGlobal[0].amountInThreshold.toNumber();
 
       const feeConfigBasePrice = feeConfigMappings[0].basePrice.toNumber();
       const global_base_price = gasSystemGlobal[0].globalBasePrice.toNumber();
@@ -1041,7 +965,7 @@ describe("Test", () => {
           this_message.targetContract
         );
         if (this_message.maxFeePerGas < dapp_base_price) {
-          throw("price < dapp_base_price");
+          throw "price < dapp_base_price";
         }
         fee = this_message.maxFeePerGas * this_message.executeGasLimit;
       } else if (this_message.mode == 4) {
@@ -1106,7 +1030,6 @@ describe("Test", () => {
             denominator_decimals
           )
           .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
             vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
@@ -1122,7 +1045,6 @@ describe("Test", () => {
       }
     }
     await BatchSetThisExchangeRate();
-
 
     // launch
     const executeGasLimit = new BN(6);
@@ -1151,7 +1073,6 @@ describe("Test", () => {
         let launch = await pg.program.methods
           .launch(thisLaunchParams)
           .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
             feePayer: user,
             messageAuthority: user,
             vizing: vizingPadSettings,
@@ -1204,21 +1125,20 @@ describe("Test", () => {
       console.log("launch2 amount error", differ2);
     }
 
-    
     //success random relayer
-    let newRelayer = new web3.Keypair();
-    console.log("newRelayer:", newRelayer.publicKey.toBase58());
-    const newLaunchParams2 = {
-      erliestArrivalTimestamp: new anchor.BN(1),
-      latestArrivalTimestamp: new anchor.BN(2),
-      relayer: newRelayer.publicKey,
-      sender: user,
-      value: thisTestValue2,
-      destChainid: id,
-      additionParams: Buffer.alloc(0),
-      message: message,
-    };
-    await Launch(newLaunchParams2);
+    // let newRelayer = new web3.Keypair();
+    // console.log("newRelayer:", newRelayer.publicKey.toBase58());
+    // const newLaunchParams2 = {
+    //   erliestArrivalTimestamp: new anchor.BN(1),
+    //   latestArrivalTimestamp: new anchor.BN(2),
+    //   relayer: newRelayer.publicKey,
+    //   sender: user,
+    //   value: thisTestValue2,
+    //   destChainid: id,
+    //   additionParams: Buffer.alloc(0),
+    //   message: message,
+    // };
+    // await Launch(newLaunchParams2);
 
     //error amount_in_threshold
     // let this_amount_in_threshold = new anchor.BN(100);
@@ -1237,7 +1157,6 @@ describe("Test", () => {
     //   molecular,
     //   denominator
     // );
-
 
     //error message
     // function encodeEthereumAddressTo40U8Array(ethAddress: string): number[] {
@@ -1297,55 +1216,150 @@ describe("Test", () => {
     // await Launch(newLaunchParams4);
 
     //get
-    async function GetEstimateGas(amount_out, dest_chain_id, this_message) {
-      try {
-        const estimateGas = await pg.program.methods
-          .estimateGas(amount_out, dest_chain_id, this_message)
-          .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
-            mappingFeeConfig: mappingFeeConfigAuthority,
-            currentRecordMessage: recordMessageAuthority,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`estimateGas tx:${estimateGas}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(estimateGas);
-        const currentRecordMessage=await pg.program.account.currentRecordMessage.fetch(
-          recordMessageAuthority
-        );
-        const estimateGasNumber=await currentRecordMessage.estimateGas.toNumber();
-        console.log("estimateGasNumber:",estimateGasNumber);
-      } catch (e) {
-        console.log("estimateGas error:", e);
-      }
-    }
-    await GetEstimateGas(testAmountOut, id, newMessage);
+    // async function GetEstimateGas(amount_out, dest_chain_id, this_message) {
+    //   try {
+    //     const estimateGas = await pg.program.methods
+    //       .estimateGas(amount_out, dest_chain_id, this_message)
+    //       .accounts({
 
-    async function GetEstimateTotalFee(amount_out, dest_chain_id, this_message) {
+    //         mappingFeeConfig: mappingFeeConfigAuthority,
+    //         currentRecordMessage: recordMessageAuthority,
+    //       })
+    //       .signers([signer])
+    //       .rpc();
+    //     console.log(`estimateGas tx:${estimateGas}'`);
+    //     // Confirm transaction
+    //     await pg.connection.confirmTransaction(estimateGas);
+    //     const currentRecordMessage =
+    //       await pg.program.account.currentRecordMessage.fetch(
+    //         recordMessageAuthority
+    //       );
+    //     const estimateGasNumber =
+    //       await currentRecordMessage.estimateGas.toNumber();
+    //     console.log("estimateGasNumber:", estimateGasNumber);
+    //   } catch (e) {
+    //     console.log("estimateGas error:", e);
+    //   }
+    // }
+    // await GetEstimateGas(testAmountOut, id, newMessage);
+
+    // async function GetEstimateTotalFee(
+    //   amount_out,
+    //   dest_chain_id,
+    //   this_message
+    // ) {
+    //   try {
+    //     const estimateTotalFee = await pg.program.methods
+    //       .estimateTotalFee(dest_chain_id, amount_out, this_message)
+    //       .accounts({
+
+    //         mappingFeeConfig: mappingFeeConfigAuthority,
+    //         currentRecordMessage: recordMessageAuthority,
+    //       })
+    //       .signers([signer])
+    //       .rpc();
+    //     console.log(`estimateTotalFee tx:${estimateTotalFee}'`);
+    //     // Confirm transaction
+    //     await pg.connection.confirmTransaction(estimateTotalFee);
+    //     const currentRecordMessage =
+    //       await pg.program.account.currentRecordMessage.fetch(
+    //         recordMessageAuthority
+    //       );
+    //     const estimateTotalFeeNumber =
+    //       await currentRecordMessage.estimateTotalFee.toNumber();
+    //     console.log("estimateTotalFeeNumber:", estimateTotalFeeNumber);
+    //   } catch (e) {
+    //     console.log("GetEstimateTotalFee error:", e);
+    //   }
+    // }
+    // await GetEstimateTotalFee(testAmountOut, id, newMessage);
+
+    const estimateTotalFeeMessage = {
+      mode: 1,
+      targetContract: dapp,
+      executeGasLimit: 6,
+      maxFeePerGas: 2000,
+      signature: Buffer.from("000000001"),
+    };
+
+    // 将 executeGasLimit (u32) 转换为 number[]
+    const executeGasLimitBuffer = Buffer.alloc(4); 
+    executeGasLimitBuffer.writeUInt32LE(estimateTotalFeeMessage.executeGasLimit, 0);
+    const executeGasLimitArray = Array.from(
+      new Uint8Array(
+        executeGasLimitBuffer,
+        4
+      )
+    );
+    console.log("executeGasLimitArray:",executeGasLimitArray);
+
+    // 将 maxFeePerGas (u64) 转换为 number[]
+    const maxFeePerGasBuffer = Buffer.alloc(8); 
+    maxFeePerGasBuffer.writeBigUInt64LE(estimateTotalFeeMessage.maxFeePerGas, 0);
+    const maxFeePerGasArray = Array.from(
+      new Uint8Array(maxFeePerGasBuffer, 8)
+    );
+    console.log("maxFeePerGasArray:", maxFeePerGasArray);
+
+
+    // 将 signature 转换为 number[]
+    const signatureArray = Array.from(
+      new Uint8Array(estimateTotalFeeMessage.signature)
+    );
+    console.log("signatureArray:", signatureArray);
+
+    // 将 estimateTotalFeeMessageArray 中的各部分合并为一个数组
+    const estimateTotalFeeMessageArray = [
+      estimateTotalFeeMessage.mode, // mode 是单个数值
+      ...estimateTotalFeeMessage.targetContract, // targetContract 需要转换为 number[]
+      ...executeGasLimitArray, // executeGasLimit 是 number[]
+      ...maxFeePerGasArray, // maxFeePerGas 是 number[]
+      ...signatureArray, // signature 是 number[]
+    ];
+
+    // 打印结果
+    console.log("Serialized Data:", estimateTotalFeeMessageArray);
+
+    async function GetEstimateVizingGasFee(
+      amount_out,
+      dest_chain_id,
+      addition_params,
+      this_message
+    ) {
       try {
-        const estimateTotalFee = await pg.program.methods
-          .estimateTotalFee(dest_chain_id, amount_out , this_message)
+        const estimateVizingGasFee = await pg.program.methods
+          .estimateVizingGasFee(
+            dest_chain_id,
+            amount_out,
+            addition_params,
+            this_message
+          )
           .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
             mappingFeeConfig: mappingFeeConfigAuthority,
             currentRecordMessage: recordMessageAuthority,
           })
           .signers([signer])
           .rpc();
-        console.log(`estimateTotalFee tx:${estimateTotalFee}'`);
+        console.log(`estimateVizingGasFee tx:${estimateVizingGasFee}'`);
         // Confirm transaction
-        await pg.connection.confirmTransaction(estimateTotalFee);
-        const currentRecordMessage=await pg.program.account.currentRecordMessage.fetch(
-          recordMessageAuthority
-        );
-        const estimateTotalFeeNumber=await currentRecordMessage.estimateTotalFee.toNumber();
-        console.log("estimateTotalFeeNumber:",estimateTotalFeeNumber);
+        await pg.connection.confirmTransaction(estimateVizingGasFee);
+        const currentRecordMessage =
+          await pg.program.account.currentRecordMessage.fetch(
+            recordMessageAuthority
+          );
+        const estimateVizingGasFeeNumber =
+          await currentRecordMessage.estimateVizingGasFee.toNumber();
+        console.log("estimateVizingGasFeeNumber:", estimateVizingGasFeeNumber);
       } catch (e) {
         console.log("GetEstimateTotalFee error:", e);
       }
     }
-    await GetEstimateTotalFee(testAmountOut, id, newMessage);
+    let newAdditionParams = Buffer.from("0");
+    await GetEstimateVizingGasFee(
+      testAmountOut,
+      id,
+      newAdditionParams,
+      estimateTotalFeeMessageArray
+    );
   });
 });
-

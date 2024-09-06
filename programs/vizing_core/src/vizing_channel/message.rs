@@ -10,8 +10,6 @@ use crate::vizing_omni::*;
 
 #[derive(Accounts)]
 pub struct LaunchOp<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info, SaveChainId>,
     /// CHECK: We need signer to claim ownership
     #[account(signer)]
     pub fee_payer: AccountInfo<'info>,
@@ -30,7 +28,7 @@ pub struct LaunchOp<'info> {
 
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_mapping_fee_config".as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -214,13 +212,11 @@ fn build_landing_ix_data(params: &LandingParams) -> Result<Vec<u8>> {
 
 #[derive(Accounts)]
 pub struct InitCurrentRecordMessage<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
     #[account(
         init,
         payer = user,
         space = 8 + CurrentRecordMessage::INIT_SPACE,
-        seeds = [b"init_current_record_message".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_current_record_message".as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -244,17 +240,15 @@ impl InitCurrentRecordMessage<'_> {
 
 #[derive(Accounts)]
 pub struct ComputeTradeFee1<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info, SaveChainId>,
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_mapping_fee_config".as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_current_record_message".as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -286,17 +280,15 @@ impl ComputeTradeFee1<'_> {
 
 #[derive(Accounts)]
 pub struct ComputeTradeFee2<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info, SaveChainId>,
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_mapping_fee_config".as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_current_record_message".as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -329,18 +321,55 @@ impl ComputeTradeFee2<'_> {
 }
 
 #[derive(Accounts)]
-pub struct EstimatePrice2<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
+pub struct EstimatePrice1<'info> {
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_mapping_fee_config".as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_current_record_message".as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
+}
+impl EstimatePrice1<'_> {
+    pub fn get_estimate_price1(
+        ctx: Context<EstimatePrice1>,
+        target_contract: [u8; 32],
+        dest_chain_id: u64,
+    ) -> Result<u64> {
+        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
+        let dapp_config = mapping_fee_config.get_dapp_config(dest_chain_id,target_contract).ok_or(errors::ErrorCode::DappConfigNotFound)?;
+        let current_record_message = &mut ctx.accounts.current_record_message;
+
+        let dapp_base_price: u64 = vizing_gas_system::estimate_price1(
+            gas_system_global.global_base_price,
+            dapp_config.value,
+            target_contract,
+            dest_chain_id,
+        ).ok_or(errors::ErrorCode::EstimatePrice2NotFound)?;
+        current_record_message.estimate_price1=dapp_base_price;
+        //set return dapp_base_price
+        set_return_data(&dapp_base_price.to_le_bytes());
+        Ok(dapp_base_price)
+    }
+}
+
+#[derive(Accounts)]
+pub struct EstimatePrice2<'info> {
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -369,17 +398,15 @@ impl EstimatePrice2<'_> {
 
 #[derive(Accounts)]
 pub struct EstimateGas<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_mapping_fee_config".as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_current_record_message".as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -427,17 +454,15 @@ impl EstimateGas<'_> {
 
 #[derive(Accounts)]
 pub struct EstimateTotalFee<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_mapping_fee_config".as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_current_record_message".as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -486,17 +511,15 @@ impl EstimateTotalFee<'_> {
 
 #[derive(Accounts)]
 pub struct ExactOutput<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_mapping_fee_config".as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_current_record_message".as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -526,17 +549,15 @@ impl ExactOutput<'_> {
 
 #[derive(Accounts)]
 pub struct ExactInput<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info,SaveChainId>,
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_mapping_fee_config".as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_current_record_message".as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -561,6 +582,69 @@ impl ExactInput<'_> {
         //set return amount_out
         set_return_data(&amount_out.to_le_bytes());
         Ok(amount_out)
+    }
+}
+
+#[derive(Accounts)]
+pub struct EstimateVizingGasFee<'info> {
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
+}
+impl EstimateVizingGasFee<'_>{
+    pub fn get_estimate_vizing_gas_fee (
+        ctx: Context<EstimateVizingGasFee>,
+        value: u64,
+        dest_chain_id: u64,
+        _addition_params: Vec<u8>,
+        message:Vec<u8>
+    ) -> Result<u64> {  
+
+        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let current_record_message = &mut ctx.accounts.current_record_message;
+        msg!("message: {:?}",message);
+        let Some((_, dapp, _, _, _))=message_monitor::slice_message(&message) else { todo!() };
+        msg!("dapp: {:?}",dapp);
+        let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
+        let get_fee_config = mapping_fee_config
+            .get_fee_config(dest_chain_id)
+            .ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+        let get_trade_fee_config = mapping_fee_config
+            .get_trade_fee_config(dest_chain_id, dapp)
+            .ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+        let get_dapp_config = mapping_fee_config
+            .get_dapp_config(dest_chain_id, dapp)
+            .ok_or(errors::ErrorCode::DappConfigNotFound)?;
+        
+        let vizing_gas_fee = vizing_gas_system::estimate_gas(
+            get_gas_system_global.global_base_price,
+            get_fee_config.base_price,
+            get_dapp_config.value,
+            get_fee_config.molecular_decimal,
+            get_fee_config.denominator_decimal,
+            get_fee_config.molecular,
+            get_trade_fee_config.molecular,
+            get_trade_fee_config.denominator,
+            get_gas_system_global.molecular,
+            get_gas_system_global.denominator,
+            get_gas_system_global.default_gas_limit,
+            value,
+            dest_chain_id,
+            &message,
+        ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
+        current_record_message.estimate_vizing_gas_fee=vizing_gas_fee;
+        //set return vizing_gas_fee
+        set_return_data(&vizing_gas_fee.to_le_bytes());
+        Ok(vizing_gas_fee)
     }
 }
 

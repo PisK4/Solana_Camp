@@ -11,7 +11,7 @@ use governance::*;
 use vizing_channel::*;
 use vizing_omni::*;
 
-declare_id!("GvFuDBYqvb2MheFdc7DmFqkg3ZvN7Ko4uGGsEvEpQsUY");
+declare_id!("8CNbddobyj79mpCHWT9b3hps7NpUdEmpwJZDqMS16agY");
 
 #[program]
 pub mod vizing_core {
@@ -94,15 +94,6 @@ pub mod vizing_core {
     }
 
     // ***********  governance end ************
-
-    //init
-    /*
-    /// @notice owner save chainId (Set a chainId once to generate a new address)
-    /// @param dest_chain_id chainId
-     */
-    pub fn save_chain_id(ctx: Context<SaveDestChainId>, dest_chain_id: Vec<u8>) -> Result<()> {
-        SaveDestChainId::set_chain_id(ctx, dest_chain_id)
-    }
 
     /*
     /// @notice owner initialize fee config mapping in MappingFeeConfig
@@ -410,6 +401,19 @@ pub mod vizing_core {
 
     /*
     /// @notice Estimate the gas price we need to encode in message
+    /// @param targetContract evm address
+    /// @param destChainid The chain id of the destination chain
+     */
+    pub fn estimate_price1(
+        ctx: Context<EstimatePrice1>,
+        target_contract: [u8; 32],
+        dest_chain_id: u64
+    ) -> Result<u64> {
+        EstimatePrice1::get_estimate_price1(ctx, target_contract, dest_chain_id)
+    }
+
+    /*
+    /// @notice Estimate the gas price we need to encode in message
     /// @param destChainid The chain id of the destination chain
      */
     pub fn estimate_price2(ctx: Context<EstimatePrice2>, dest_chain_id: u64) -> Result<u64> {
@@ -472,6 +476,32 @@ pub mod vizing_core {
         amount_in: u64,
     ) -> Result<u64> {
         ExactInput::get_exact_input(ctx, dest_chain_id, amount_in)
+    }
+
+
+    /*
+        /// @notice Estimate the gas price we need to encode in message
+        /// @param value The native token that value target address will receive in the destination chain
+        /// @param destChainid The chain id of the destination chain
+        /// @param additionParams The addition params for the message
+        ///        if not in expert mode, set to 0 (`new bytes(0)`)
+        /// @param message The message we want to send to the destination chain
+    */
+
+    pub fn estimate_vizing_gas_fee(
+        ctx: Context<EstimateVizingGasFee>,
+        value: u64,
+        dest_chain_id: u64,
+        _addition_params: Vec<u8>,
+        message:Vec<u8>
+    )-> Result<u64>{
+        EstimateVizingGasFee::get_estimate_vizing_gas_fee(
+            ctx,
+            value,
+            dest_chain_id,
+            _addition_params,
+            message
+        )
     }
 
 }
