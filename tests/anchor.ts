@@ -118,188 +118,6 @@ async function getSolBalance(checkAddress: PublicKey) {
   }
 }
 
-//createMint
-async function create_mint() {
-  const tokenMint = await createMint(
-    connection,
-    signer,
-    user,
-    null,
-    6,
-    newTokenMes,
-    null,
-    token_programId
-  );
-  console.log("tokenMint:", tokenMint.toString());
-}
-await create_mint();
-
-//Make some token metadata
-// Generate a new keypair for the mint
-async function make_metadata() {
-  const TOKEN_METADATA_PROGRAM_ID = new PublicKey(
-    "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
-  );
-
-  const metadataPDAAndBump = PublicKey.findProgramAddressSync(
-    [
-      Buffer.from("metadata"),
-      TOKEN_METADATA_PROGRAM_ID.toBuffer(),
-      newTokenMes.publicKey.toBuffer(),
-    ],
-    TOKEN_METADATA_PROGRAM_ID
-  );
-
-  const metadataPDA = metadataPDAAndBump[0];
-  console.log("metadataPDA success");
-  const transaction = new Transaction();
-
-  const createMetadataAccountInstruction =
-    createCreateMetadataAccountV3Instruction(
-      {
-        metadata: metadataPDA,
-        mint: newTokenMes.publicKey,
-        mintAuthority: user,
-        payer: user,
-        updateAuthority: user,
-      },
-      {
-        createMetadataAccountArgsV3: {
-          collectionDetails: null,
-          data: metadataData,
-          isMutable: true,
-        },
-      }
-    );
-
-  transaction.add(createMetadataAccountInstruction);
-
-  // send
-  try {
-    const metadataTxHash = await pg.connection.sendTransaction(transaction, [
-      signer,
-    ]);
-    console.log(`Transaction sent`);
-    // confirm
-    const metadataConfirmation = await pg.connection.confirmTransaction(
-      metadataTxHash
-    );
-    console.log(
-      `Transaction confirmed: ${metadataTxHash}`,
-      metadataConfirmation
-    );
-  } catch (error) {
-    console.error("Error sending transaction:", error);
-  }
-}
-await make_metadata();
-
-let userAssociatedAccount: PublicKey;
-let destinationTokenAccount: PublicKey;
-
-async function GetOrcreateAssociatedToken(
-  createAssociateAccount: PublicKey,
-  newToken: PublicKey,
-  this_signer
-) {
-  try {
-    const userAssociatedTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      this_signer,
-      newToken,
-      createAssociateAccount,
-      true,
-      null,
-      null,
-      token_programId,
-      associated_token_programId
-    );
-    return userAssociatedTokenAccount.address;
-  } catch (e) {
-    console.log("GetOrcreateAssociatedToken:", e);
-  }
-}
-userAssociatedAccount = await GetOrcreateAssociatedToken(
-  user,
-  newTokenMes.publicKey,
-  signer
-);
-console.log(
-  "userAssociatedAccount:",
-  userAssociatedAccount.toString(),
-  "owner:",
-  user.toString()
-);
-
-//
-destinationTokenAccount = await GetOrcreateAssociatedToken(
-  testReceiver.publicKey,
-  newTokenMes.publicKey,
-  signer
-);
-console.log(
-  "destinationTokenAccountInfo:",
-  destinationTokenAccount.toString(),
-  "owner:",
-  testReceiver.publicKey.toString()
-);
-
-//mint to
-async function mint_to(newToken: PublicKey, receiver: PublicKey) {
-  const init_amount = 10000000000;
-  try {
-    const mintToTx = await mintTo(
-      connection,
-      signer,
-      newToken,
-      receiver,
-      user,
-      init_amount,
-      [signer],
-      null,
-      token_programId
-    );
-    console.log("mintToTx:", mintToTx);
-  } catch (e) {
-    console.log("Mint to error:", e);
-  }
-}
-await mint_to(newTokenMes.publicKey, userAssociatedAccount);
-
-//token balance
-async function getTokenBalance(checkAddress: PublicKey) {
-  try {
-    const tokenAccountInfo = await getAccount(connection, checkAddress);
-    let tokenBalance = tokenAccountInfo.amount;
-    console.log(`This Account Token balance: ${tokenAccountInfo.amount}`);
-    return tokenBalance;
-  } catch (err) {
-    console.error("Failed to get token balance:", err);
-  }
-}
-await getTokenBalance(userAssociatedAccount);
-
-//Transfer token to user
-async function transfer_to(receiverAssociatedAccount: PublicKey) {
-  try {
-    const TransferTokenSignature = await transfer(
-      connection,
-      signer,
-      userAssociatedAccount,
-      receiverAssociatedAccount,
-      user,
-      10000,
-      [signer],
-      null,
-      token_programId
-    );
-    console.log("transfer_to:", TransferTokenSignature);
-  } catch (e) {
-    console.log("Transfer error:", e);
-  }
-}
-await transfer_to(destinationTokenAccount);
-
 describe("Test", () => {
   it("initialize", async () => {
     console.log("current user:", user.toBase58());
@@ -414,34 +232,6 @@ describe("Test", () => {
     console.log("chainId buffer:", chainId);
 
     //pda
-    let [powerUserAuthority, powerUserBump] =
-      await PublicKey.findProgramAddress(
-        [Buffer.from("init_power_user")],
-        pg.PROGRAM_ID
-      );
-    console.log("powerUserAuthority:", powerUserAuthority.toString());
-    console.log("powerUserBump:", powerUserBump);
-
-    let [vizingVaultAuthority, vizingVaultBump] =
-      await PublicKey.findProgramAddress(
-        [Buffer.from("vizing_vault")],
-        pg.PROGRAM_ID
-      );
-    console.log("vizingVaultAuthority:", vizingVaultAuthority.toString());
-    console.log("vizingVaultBump:", vizingVaultBump);
-
-    //gas_global
-    let [gasSystemGlobalAuthority, gasSystemGlobalBump] =
-      await PublicKey.findProgramAddress(
-        [Buffer.from("gas_global"), chainId],
-        pg.PROGRAM_ID
-      );
-    console.log(
-      "gasSystemGlobalAuthority:",
-      gasSystemGlobalAuthority.toString()
-    );
-    console.log("gasSystemGlobalBump:", gasSystemGlobalBump);
-
     //init_mapping_fee_config
     let [mappingFeeConfigAuthority, mappingFeeConfigBump] =
       await PublicKey.findProgramAddress(
@@ -453,33 +243,6 @@ describe("Test", () => {
       mappingFeeConfigAuthority.toString()
     );
     console.log("mappingFeeConfigBump:", mappingFeeConfigBump);
-
-    //amount_in_thresholds
-    let [amountInThresholdsAuthority, amountInThresholdsBump] =
-      await PublicKey.findProgramAddress(
-        [Buffer.from("amount_in_thresholds"), chainId],
-        pg.PROGRAM_ID
-      );
-    console.log(
-      "amountInThresholdsAuthority:",
-      amountInThresholdsAuthority.toString()
-    );
-    console.log("amountInThresholdsBump:", amountInThresholdsBump);
-
-    //native_token_trade_fee_config
-    let [nativeTokenTradeFeeConfigAuthority, nativeTokenTradeFeeConfigBump] =
-      await PublicKey.findProgramAddress(
-        [Buffer.from("native_token_trade_fee_config"), chainId],
-        pg.PROGRAM_ID
-      );
-    console.log(
-      "nativeTokenTradeFeeConfigAuthority:",
-      nativeTokenTradeFeeConfigAuthority.toString()
-    );
-    console.log(
-      "nativeTokenTradeFeeConfigBump:",
-      nativeTokenTradeFeeConfigBump
-    );
 
     //init_current_record_message
     let [recordMessageAuthority, recordMessageBump] =
@@ -585,34 +348,6 @@ describe("Test", () => {
     }
     await SaveChainId();
 
-    //initVizingVault
-    async function InitVizingVault() {
-      try {
-        const vaultMes = await pg.program.account.vaultMes.fetch(
-          vizingVaultAuthority
-        );
-        console.log("InitVizingVault:", vaultMes);
-      } catch (e) {
-        const initVizingVault = await pg.program.methods
-          .initVizingVault()
-          .accounts({
-            vizingVault: vizingVaultAuthority,
-            user: user,
-            systemProgram: systemId,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`initVizingVault:${initVizingVault}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(initVizingVault);
-        const vaultMes = await pg.program.account.vaultMes.fetch(
-          vizingVaultAuthority
-        );
-        console.log("InitVizingVault:", vaultMes);
-      }
-    }
-    await InitVizingVault();
-
     let base_price = new anchor.BN(500);
     let reserve = new anchor.BN(1000);
     let molecular = new anchor.BN(5);
@@ -662,89 +397,11 @@ describe("Test", () => {
     let global_base_price = new anchor.BN(500);
     let default_gas_limit = new anchor.BN(1000);
     let amount_in_threshold = new anchor.BN(1000000000);
-    async function InitGasGlobal() {
-      try {
-        const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
-          gasSystemGlobalAuthority
-        );
-        console.log("gasSystemGlobal:", gasSystemGlobal);
-      } catch (e) {
-        const initGasGlobal = await pg.program.methods
-          .initGasGlobal(
-            global_base_price,
-            default_gas_limit,
-            amount_in_threshold,
-            molecular,
-            denominator
-          )
-          .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
-            gasSystemGlobal: gasSystemGlobalAuthority,
-            vizing: vizingPadSettings,
-            user: user,
-            systemProgram: systemId,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`initGasGlobal:${initGasGlobal}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(initGasGlobal);
-        const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
-          gasSystemGlobalAuthority
-        );
-        console.log("gasSystemGlobal:", gasSystemGlobal);
-      }
-    }
-    await InitGasGlobal();
+
 
     //init_native_token_trade_fee_config
     let native_molecular = new anchor.BN(5);
     let native_denominator = new anchor.BN(10);
-    async function InitNativeTokenTradeFeeConfig() {
-      try {
-        const mappingNativeTokenTradeFeeConfig =
-          await pg.program.account.mappingNativeTokenTradeFeeConfig.fetch(
-            nativeTokenTradeFeeConfigAuthority
-          );
-        console.log(
-          "mappingNativeTokenTradeFeeConfig:",
-          mappingNativeTokenTradeFeeConfig,
-          "\n"
-        );
-      } catch (e) {
-        const initNativeTokenTradeFeeConfig = await pg.program.methods
-          .initNativeTokenTradeFeeConfig(
-            id,
-            native_molecular,
-            native_denominator
-          )
-          .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
-            vizing: vizingPadSettings,
-            nativeTokenTradeFeeConfig: nativeTokenTradeFeeConfigAuthority,
-            user: user,
-            systemProgram: systemId,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(
-          `initNativeTokenTradeFeeConfig:${initNativeTokenTradeFeeConfig}'`
-        );
-        // Confirm transaction
-        await pg.connection.confirmTransaction(initNativeTokenTradeFeeConfig);
-
-        const mappingNativeTokenTradeFeeConfig =
-          await pg.program.account.mappingNativeTokenTradeFeeConfig.fetch(
-            nativeTokenTradeFeeConfigAuthority
-          );
-        console.log(
-          "mappingNativeTokenTradeFeeConfig:",
-          mappingNativeTokenTradeFeeConfig,
-          "\n"
-        );
-      }
-    }
-    await InitNativeTokenTradeFeeConfig();
 
     let symbol = "usdt";
     let tokenAddress = ethereumAddressToU8Array(
@@ -753,42 +410,6 @@ describe("Test", () => {
 
     let init_decimals = 6;
     let init_max_price = new anchor.BN(1000);
-    async function InitTokenInfoBase() {
-      try {
-        const mappingSymbolConfig =
-          await pg.program.account.mappingSymbolConfig.fetch(
-            initSymbolConfigAuthority
-          );
-        console.log("mappingSymbolConfig:", mappingSymbolConfig);
-        const mappingTokenConfig =
-          await pg.program.account.mappingTokenConfig.fetch(
-            initTokenConfigAuthority
-          );
-        console.log("mappingTokenConfig:", mappingTokenConfig);
-      } catch (e) {
-        const initTokenInfoBase = await pg.program.methods
-          .initTokenInfoBase(
-            symbol,
-            tokenAddress,
-            init_decimals,
-            init_max_price
-          )
-          .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
-            vizing: vizingPadSettings,
-            user: user,
-            tokenConfig: initTokenConfigAuthority,
-            symbolConfig: initSymbolConfigAuthority,
-            systemProgram: systemId,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`initTokenInfoBase:${initTokenInfoBase}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(initTokenInfoBase);
-      }
-    }
-    await InitTokenInfoBase();
 
     //init_record_message
     async function InitCurrentRecordMessage(){
@@ -885,6 +506,7 @@ describe("Test", () => {
       try {
         const setThisGasGlobal = await pg.program.methods
           .setThisGasGlobal(
+            id,
             thisGlobalBasePrice,
             thisDefaultGasLimit,
             thisAmountInThreshold,
@@ -893,7 +515,7 @@ describe("Test", () => {
           )
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
-            gasSystemGlobal: gasSystemGlobalAuthority,
+            mappingFeeConfig: mappingFeeConfigAuthority,
             vizing: vizingPadSettings,
             user: user,
             systemProgram: systemId,
@@ -903,11 +525,6 @@ describe("Test", () => {
         console.log(`setThisGasGlobal:${setThisGasGlobal}'`);
         // Confirm transaction
         await pg.connection.confirmTransaction(setThisGasGlobal);
-
-        const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
-          gasSystemGlobalAuthority
-        );
-        console.log("gasSystemGlobal:", gasSystemGlobal);
       } catch (e) {
         console.log("SetThisGasGlobal error:", e);
       }
@@ -976,8 +593,7 @@ describe("Test", () => {
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             vizing: vizingPadSettings,
-            gasSystemGlobal: gasSystemGlobalAuthority,
-            nativeTokenTradeFeeConfig: nativeTokenTradeFeeConfigAuthority,
+            mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
           })
@@ -1062,7 +678,6 @@ describe("Test", () => {
             saveChainId: saveDestChainIdAccount.publicKey,
             vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
-            nativeTokenTradeFeeConfig: nativeTokenTradeFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
           })
@@ -1098,7 +713,6 @@ describe("Test", () => {
             saveChainId: saveDestChainIdAccount.publicKey,
             vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
-            nativeTokenTradeFeeConfig: nativeTokenTradeFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
           })
@@ -1242,17 +856,15 @@ describe("Test", () => {
       const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
         mappingFeeConfigAuthority
       );
-      const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
-        gasSystemGlobalAuthority
-      );
+      const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
       const tradeFeeConfigMappings =
         await mappingFeeConfig.tradeFeeConfigMappings;
       let trade_fee_config_molecular =
         tradeFeeConfigMappings[0].molecular.toNumber();
       let trade_fee_config_denominator =
         tradeFeeConfigMappings[0].denominator.toNumber();
-      let global_trade_fee_molecular = gasSystemGlobal.molecular.toNumber();
-      let global_trade_fee_denominator = gasSystemGlobal.denominator.toNumber();
+      let global_trade_fee_molecular = gasSystemGlobal[0].molecular.toNumber();
+      let global_trade_fee_denominator = gasSystemGlobal[0].denominator.toNumber();
       let fee;
       if (trade_fee_config_denominator > 0) {
         fee =
@@ -1271,12 +883,11 @@ describe("Test", () => {
       const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
         mappingFeeConfigAuthority
       );
-      const dappConfigMappings = await mappingFeeConfig.dappConfigMappings;
-      const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
-        gasSystemGlobalAuthority
-      );
+      const dappConfigMappings = mappingFeeConfig.dappConfigMappings;
+      const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
+      
       let gas_system_global_base_price =
-        await gasSystemGlobal[0].global_base_price.toNumber();
+        await gasSystemGlobal[0].globalBasePrice.toNumber();
       let dapp_config_value = dappConfigMappings[0].value.toNumber();
       let dapp_base_price;
       if (dapp_config_value > 0) {
@@ -1293,12 +904,10 @@ describe("Test", () => {
         mappingFeeConfigAuthority
       );
       const feeConfigMappings = await mappingFeeConfig.feeConfigMappings;
-      const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
-        gasSystemGlobalAuthority
-      );
+      const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
 
       let gas_system_global_base_price =
-        await gasSystemGlobal[0].global_base_price.toNumber();
+        await gasSystemGlobal[0].globalBasePrice.toNumber();
       let fee_config_base_price =
         await feeConfigMappings[0].basePrice.toNumber();
       let base_price;
@@ -1354,15 +963,13 @@ describe("Test", () => {
       const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
         mappingFeeConfigAuthority
       );
-      const feeConfigMappings = await mappingFeeConfig.feeConfigMappings;
-      const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
-        gasSystemGlobalAuthority
-      );
+      const feeConfigMappings = mappingFeeConfig.feeConfigMappings;
+      const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
       let base_price;
       let fee;
       const feeConfigBasePrice = feeConfigMappings[0].basePrice.toNumber();
-      const global_base_price = gasSystemGlobal.globalBasePrice.toNumber();
-      const default_gas_limit = gasSystemGlobal.defaultGasLimit.toNumber();
+      const global_base_price = gasSystemGlobal[0].globalBasePrice.toNumber();
+      const default_gas_limit = gasSystemGlobal[0].defaultGasLimit.toNumber();
       if (feeConfigBasePrice > 0) {
         base_price = feeConfigBasePrice;
       } else {
@@ -1411,15 +1018,13 @@ describe("Test", () => {
         mappingFeeConfigAuthority
       );
       const feeConfigMappings = mappingFeeConfig.feeConfigMappings;
-      const gasSystemGlobal = await pg.program.account.gasSystemGlobal.fetch(
-        gasSystemGlobalAuthority
-      );
+      const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
 
-      const token_amount_limit = gasSystemGlobal.amountInThreshold.toNumber();
+      const token_amount_limit = gasSystemGlobal[0].amountInThreshold.toNumber();
 
       const feeConfigBasePrice = feeConfigMappings[0].basePrice.toNumber();
-      const global_base_price = gasSystemGlobal.globalBasePrice.toNumber();
-      const default_gas_limit = gasSystemGlobal.defaultGasLimit.toNumber();
+      const global_base_price = gasSystemGlobal[0].globalBasePrice.toNumber();
+      const default_gas_limit = gasSystemGlobal[0].defaultGasLimit.toNumber();
 
       let base_price;
       let fee;
@@ -1518,178 +1123,6 @@ describe("Test", () => {
     }
     await BatchSetThisExchangeRate();
 
-    //ChangeThisPowerUser
-    // async function ChangeThisPowerUser() {
-    //   try {
-    //     const changeThisPowerUser = await pg.program.methods
-    //       .changeThisPowerUser(
-    //         user,
-    //         new_engine_admins,
-    //         new_station_admins,
-    //         new_gas_pool_admins,
-    //         new_trusted_relayers,
-    //         new_registered_validators,
-    //         gas_managers,
-    //         swap_managers,
-    //         token_managers
-    //       )
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         vizing: vizingPadSettings,
-    //         user: user,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(`changeThisPowerUser:${changeThisPowerUser}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(changeThisPowerUser);
-    //   } catch (e) {
-    //     const powerUser = await pg.program.account.powerUser.fetch(
-    //       powerUserAuthority
-    //     );
-    //     console.log("powerUser:", powerUser);
-    //   }
-    // }
-    // await ChangeThisPowerUser();
-
-    //vizingVaultAssociatedToken
-    let vizingVaultAssociatedToken = await GetOrcreateAssociatedToken(
-      vizingVaultAuthority,
-      newTokenMes.publicKey,
-      signer
-    );
-    console.log(
-      "vizingVaultAssociatedToken:",
-      vizingVaultAssociatedToken.toBase58()
-    );
-
-    await transfer_to(vizingVaultAssociatedToken);
-
-    //WithdrawSplToken
-    let withdraw_amount = new anchor.BN(1000);
-    async function WithdrawVaultSplToken() {
-      try {
-        const withdrawVaultSplToken = await pg.program.methods
-          .withdrawVaultSplToken(withdraw_amount, vizingVaultBump)
-          .accounts({
-            vizing: vizingPadSettings,
-            user: user,
-            source: vizingVaultAssociatedToken,
-            destination: userAssociatedAccount,
-            contractAuthority: vizingVaultAuthority,
-            tokenProgram: TOKEN_PROGRAM_ID,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`withdrawVaultSplToken:${withdrawVaultSplToken}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(withdrawVaultSplToken);
-      } catch (e) {
-        console.log("WithdrawVaultSplToken error:", e);
-      }
-    }
-    await WithdrawVaultSplToken();
-
-    // sol_transfer
-    // let amount1 = new anchor.BN(1000000);
-    // async function SolTransfer(sender, receiver, amount) {
-    //   try {
-    //     const solTransfer = await pg.program.methods
-    //       .transferSolValut(amount)
-    //       .accounts({
-    //         sender: sender,
-    //         vizingVault: receiver,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(`solTransfer:${solTransfer}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(solTransfer);
-    //   } catch (e) {
-    //     console.log("SolTransfer error:", e);
-    //   }
-    // }
-    // await SolTransfer(user, vizingVaultAuthority, amount1);
-
-    //withdraw_sol
-    // async function WithdrawVaultSol(sender, receiver, amount) {
-    //   try {
-    //     const withdrawVaultSol = await pg.program.methods
-    //       .withdrawVaultSol(amount)
-    //       .accounts({
-    //         saveChainId: saveDestChainIdAccount.publicKey,
-    //         vizing: vizingPadSettings,
-    //         user: user,
-    //         source: sender,
-    //         destination: receiver,
-    //         systemProgram: systemId,
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(`withdrawVaultSol:${withdrawVaultSol}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(withdrawVaultSol);
-    //   } catch (e) {
-    //     console.log("WithdrawVaultSol error:", e);
-    //   }
-    // }
-    // let amount2 = new anchor.BN(55555);
-    // await WithdrawVaultSol(vizingVaultAuthority, user, amount2);
-
-    //set_this_token_info_base
-    let decimals = 8;
-    let max_price = new anchor.BN(1000);
-    async function SetThisTokenInfoBase() {
-      try {
-        const setThisTokenInfoBase = await pg.program.methods
-          .setThisTokenInfoBase(symbol, tokenAddress, decimals, max_price)
-          .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
-            vizing: vizingPadSettings,
-            user: user,
-            tokenConfig: initTokenConfigAuthority,
-            symbolConfig: initSymbolConfigAuthority,
-            systemProgram: systemId,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`setThisTokenInfoBase:${setThisTokenInfoBase}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(setThisTokenInfoBase);
-      } catch (e) {
-        console.log("SetThisTokenInfoBase error:", e);
-      }
-    }
-    await SetThisTokenInfoBase();
-
-    async function SetThisTokenTradeFeeMap() {
-      try {
-        const setThisTokenTradeFeeMap = await pg.program.methods
-          .setThisTokenTradeFeeMap(
-            tokenAddress,
-            destChainIds,
-            moleculars,
-            denominators
-          )
-          .accounts({
-            saveChainId: saveDestChainIdAccount.publicKey,
-            vizing: vizingPadSettings,
-            user: user,
-            tokenConfig: initTokenConfigAuthority,
-            systemProgram: systemId,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`setThisTokenTradeFeeMap:${setThisTokenTradeFeeMap}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(setThisTokenTradeFeeMap);
-      } catch (e) {
-        console.log("SetThisTokenTradeFeeMap error:", e);
-      }
-    }
-    await SetThisTokenTradeFeeMap();
 
     // launch
     const executeGasLimit = new BN(6);
@@ -1724,7 +1157,6 @@ describe("Test", () => {
             vizing: vizingPadSettings,
             feeCollector: feeReceiverKeyPair.publicKey,
             mappingFeeConfig: mappingFeeConfigAuthority,
-            gasSystemGlobal: gasSystemGlobalAuthority,
             systemProgram: systemId,
           })
           .signers([signer])
@@ -1759,7 +1191,7 @@ describe("Test", () => {
       relayer: user,
       sender: user,
       value: thisTestValue2,
-      destChainid: new anchor.BN(5),
+      destChainid: id,
       additionParams: Buffer.alloc(0),
       message: message,
     };
@@ -1872,7 +1304,6 @@ describe("Test", () => {
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             mappingFeeConfig: mappingFeeConfigAuthority,
-            gasSystemGlobal: gasSystemGlobalAuthority,
             currentRecordMessage: recordMessageAuthority,
           })
           .signers([signer])
@@ -1898,7 +1329,6 @@ describe("Test", () => {
           .accounts({
             saveChainId: saveDestChainIdAccount.publicKey,
             mappingFeeConfig: mappingFeeConfigAuthority,
-            gasSystemGlobal: gasSystemGlobalAuthority,
             currentRecordMessage: recordMessageAuthority,
           })
           .signers([signer])
@@ -1918,3 +1348,4 @@ describe("Test", () => {
     await GetEstimateTotalFee(testAmountOut, id, newMessage);
   });
 });
+

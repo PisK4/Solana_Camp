@@ -8,8 +8,6 @@ pub mod vizing_omni;
 use anchor_lang::prelude::*;
 use gas_system::*;
 use governance::*;
-use library::*;
-use state::*;
 use vizing_channel::*;
 use vizing_omni::*;
 
@@ -107,39 +105,6 @@ pub mod vizing_core {
     }
 
     /*
-    /// @notice anyone can initialize vizing_vault pda for save money
-     */
-    pub fn init_vizing_vault(ctx: Context<InitVizingVault>) -> Result<()> {
-        InitVizingVault::initialize_vizing_vault(ctx)
-    }
-
-    /*
-    /// @notice owner initialize global params in GasSystemGlobal
-    /// @param global_base_price global base price
-    /// @param default_gas_limit  global default gas limit
-    /// @param amount_in_threshold  global amountIn threshold
-    /// @param molecular  global molecular
-    /// @param denominator  global denominator
-     */
-    pub fn init_gas_global(
-        ctx: Context<InitGasGlobal>,
-        global_base_price: u64,
-        default_gas_limit: u64,
-        amount_in_threshold: u64,
-        molecular: u64,
-        denominator: u64,
-    ) -> Result<()> {
-        InitGasGlobal::initialize_gas_global(
-            ctx,
-            global_base_price,
-            default_gas_limit,
-            amount_in_threshold,
-            molecular,
-            denominator,
-        )
-    }
-
-    /*
     /// @notice owner initialize fee config mapping in MappingFeeConfig
     /// @param key evm chainId
     /// @param basePrice  base price
@@ -171,48 +136,6 @@ pub mod vizing_core {
         )
     }
 
-    /*
-    /// @notice owner initialize fee config mapping in MappingFeeConfig
-    /// @param key evm chainId
-    /// @param molecular  molecular
-    /// @param denominator  denominator
-     */
-    pub fn init_native_token_trade_fee_config(
-        ctx: Context<InitNativeTokenTradeFeeConfig>,
-        key: u64,
-        molecular: u64,
-        denominator: u64,
-    ) -> Result<()> {
-        InitNativeTokenTradeFeeConfig::initialize_native_token_trade_fee_config(
-            ctx,
-            key,
-            molecular,
-            denominator,
-        )
-    }
-
-    /*
-    /// @notice owner initialize token_config symbol_config mapping
-    /// @param symbol evm token symbol
-    /// @param token_address  evm token address
-    /// @param decimals  evm token decimals
-    /// @param max_price max price
-     */
-    pub fn init_token_info_base(
-        ctx: Context<InitTokenInfoBase>,
-        symbol: String,
-        token_address: [u8; 32],
-        decimals: u8,
-        max_price: u64,
-    ) -> Result<()> {
-        InitTokenInfoBase::initialize_token_info_base(
-            ctx,
-            symbol,
-            token_address,
-            decimals,
-            max_price,
-        )
-    }
 
     /// @notice owner initialize record_message for dev get data
     pub fn init_record_message(ctx: Context<InitCurrentRecordMessage>) -> Result<()> {
@@ -231,6 +154,7 @@ pub mod vizing_core {
      */
     pub fn set_this_gas_global(
         ctx: Context<SetGasGlobal>,
+        key: u64,
         global_base_price: u64,
         default_gas_limit: u64,
         amount_in_threshold: u64,
@@ -239,6 +163,7 @@ pub mod vizing_core {
     ) -> Result<()> {
         SetGasGlobal::set_gas_global(
             ctx,
+            key,
             global_base_price,
             default_gas_limit,
             amount_in_threshold,
@@ -451,82 +376,6 @@ pub mod vizing_core {
             denominators,
             molecular_decimals,
             denominator_decimals,
-        )
-    }
-
-    /*
-    /// @notice user transfer sol to vizing_vault
-    /// @param amount transfer sol amount
-     */
-    // pub fn transfer_sol_valut(ctx: Context<SolTransfer>, amount: u64) ->Result<()>{
-    //     SolTransfer::sol_transfer(
-    //         ctx,
-    //         amount
-    //     )
-    // }
-
-    //withdraw_spl_token
-    /*
-    /// @notice owner withdraw spl token from vizing_vault pda address
-    /// @param withdrawAmount withdraw amount
-    /// @param thisBump vizing_vault pda bump
-     */
-    pub fn withdraw_vault_spl_token(
-        ctx: Context<WithdrawSplToken>,
-        withdraw_amount: u64,
-        this_bump: u8,
-    ) -> Result<()> {
-        WithdrawSplToken::withdraw_spl_token(ctx, withdraw_amount, this_bump)
-    }
-
-    //withdraw_sol
-    /*
-    /// @notice owner withdraw sol from vizing_vault pda address
-    /// @param withdrawAmount withdraw amount
-     */
-    pub fn withdraw_vault_sol(ctx: Context<WithdrawSol>, withdraw_amount: u64) -> Result<()> {
-        WithdrawSol::withdraw_sol(ctx, withdraw_amount)
-    }
-
-    //set_token_info_base
-    /*
-    /// @notice set token config mapping in MappingTokenConfig and MappingSymbolConfig
-    /// @param symbol evm token symbol
-    /// @param tokenAddress evm token address
-    /// @param decimals  token decimals
-    /// @param maxPrice  max price
-     */
-    pub fn set_this_token_info_base(
-        ctx: Context<SetTokenInfoBase>,
-        symbol: String,
-        token_address: [u8; 32],
-        decimals: u8,
-        max_price: u64,
-    ) -> Result<()> {
-        SetTokenInfoBase::set_token_info_base(ctx, symbol, token_address, decimals, max_price)
-    }
-
-    //set_token_trade_fee_map
-    /*
-    /// @notice set token trade fee mapping in MappingTokenConfig
-    /// @param tokenAddress evm token address
-    /// @param chainIds evm chainId group
-    /// @param moleculars  molecular group
-    /// @param denominators  denominator group
-     */
-    pub fn set_this_token_trade_fee_map(
-        ctx: Context<SetTokenTradeFeeMap>,
-        token_address: [u8; 32],
-        chain_ids: Vec<u64>,
-        moleculars: Vec<u64>,
-        denominators: Vec<u64>,
-    ) -> Result<()> {
-        SetTokenTradeFeeMap::set_token_trade_fee_map(
-            ctx,
-            token_address,
-            chain_ids,
-            moleculars,
-            denominators,
         )
     }
 

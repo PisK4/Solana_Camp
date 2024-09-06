@@ -7,16 +7,6 @@ pub struct SaveChainId {
 
 #[account]
 #[derive(InitSpace)]
-pub struct GasSystemGlobal {
-    pub global_base_price: u64,
-    pub default_gas_limit: u64,
-    pub amount_in_threshold: u64,
-    pub molecular: u64,
-    pub denominator: u64,
-}
-
-#[account]
-#[derive(InitSpace)]
 pub struct VaultMes {
     pub current_pragma_id: Pubkey,
 }

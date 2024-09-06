@@ -1,9 +1,18 @@
 use anchor_lang::prelude::*;
-use anchor_lang::system_program::{transfer, Transfer};
 
 use crate::library::*;
 use crate::state::*;
 use crate::governance::*;
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone ,InitSpace)]
+pub struct GasSystemGlobal {
+    pub key: u64,
+    pub global_base_price: u64,
+    pub default_gas_limit: u64,
+    pub amount_in_threshold: u64,
+    pub molecular: u64,
+    pub denominator: u64,
+}
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone ,InitSpace)]
 pub struct NativeTokenTradeFeeConfig {
@@ -48,24 +57,53 @@ pub struct DappConfig {
 #[account]
 #[derive(InitSpace)]
 pub struct MappingFeeConfig {
-    #[max_len(50)]
+    #[max_len(1)]
+    pub gas_system_global_mappings: Vec<GasSystemGlobal>,
+    #[max_len(45)]
     pub fee_config_mappings: Vec<FeeConfig>,
-    #[max_len(50)]
+    #[max_len(45)]
     pub trade_fee_mappings: Vec<TradeFee>,
-    #[max_len(50)]
+    #[max_len(45)]
     pub trade_fee_config_mappings: Vec<TradeFeeConfig>,
-    #[max_len(50)]
+    #[max_len(45)]
     pub dapp_config_mappings: Vec<DappConfig>,
-}
-
-#[account]
-#[derive(InitSpace)]
-pub struct MappingNativeTokenTradeFeeConfig {
-    #[max_len(128)]
+    #[max_len(100)]
     pub native_token_trade_fee_config_mappings: Vec<NativeTokenTradeFeeConfig>,
 }
 
 impl MappingFeeConfig {
+    //gas_system_global
+    pub fn set_gas_system_global(
+        &mut self,
+        key: u64,
+        global_base_price: u64,
+        default_gas_limit: u64,
+        amount_in_threshold: u64,
+        molecular: u64,
+        denominator: u64,
+    ) {
+        if let Some(pair) = self
+            .gas_system_global_mappings
+            .iter_mut()
+            .find(|pair| pair.key == key)
+        {
+            pair.global_base_price = global_base_price;
+            pair.default_gas_limit = default_gas_limit;
+            pair.amount_in_threshold = amount_in_threshold;
+            pair.molecular = molecular;
+            pair.denominator = denominator;
+        } else {
+            self.gas_system_global_mappings.push(GasSystemGlobal {
+                key,
+                global_base_price,
+                default_gas_limit,
+                amount_in_threshold,
+                molecular,
+                denominator
+            });
+        }
+    }
+
     //feeConfig
     pub fn set_fee_config(
         &mut self,
@@ -157,6 +195,39 @@ impl MappingFeeConfig {
         }
     }
 
+    pub fn set_native_token_trade_fee_config(
+        &mut self,
+        key: u64,
+        molecular: u64,
+        denominator: u64,
+    ) {
+        if let Some(pair) = self
+            .native_token_trade_fee_config_mappings
+            .iter_mut()
+            .find(|pair| pair.key == key)
+        {
+            pair.molecular = molecular;
+            pair.denominator = denominator;
+        } else {
+            self.native_token_trade_fee_config_mappings
+                .push(NativeTokenTradeFeeConfig {
+                    key,
+                    molecular,
+                    denominator,
+                });
+        }
+    }
+
+    pub fn get_gas_system_global(
+        &mut self,
+        key: u64,
+    ) -> Option<GasSystemGlobal> {
+        self.gas_system_global_mappings
+            .iter()
+            .find(|pair| pair.key == key)
+            .cloned()
+    }
+
     pub fn get_fee_config(&self, key: u64) -> Option<FeeConfig> {
         self.fee_config_mappings
             .iter()
@@ -184,31 +255,6 @@ impl MappingFeeConfig {
             .find(|pair| pair.key == key && pair.dapp == dapp)
             .cloned()
     }
-}
-
-impl MappingNativeTokenTradeFeeConfig {
-    pub fn set_native_token_trade_fee_config(
-        &mut self,
-        key: u64,
-        molecular: u64,
-        denominator: u64,
-    ) {
-        if let Some(pair) = self
-            .native_token_trade_fee_config_mappings
-            .iter_mut()
-            .find(|pair| pair.key == key)
-        {
-            pair.molecular = molecular;
-            pair.denominator = denominator;
-        } else {
-            self.native_token_trade_fee_config_mappings
-                .push(NativeTokenTradeFeeConfig {
-                    key,
-                    molecular,
-                    denominator,
-                });
-        }
-    }
 
     pub fn get_native_token_trade_fee_config(
         &mut self,
@@ -225,33 +271,6 @@ impl SaveDestChainId<'_>{
     pub fn set_chain_id(ctx: Context<SaveDestChainId>, dest_chain_id: Vec<u8>) -> Result<()> {
         let save = &mut ctx.accounts.save_chain_id;
         save.dest_chain_id = dest_chain_id;
-        Ok(())
-    }
-}
-
-impl InitVizingVault<'_>{
-    pub fn initialize_vizing_vault(ctx: Context<InitVizingVault>) -> Result<()> {
-        let vizing_vault = &mut ctx.accounts.vizing_vault;
-        vizing_vault.current_pragma_id = *ctx.program_id;
-        Ok(())
-    }
-}
-
-impl InitGasGlobal<'_>{
-    pub fn initialize_gas_global(
-        ctx: Context<InitGasGlobal>,
-        global_base_price: u64,
-        default_gas_limit: u64,
-        amount_in_threshold: u64,
-        molecular: u64,
-        denominator: u64,
-    ) -> Result<()> {
-        let gas_system_global = &mut ctx.accounts.gas_system_global;
-        gas_system_global.global_base_price = global_base_price;
-        gas_system_global.default_gas_limit = default_gas_limit;
-        gas_system_global.amount_in_threshold = amount_in_threshold;
-        gas_system_global.molecular = molecular;
-        gas_system_global.denominator = denominator;
         Ok(())
     }
 }
@@ -281,36 +300,27 @@ impl InitFeeConfig<'_>{
     }
 }
 
-impl InitNativeTokenTradeFeeConfig<'_>{
-    pub fn initialize_native_token_trade_fee_config(
-        ctx: Context<InitNativeTokenTradeFeeConfig>,
-        key: u64,
-        molecular: u64,
-        denominator: u64,
-    ) -> Result<()> {
-        let native_token_trade_fee_config = &mut ctx.accounts.native_token_trade_fee_config;
-        native_token_trade_fee_config.set_native_token_trade_fee_config(key, molecular, denominator);
-        Ok(())
-    }
-}
-
 
 //set
 impl SetGasGlobal<'_>{
     pub fn set_gas_global(
         ctx: Context<SetGasGlobal>,
+        key: u64,
         global_base_price: u64,
         default_gas_limit: u64,
         amount_in_threshold: u64,
         molecular: u64,
         denominator: u64,
     ) -> Result<()> {
-        let gas_system_global = &mut ctx.accounts.gas_system_global;
-        gas_system_global.global_base_price = global_base_price;
-        gas_system_global.default_gas_limit = default_gas_limit;
-        gas_system_global.amount_in_threshold = amount_in_threshold;
-        gas_system_global.molecular = molecular;
-        gas_system_global.denominator = denominator;
+        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        mapping_fee_config.set_gas_system_global(
+            key,
+            global_base_price,
+            default_gas_limit,
+            amount_in_threshold,
+            molecular,
+            denominator
+        );
         Ok(())
     }
 }
@@ -348,11 +358,18 @@ impl SetTokenFeeConfig<'_>{
         molecular: u64,
         denominator: u64,
     ) -> Result<()> {
-        let gas_system_global = &mut ctx.accounts.gas_system_global;
-        let native_token_trade_fee_config = &mut ctx.accounts.native_token_trade_fee_config;
-        gas_system_global.molecular = molecular;
-        gas_system_global.denominator = denominator;
-        native_token_trade_fee_config.set_native_token_trade_fee_config(key, molecular, denominator);
+        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let gas_system_global = mapping_fee_config.get_gas_system_global(key).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
+        mapping_fee_config.set_gas_system_global(
+            key,
+            gas_system_global.global_base_price,
+            gas_system_global.default_gas_limit,
+            gas_system_global.amount_in_threshold,
+            molecular,
+            denominator
+        );
+        
+        mapping_fee_config.set_native_token_trade_fee_config(key, molecular, denominator);
         Ok(())
     }
 }
@@ -415,10 +432,9 @@ impl BatchSetTokenFeeConfig<'_>{
             errors::ErrorCode::InvalidLength
         );
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        let native_token_trade_fee_config = &mut ctx.accounts.native_token_trade_fee_config;
 
         for (i, &current_id) in dest_chain_ids.iter().enumerate() {
-            native_token_trade_fee_config.set_native_token_trade_fee_config(current_id, moleculars[i], denominators[i]);
+            mapping_fee_config.set_native_token_trade_fee_config(current_id, moleculars[i], denominators[i]);
             mapping_fee_config.set_trade_fee(current_id, moleculars[i], denominators[i])
         }
         Ok(())
@@ -441,10 +457,9 @@ impl BatchSetTradeFeeConfigMap<'_>{
         );
 
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        let native_token_trade_fee_config = &mut ctx.accounts.native_token_trade_fee_config;
 
         for (i, &current_id) in dest_chain_ids.iter().enumerate() {
-            native_token_trade_fee_config.set_native_token_trade_fee_config(current_id, moleculars[i], denominators[i]);
+            mapping_fee_config.set_native_token_trade_fee_config(current_id, moleculars[i], denominators[i]);
             mapping_fee_config.set_trade_fee_config(current_id, dapps[i], moleculars[i], denominators[i])
         }
         Ok(())
@@ -863,32 +878,17 @@ pub struct SaveDestChainId<'info> {
 }
 
 #[derive(Accounts)]
-pub struct InitVizingVault<'info> {
-    #[account(
-        init, 
-        payer = user, 
-        space = 8 + VaultMes::INIT_SPACE,
-        seeds = [b"vizing_vault".as_ref()],
-        bump
-    )]
-    pub vizing_vault: Account<'info, VaultMes>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
 pub struct InitGasGlobal<'info> {
     #[account(mut)]
     pub save_chain_id: Account<'info, SaveChainId>,
     #[account(
         init,
         payer = user, 
-        space = 8 + GasSystemGlobal::INIT_SPACE,
-        seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        space = 8 + MappingFeeConfig::INIT_SPACE,
+        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
         bump
     )]
-    pub gas_system_global: Account<'info, GasSystemGlobal>,
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
         , constraint = vizing.owner == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing: Account<'info, VizingPadSettings>,
@@ -917,26 +917,6 @@ pub struct InitFeeConfig<'info> {
     pub system_program: Program<'info, System>,
 }
 
-#[derive(Accounts)]
-pub struct InitNativeTokenTradeFeeConfig<'info> {
-    #[account(mut)]
-    pub save_chain_id: Account<'info, SaveChainId>,
-    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
-        , constraint = vizing.owner == user.key() @VizingError::NotGasPoolAdmin)]
-    pub vizing: Account<'info, VizingPadSettings>,
-    #[account(
-        init,
-        payer = user, 
-        space = 8 + MappingNativeTokenTradeFeeConfig::INIT_SPACE,
-        seeds = [b"native_token_trade_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub native_token_trade_fee_config: Account<'info, MappingNativeTokenTradeFeeConfig>,
-    #[account(mut)]
-    pub user: Signer<'info>,
-    pub system_program: Program<'info, System>,
-}
-
 // #[derive(Accounts)]
 // pub struct SolTransfer<'info> {
 //     #[account(mut)]
@@ -956,10 +936,10 @@ pub struct SetGasGlobal<'info> {
     pub save_chain_id: Account<'info,SaveChainId>,
     #[account(
         mut,
-        seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
         bump
     )]
-    pub gas_system_global: Account<'info, GasSystemGlobal>,
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
         , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing: Account<'info, VizingPadSettings>,
@@ -995,16 +975,10 @@ pub struct SetTokenFeeConfig<'info> {
     pub vizing: Account<'info, VizingPadSettings>,
     #[account(
         mut,
-        seeds = [b"gas_global".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
+        seeds = [b"init_mapping_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
         bump
     )]
-    pub gas_system_global: Account<'info, GasSystemGlobal>,
-    #[account(
-        mut,
-        seeds = [b"native_token_trade_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub native_token_trade_fee_config: Account<'info, MappingNativeTokenTradeFeeConfig>,
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -1023,12 +997,6 @@ pub struct BatchSetTokenFeeConfig<'info> {
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
-    #[account(
-        mut,
-        seeds = [b"native_token_trade_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub native_token_trade_fee_config: Account<'info, MappingNativeTokenTradeFeeConfig>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -1047,12 +1015,6 @@ pub struct BatchSetTradeFeeConfigMap<'info> {
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
-    #[account(
-        mut,
-        seeds = [b"native_token_trade_fee_config".as_ref(),&save_chain_id.dest_chain_id.as_ref()],
-        bump
-    )]
-    pub native_token_trade_fee_config: Account<'info, MappingNativeTokenTradeFeeConfig>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
