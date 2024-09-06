@@ -17,3 +17,4 @@ default = []
 
 [dependencies]
 anchor-lang = "0.28.0"
+vizing_pad = { path = "../vizing_pad", features = ["cpi"]}

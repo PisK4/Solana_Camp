@@ -1,7 +1,6 @@
 pub mod vizing_omni;
 use anchor_lang::prelude::*;
 use vizing_omni::*;
-use vizing_pad::{self, cpi::accounts::LaunchOp, cpi::launch};
 
 declare_id!("2xiuj4ozxygvkmC1WKJTGZyJXSD8dtbFxWkuJiMLzrTg");
 
@@ -27,18 +26,18 @@ pub mod vizing_app_mock {
     }
 
     pub fn launch_vizing(ctx: Context<LaunchAppOpTemplate>) -> Result<()> {
-        let params = vizing_pad::vizing_omni::LaunchParams {
+        let params = LaunchParams {
             erliest_arrival_timestamp: VIZING_ERLIEST_ARRIVAL_TIMESTAMP_DEFAULT,
             latest_arrival_timestamp: VIZING_LATEST_ARRIVAL_TIMESTAMP_DEFAULT,
             relayer: VIZING_RELAYER_DEFAULT,
             sender: ctx.accounts.user.key(),
-            value: 0,
+            value: 886,
             dest_chainid: 1,
-            addition_params: vizing_pad::vizing_omni::AdditionalParams {
+            addition_params: AdditionalParams {
                 mode: 0,
                 signature: vec![],
             },
-            message: vizing_pad::vizing_omni::Message {
+            message: Message {
                 mode: 1,
                 target_program: [0; 32],
                 execute_gas_limit: VIZING_GASLIMIT_DEFAULT,
@@ -47,35 +46,16 @@ pub mod vizing_app_mock {
             },
         };
 
-        let (_, bump_authority) =
-            Pubkey::find_program_address(&[VIZING_MESSAGE_AUTHORITY_SEED], &ctx.program_id);
-
-        let seeds = &[VIZING_MESSAGE_AUTHORITY_SEED, &[bump_authority]];
-
-        let signer = &[&seeds[..]];
-
-        let cpi_ctx = CpiContext::new_with_signer(
-            ctx.accounts.vizing_pad_program.to_account_info(),
-            LaunchOp {
-                vizing_app_fee_payer: ctx.accounts.user.to_account_info(),
-                vizing_app_message_authority: ctx
-                    .accounts
-                    .vizing_app_message_authority
-                    .to_account_info(),
-                vizing_pad_config: ctx.accounts.vizing_pad_config.to_account_info(),
-                vizing_pad_fee_collector: ctx.accounts.vizing_pad_fee_collector.to_account_info(),
-                system_program: ctx.accounts.system_program.to_account_info(),
-            },
-            signer,
-        );
-
-        let res = launch(cpi_ctx, params);
-
-        if res.is_ok() {
-            return Ok(());
-        } else {
-            return err!(AppErrors::VizingCallFailed);
-        }
+        launch_2_vizing(
+            params,
+            &ctx.program_id,
+            &ctx.accounts.vizing_pad_program.to_account_info(),
+            &ctx.accounts.user.to_account_info(),
+            &ctx.accounts.vizing_app_message_authority.to_account_info(),
+            &ctx.accounts.vizing_pad_config.to_account_info(),
+            &ctx.accounts.vizing_pad_fee_collector.to_account_info(),
+            &ctx.accounts.system_program.to_account_info(),
+        )
     }
 
     #[access_control(assert_vizing_authority(&ctx.accounts.vizing_authority))]
@@ -170,10 +150,4 @@ pub struct Initialize<'info> {
 pub struct ResultData {
     pub result: u64,
     pub bump: u8,
-}
-
-#[error_code]
-pub enum AppErrors {
-    #[msg("vizing call failed")]
-    VizingCallFailed,
 }

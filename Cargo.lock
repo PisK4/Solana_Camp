@@ -1604,6 +1604,7 @@ name = "vizing_app"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+ "vizing_pad",
 ]
 
 [[package]]
@@ -1619,6 +1620,7 @@ name = "vizing_core"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
+ "vizing_pad",
 ]
 
 [[package]]
