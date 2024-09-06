@@ -34,3 +34,21 @@ pub enum VizingIError {
     #[msg("Unauthorized: Not Vizing Authority")]
     AccessDenied,
 }
+
+#[derive(Accounts)]
+pub struct VizingSolReceiverInitialize<'info> {
+    #[account(init, payer = payer, space = 8 + VizingSolReceiver::INIT_SPACE, seeds = [VIZING_APP_SOL_RECEIVER_SEED], bump)]
+    pub sol_pda_receiver: Account<'info, VizingSolReceiver>,
+
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+impl VizingSolReceiverInitialize<'_> {
+    pub fn handler(ctx: Context<Self>) -> Result<()> {
+        ctx.accounts.sol_pda_receiver.bump = *ctx.bumps.get("sol_pda_receiver").unwrap();
+        Ok(())
+    }
+}

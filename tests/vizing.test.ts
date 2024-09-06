@@ -551,18 +551,18 @@ describe("Vizing Test", () => {
       expect(fetchedVizingAppConfig.bump).to.equal(vizingAppBump);
     }
 
-    const [solReceiver2, bump2] = anchor.web3.PublicKey.findProgramAddressSync(
-      [vizingAppSolReceiverSeed],
-      vizingAppProgram.programId
-    );
+    // const [solReceiver2, bump2] = anchor.web3.PublicKey.findProgramAddressSync(
+    //   [vizingAppSolReceiverSeed],
+    //   vizingAppProgram.programId
+    // );
 
-    await vizingAppProgram.methods
-      .initialize()
-      .accounts({
-        solPdaReceiver: solReceiver2,
-        payer: provider.wallet.publicKey,
-      })
-      .rpc();
+    // await vizingAppProgram.methods
+    //   .initialize()
+    //   .accounts({
+    //     solPdaReceiver: solReceiver2,
+    //     payer: provider.wallet.publicKey,
+    //   })
+    //   .rpc();
 
     await vizingAppMockProgram.methods
       .initialize()
