@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 use crate::library::*;
 use crate::governance::*;
 
+// 48 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone ,InitSpace)]
 pub struct GasSystemGlobal {
     pub key: u64,
@@ -13,6 +14,7 @@ pub struct GasSystemGlobal {
     pub denominator: u64,
 }
 
+// 24 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone ,InitSpace)]
 pub struct NativeTokenTradeFeeConfig {
     pub key: u64,
@@ -20,6 +22,7 @@ pub struct NativeTokenTradeFeeConfig {
     pub denominator: u64,
 }
 
+// 42 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone ,InitSpace)]
 pub struct FeeConfig {
     pub key: u64,
@@ -31,6 +34,7 @@ pub struct FeeConfig {
     pub denominator_decimal: u8,
 }
 
+//24 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct TradeFee {
     pub key: u64,
@@ -38,20 +42,14 @@ pub struct TradeFee {
     pub denominator: u64,
 }
 
+//192 byes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
-pub struct TradeFeeConfig {
+pub struct TradeFeeAndDappConfig {
     pub key: u64,
-    #[max_len(5)]
+    #[max_len(10)]
     pub dapps: Vec<[u8; 32]>, //address group
     pub molecular: u64,
     pub denominator: u64,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
-pub struct DappConfig {
-    pub key: u64,
-    #[max_len(5)]
-    pub dapps: Vec<[u8; 32]>, //address group
     pub value: u64,
 }
 
@@ -65,9 +63,7 @@ pub struct MappingFeeConfig {
     #[max_len(20)]
     pub trade_fee_mappings: Vec<TradeFee>,
     #[max_len(20)]
-    pub trade_fee_config_mappings: Vec<TradeFeeConfig>,
-    #[max_len(20)]
-    pub dapp_config_mappings: Vec<DappConfig>,
+    pub trade_fee_config_mappings: Vec<TradeFeeAndDappConfig>,
     #[max_len(20)]
     pub native_token_trade_fee_config_mappings: Vec<NativeTokenTradeFeeConfig>,
 }
@@ -157,42 +153,33 @@ impl MappingFeeConfig {
         }
     }
 
-    pub fn set_trade_fee_config(
+    pub fn set_trade_fee_and_dapp_config(
         &mut self,
         key: u64,
         dapp: [u8; 32],
         molecular: u64,
         denominator: u64,
+        value: u64
     ) {
         if let Some(pair) = self
             .trade_fee_config_mappings
             .iter_mut()
             .find(|pair| pair.key == key)
         {
-            pair.dapps.push(dapp);
+            if !pair.dapps.contains(&dapp) {
+                pair.dapps.push(dapp);
+            }
             pair.molecular = molecular;
             pair.denominator = denominator;
+            pair.value = value;
         } else {
-            self.trade_fee_config_mappings.push(TradeFeeConfig {
+            self.trade_fee_config_mappings.push(TradeFeeAndDappConfig {
                 key,
                 dapps: vec![dapp],
                 molecular,
                 denominator,
+                value
             });
-        }
-    }
-
-    pub fn set_dapp_config(&mut self, key: u64, dapp: [u8; 32], value: u64) {
-        if let Some(pair) = self
-            .dapp_config_mappings
-            .iter_mut()
-            .find(|pair| pair.key == key)
-        {
-            pair.dapps.push(dapp);
-            pair.value = value;
-        } else {
-            self.dapp_config_mappings
-                .push(DappConfig { key, dapps: vec![dapp], value });
         }
     }
 
@@ -221,17 +208,9 @@ impl MappingFeeConfig {
 
     pub fn remove_trade_fee_config_dapp(&mut self, key: u64, dapp: [u8; 32]) {
         if let Some(pair) = self.trade_fee_config_mappings.iter_mut().find(|pair| pair.key == key) {
-            pair.dapps.retain(|&stored_dapp| stored_dapp != dapp);
+            pair.dapps.retain(|item| *item != dapp);
         } else {
             panic!("TradeFeeConfig key not found");
-        }
-    }
-
-    pub fn remove_dapp_config_dapp(&mut self, key: u64, dapp: [u8; 32]) {
-        if let Some(pair) = self.dapp_config_mappings.iter_mut().find(|pair| pair.key == key) {
-            pair.dapps.retain(|&stored_dapp| stored_dapp != dapp);
-        } else {
-            panic!("DappConfig key not found");
         }
     }
 
@@ -259,15 +238,8 @@ impl MappingFeeConfig {
             .cloned()
     }
 
-    pub fn get_trade_fee_config(&self, key: u64, dapp: [u8; 32]) -> Option<TradeFeeConfig> {
+    pub fn get_trade_fee_config(&self, key: u64, dapp: [u8; 32]) -> Option<TradeFeeAndDappConfig> {
         self.trade_fee_config_mappings
-            .iter()
-            .find(|pair| pair.key == key && pair.dapps.iter().any(|&stored_dapp| stored_dapp == dapp))
-            .cloned()
-    }
-
-    pub fn get_dapp_config(&mut self, key: u64, dapp: [u8; 32]) -> Option<DappConfig> {
-        self.dapp_config_mappings
             .iter()
             .find(|pair| pair.key == key && pair.dapps.iter().any(|&stored_dapp| stored_dapp == dapp))
             .cloned()
@@ -388,10 +360,12 @@ impl SetDappPriceConfig<'_>{
         ctx: Context<SetDappPriceConfig>,
         chain_id: u64,
         dapp: [u8; 32],
+        molecular: u64,
+        denominator: u64,
         base_price: u64,
     ) -> Result<()> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        mapping_fee_config.set_dapp_config(chain_id, dapp, base_price);
+        mapping_fee_config.set_trade_fee_and_dapp_config(chain_id, dapp, molecular, denominator, base_price);
         Ok(())
     }
 }
@@ -451,12 +425,13 @@ impl BatchSetTokenFeeConfig<'_>{
 }
 
 impl BatchSetTradeFeeConfigMap<'_>{
-    pub fn batch_set_trade_fee_config_map(
+    pub fn batch_set_trade_fee_and_dapp_config_map(
         ctx: Context<BatchSetTradeFeeConfigMap>,
         dapps: Vec<[u8; 32]>,
         dest_chain_ids: Vec<u64>,
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
+        values: Vec<u64>
     ) -> Result<()> {
         require!(
             dest_chain_ids.len() == moleculars.len()
@@ -469,7 +444,7 @@ impl BatchSetTradeFeeConfigMap<'_>{
 
         for (i, &current_id) in dest_chain_ids.iter().enumerate() {
             mapping_fee_config.set_native_token_trade_fee_config(current_id, moleculars[i], denominators[i]);
-            mapping_fee_config.set_trade_fee_config(current_id, dapps[i], moleculars[i], denominators[i])
+            mapping_fee_config.set_trade_fee_and_dapp_config(current_id, dapps[i], moleculars[i], denominators[i], values[i])
         }
         Ok(())
     }
@@ -488,7 +463,8 @@ impl BatchSetDappPriceConfigInDiffChain<'_>{
         );
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         for (i, &current_id) in chain_ids.iter().enumerate() {
-            mapping_fee_config.set_dapp_config(current_id, dapps[i], base_prices[i]);
+            let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(current_id, dapps[i]).ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+            mapping_fee_config.set_trade_fee_and_dapp_config(current_id, dapps[i],get_trade_fee_config.molecular,get_trade_fee_config.denominator, base_prices[i]);
         }
 
         Ok(())
@@ -505,7 +481,8 @@ impl BatchSetDappPriceConfigInSameChain<'_>{
         require!(dapps.len() == base_prices.len(), errors::ErrorCode::InvalidLength);
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         for (i, _) in base_prices.iter().enumerate() {
-            mapping_fee_config.set_dapp_config(chain_id, dapps[i], base_prices[i]);
+            let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(chain_id, dapps[i]).ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+            mapping_fee_config.set_trade_fee_and_dapp_config(chain_id, dapps[i],get_trade_fee_config.molecular,get_trade_fee_config.denominator, base_prices[i]);
         }
         Ok(())
     }
@@ -556,21 +533,6 @@ impl RemoveTradeFeeConfigDapp<'_>{
     )-> Result<()> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         mapping_fee_config.remove_trade_fee_config_dapp(
-            key,
-            dapp
-        );
-        Ok(())
-    }
-}
-
-impl RemoveDappConfigDapp<'_>{
-    pub fn remove_this_dapp_config_dapp(
-        ctx: Context<RemoveDappConfigDapp>,
-        key: u64,
-        dapp: [u8; 32]
-    )-> Result<()> {
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        mapping_fee_config.remove_dapp_config_dapp(
             key,
             dapp
         );

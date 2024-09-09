@@ -44,8 +44,6 @@ pub enum ErrorCode {
     TradeFeeNotFound,
     #[msg("Trade fee config not found.")]
     TradeFeeConfigNotFound,
-    #[msg("Dapp config not found.")]
-    DappConfigNotFound,
     #[msg("AmountInThresholds not found.")]
     AmountInThresholdsNotFound,
     #[msg("ComputeTradeFee1 not found.")]
