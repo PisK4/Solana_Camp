@@ -167,45 +167,6 @@ describe("Test", () => {
       vizingAuthority = authority;
     }
 
-    // function encodeEthereumAddressToU8Array(ethAddress: string): number[] {
-    //   const address = ethAddress.slice(2); // Remove the '0x' prefix
-    //   const result = new Uint8Array(60);
-    //   result[0] = 2;
-    //   for (let i = 0; i < 40; i++) {
-    //     let charAddressI = address[i].charCodeAt(0);
-    //     result[i + 1] = charAddressI;
-    //   }
-
-    //   for (let i = 41; i < 60; i++) {
-    //     result[i] = result[((i - 1) % 10) + 1];
-    //   }
-    //   const addressArray: number[] = Array.from(result);
-    //   return addressArray;
-    // }
-
-    // function decodeU8ArrayToEthereumAddress(message) {
-    //   const asciiData = message.slice(0, 40); // ASCII数据
-    //   let hexAddress = "0x";
-    //   for (let i = 0; i < 40; i++) {
-    //     const charCode = asciiData[i];
-    //     hexAddress += String.fromCharCode(charCode);
-    //   }
-    //   return hexAddress;
-    // }
-
-    // function encodeEthereumAddressToU8Array(ethAddress: string): number[] {
-    //   const remove0xAddress = ethAddress.slice(2);
-    //   const address = Buffer.from(remove0xAddress);
-    //   console.log("ethAddress:", ethAddress, "\n", "Buffer address:", address);
-    //   console.log("address length:", address.length);
-    //   const result = new Uint8Array(32);
-    //   for (let i = 0; i < 32; i++) {
-    //     result[i] = address[i];
-    //   }
-    //   const addressArray: number[] = Array.from(result);
-    //   return addressArray;
-    // }
-
     function ethereumAddressToU8Array(address: string): number[] {
       const cleanAddress = address.startsWith("0x")
         ? address.slice(2)
@@ -244,13 +205,6 @@ describe("Test", () => {
       );
     console.log("recordMessageAuthority:", recordMessageAuthority.toString());
     console.log("recordMessageBump:", recordMessageBump);
-
-    //save_dest_chain_Id
-    let saveDestChainIdAccount = new web3.Keypair();
-    console.log(
-      "saveDestChainIdAccount:",
-      saveDestChainIdAccount.publicKey.toBase58()
-    );
 
     let dapp = ethereumAddressToU8Array(
       "0xaE67336f06B10fbbb26F31d31AbEA897290109B9"
@@ -539,7 +493,7 @@ describe("Test", () => {
     async function SetThisDappPriceConfig() {
       try {
         const setThisDappPriceConfig = await pg.program.methods
-          .setThisDappPriceConfig(id, dapp, base_price)
+          .setThisDappPriceConfig(id, dapp, molecular, denominator, base_price)
           .accounts({
             vizing: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
@@ -551,13 +505,6 @@ describe("Test", () => {
         console.log(`setThisDappPriceConfig tx:${setThisDappPriceConfig}'`);
         // Confirm transaction
         await pg.connection.confirmTransaction(setThisDappPriceConfig);
-
-        const mappingFeeConfig =
-          await pg.program.account.mappingFeeConfig.fetch(
-            mappingFeeConfigAuthority
-          );
-        const this_dapp_date = mappingFeeConfig.dappConfigMappings;
-        console.log("this_dapp_date:", this_dapp_date);
       } catch (e) {
         console.log("SetThisDappPriceConfig error:", e);
       }
@@ -624,6 +571,7 @@ describe("Test", () => {
     let tradeFeeConfig_destChainIds = [new anchor.BN(4), new anchor.BN(5)];
     let tradeFeeConfig_moleculars = [new anchor.BN(5), new anchor.BN(5)];
     let tradeFeeConfig_denominators = [new anchor.BN(10), new anchor.BN(10)];
+    let base_price_group = [new anchor.BN(100), new anchor.BN(200)];
     async function BatchSetThisTradeFeeConfigMap() {
       try {
         const batchSetThisTradeFeeConfigMap = await pg.program.methods
@@ -631,7 +579,8 @@ describe("Test", () => {
             tradeFeeConfig_dapps,
             tradeFeeConfig_destChainIds,
             tradeFeeConfig_moleculars,
-            tradeFeeConfig_denominators
+            tradeFeeConfig_denominators,
+            base_price_group
           )
           .accounts({
             vizing: vizingPadSettings,
@@ -687,10 +636,9 @@ describe("Test", () => {
     await BatchSetThisDappPriceConfigInDiffChain();
 
     //batch_set_this_dapp_price_config_in_same_chain
-    let DappPriceConfig_dapps = [dapp, dapp2];
+    let DappPriceConfig_dapps = [dapp];
     let DappPriceConfig_base_prices = [
-      new anchor.BN(1000),
-      new anchor.BN(1000),
+      new anchor.BN(1000)
     ];
     async function BatchSetThisDappPriceConfigInSameChain() {
       try {
@@ -727,7 +675,7 @@ describe("Test", () => {
       const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
         mappingFeeConfigAuthority
       );
-      const dappConfigMappings = await mappingFeeConfig.dappConfigMappings;
+      const dappConfigMappings = await mappingFeeConfig.tradeFeeConfigMappings;
       let dapp_config_value = dappConfigMappings[0].value.toNumber();
       if (dapp_config_value > 0) {
         dapp_base_price = dapp_config_value;
@@ -805,7 +753,7 @@ describe("Test", () => {
       const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
         mappingFeeConfigAuthority
       );
-      const dappConfigMappings = mappingFeeConfig.dappConfigMappings;
+      const dappConfigMappings = mappingFeeConfig.tradeFeeConfigMappings;
       const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
 
       let gas_system_global_base_price =
@@ -1088,7 +1036,7 @@ describe("Test", () => {
         console.log("launch error:", e);
       }
     }
-    
+
     //success launch
     let thisTestValue = new anchor.BN(1000);
     let thisFee1 = await EstimateTotalFee(id, thisTestValue, message);
@@ -1274,85 +1222,28 @@ describe("Test", () => {
     // }
     // await GetEstimateTotalFee(testAmountOut, id, newMessage);
 
-    //remove
-    // async function RemoveTradeFeeDapp(this_chain_id,thisDapp){
-    //     try {
-    //     const removeTradeFeeDapp = await pg.program.methods
-    //       .removeTradeFeeDapp(this_chain_id, thisDapp)
-    //       .accounts({
-    //         vizing: vizingPadSettingsSeed,
-    //         mappingFeeConfig: mappingFeeConfigAuthority,
-    //         user: user,
-    //         systemProgram: systemId
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(`removeTradeFeeDapp tx:${removeTradeFeeDapp}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(removeTradeFeeDapp);
-    //     const mappingFeeConfig=await pg.program.account.mappingFeeConfig.fetch(mappingFeeConfigAuthority);
-    //     const tradeFeeConfigDapps=mappingFeeConfig.tradeFeeConfigMappings[0].dapps;
-    //     console.log("tradeFeeConfigDapps:",tradeFeeConfigDapps);
-    //   } catch (e) {
-    //     console.log("RemoveTradeFeeDapp error:", e);
-    //   }
-    // }
-    // await RemoveTradeFeeDapp(id,dapp);
-
-    // async function RemoveDappConfigDapp(this_chain_id,thisDapp){
-    //     try {
-    //     const removeDappsConfigDapp = await pg.program.methods
-    //       .removeDappsConfigDapp(this_chain_id, thisDapp)
-    //       .accounts({
-    //         vizing: vizingPadSettingsSeed,
-    //         mappingFeeConfig: mappingFeeConfigAuthority,
-    //         user: user,
-    //         systemProgram: systemId
-    //       })
-    //       .signers([signer])
-    //       .rpc();
-    //     console.log(`removeDappsConfigDapp tx:${removeDappsConfigDapp}'`);
-    //     // Confirm transaction
-    //     await pg.connection.confirmTransaction(removeDappsConfigDapp);
-    //     const mappingFeeConfig=await pg.program.account.mappingFeeConfig.fetch(mappingFeeConfigAuthority);
-    //     const dappConfigDapps=mappingFeeConfig.dappConfigMappings[0].dapps;
-    //     console.log("dappConfigDapps:",dappConfigDapps);
-    //   } catch (e) {
-    //     console.log("RemoveDappConfigDapp error:", e);
-    //   }
-    // }
-    // await RemoveDappConfigDapp(id,dapp);
-
-    // const serializedData = {
-    //     mode: 1, // u8
-    //     targetContract: dapp, //[u8; 32]
-    //     executeGasLimit: executeGasLimit, // u32
-    //     maxFeePerGas: maxFeePerGas, // u64
-    //     signature: Buffer.from("transfer balance 555"), // Buffer
-    // };
-
     const estimateTotalFeeMessage = {
-        mode: Buffer.from([1]), // u8
-        targetContract: Buffer.from(dapp), // [u8; 32]
-        executeGasLimit: new anchor.BN(6), // u32
-        maxFeePerGas: new anchor.BN(2000), // u64
-        signature: Buffer.from("transfer from alice to bob"), // Buffer
+      mode: Buffer.from([1]), // u8
+      targetContract: Buffer.from(dapp), // [u8; 32]
+      executeGasLimit: new anchor.BN(6), // u32
+      maxFeePerGas: new anchor.BN(2000), // u64
+      signature: Buffer.from("transfer from alice to bob"), // Buffer
     };
 
     console.log("estimateTotalFeeMessage:", estimateTotalFeeMessage);
 
-    const executeGasLimitBytes = Buffer.from(executeGasLimit.toArray('le', 4)); // u32
-    const maxFeePerGasBytes = Buffer.from(maxFeePerGas.toArray('le', 8)); // u64
+    const executeGasLimitBytes = Buffer.from(executeGasLimit.toArray("le", 4)); // u32
+    const maxFeePerGasBytes = Buffer.from(maxFeePerGas.toArray("le", 8)); // u64
 
     const serializedDataArray = [
-        ...estimateTotalFeeMessage.mode,
-        ...estimateTotalFeeMessage.targetContract,
-        ...executeGasLimitBytes,
-        ...maxFeePerGasBytes,
-        ...estimateTotalFeeMessage.signature,
+      ...estimateTotalFeeMessage.mode,
+      ...estimateTotalFeeMessage.targetContract,
+      ...executeGasLimitBytes,
+      ...maxFeePerGasBytes,
+      ...estimateTotalFeeMessage.signature,
     ];
-    let bufferMessage=Buffer.from(serializedDataArray);
-    console.log("bufferMessage:",bufferMessage);
+    let bufferMessage = Buffer.from(serializedDataArray);
+    console.log("bufferMessage:", bufferMessage);
     // const serializedDataBuffer = Buffer.concat([
     //     estimateTotalFeeMessage.mode,               // 1 byte
     //     estimateTotalFeeMessage.targetContract,     // 32 bytes
@@ -1403,5 +1294,35 @@ describe("Test", () => {
       newAdditionParams,
       bufferMessage
     );
+
+    //remove
+    async function RemoveTradeFeeDapp(this_chain_id, thisDapp) {
+      try {
+        const removeTradeFeeDapp = await pg.program.methods
+          .removeTradeFeeDapp(this_chain_id, thisDapp)
+          .accounts({
+            vizing: vizingPadSettings,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`removeTradeFeeDapp tx:${removeTradeFeeDapp}'`);
+        // Confirm transaction
+        await pg.connection.confirmTransaction(removeTradeFeeDapp);
+        const mappingFeeConfig =
+          await pg.program.account.mappingFeeConfig.fetch(
+            mappingFeeConfigAuthority
+          );
+        const tradeFeeConfigDapps =
+          mappingFeeConfig.tradeFeeConfigMappings[0].dapps;
+        console.log("tradeFeeConfigDapps:", tradeFeeConfigDapps);
+      } catch (e) {
+        console.log("RemoveTradeFeeDapp error:", e);
+      }
+    }
+    await RemoveTradeFeeDapp(id, Buffer.from(dapp));
+
   });
 });
