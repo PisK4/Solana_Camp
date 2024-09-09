@@ -3,7 +3,6 @@ use anchor_lang::prelude::*;
 use crate::library::*;
 use crate::governance::*;
 
-// 48 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone ,InitSpace)]
 pub struct GasSystemGlobal {
     pub key: u64,
@@ -14,7 +13,6 @@ pub struct GasSystemGlobal {
     pub denominator: u64,
 }
 
-// 24 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone ,InitSpace)]
 pub struct NativeTokenTradeFeeConfig {
     pub key: u64,
@@ -22,7 +20,6 @@ pub struct NativeTokenTradeFeeConfig {
     pub denominator: u64,
 }
 
-// 42 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone ,InitSpace)]
 pub struct FeeConfig {
     pub key: u64,
@@ -34,7 +31,6 @@ pub struct FeeConfig {
     pub denominator_decimal: u8,
 }
 
-//24 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct TradeFee {
     pub key: u64,
@@ -42,11 +38,10 @@ pub struct TradeFee {
     pub denominator: u64,
 }
 
-//192 byes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct TradeFeeAndDappConfig {
     pub key: u64,
-    #[max_len(10)]
+    #[max_len(5)]
     pub dapps: Vec<[u8; 32]>, //address group
     pub molecular: u64,
     pub denominator: u64,
