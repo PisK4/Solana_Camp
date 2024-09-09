@@ -613,7 +613,7 @@ impl EstimateVizingGasFee<'_>{
         let current_record_message = &mut ctx.accounts.current_record_message;
         msg!("message: {:?}",message);
         let Some((_, dapp, _, _, _))=message_monitor::slice_message(&message) else { todo!() };
-        msg!("dapp: {:?}",dapp);
+        
         let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
         let get_fee_config = mapping_fee_config
             .get_fee_config(dest_chain_id)
@@ -646,6 +646,56 @@ impl EstimateVizingGasFee<'_>{
         set_return_data(&vizing_gas_fee.to_le_bytes());
         Ok(vizing_gas_fee)
     }
+
+    
+    // pub fn get_estimate_vizing_gas_fee (
+    //     ctx: Context<EstimateVizingGasFee>,
+    //     value: u64,
+    //     dest_chain_id: u64,
+    //     _addition_params: Vec<u8>,
+    //     message: Message
+    // ) -> Result<u64> {  
+
+    //     let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+    //     let current_record_message = &mut ctx.accounts.current_record_message;
+
+    //     let serialized_data: Vec<u8> = message.try_to_vec()?;
+    //     let Some((_, dapp, _, _, _))=message_monitor::slice_message(&serialized_data) else { todo!() };
+
+    //     msg!("dapp: {:?}",dapp);
+    //     let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
+    //     let get_fee_config = mapping_fee_config
+    //         .get_fee_config(dest_chain_id)
+    //         .ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+    //     let get_trade_fee_config = mapping_fee_config
+    //         .get_trade_fee_config(dest_chain_id, dapp)
+    //         .ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+    //     let get_dapp_config = mapping_fee_config
+    //         .get_dapp_config(dest_chain_id, dapp)
+    //         .ok_or(errors::ErrorCode::DappConfigNotFound)?;
+        
+    //     let vizing_gas_fee = vizing_gas_system::estimate_gas(
+    //         get_gas_system_global.global_base_price,
+    //         get_fee_config.base_price,
+    //         get_dapp_config.value,
+    //         get_fee_config.molecular_decimal,
+    //         get_fee_config.denominator_decimal,
+    //         get_fee_config.molecular,
+    //         get_trade_fee_config.molecular,
+    //         get_trade_fee_config.denominator,
+    //         get_gas_system_global.molecular,
+    //         get_gas_system_global.denominator,
+    //         get_gas_system_global.default_gas_limit,
+    //         value,
+    //         dest_chain_id,
+    //         &serialized_data,
+    //     ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
+    //     current_record_message.estimate_vizing_gas_fee=vizing_gas_fee;
+    //     //set return vizing_gas_fee
+    //     set_return_data(&vizing_gas_fee.to_le_bytes());
+    //     Ok(vizing_gas_fee)
+    // }
+    
 }
 
 

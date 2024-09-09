@@ -41,7 +41,8 @@ pub struct TradeFee {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct TradeFeeConfig {
     pub key: u64,
-    pub dapp: [u8; 32], //address
+    #[max_len(5)]
+    pub dapps: Vec<[u8; 32]>, //address group
     pub molecular: u64,
     pub denominator: u64,
 }
@@ -49,7 +50,8 @@ pub struct TradeFeeConfig {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct DappConfig {
     pub key: u64,
-    pub dapp: [u8; 32], //address
+    #[max_len(5)]
+    pub dapps: Vec<[u8; 32]>, //address group
     pub value: u64,
 }
 
@@ -58,15 +60,15 @@ pub struct DappConfig {
 pub struct MappingFeeConfig {
     #[max_len(1)]
     pub gas_system_global_mappings: Vec<GasSystemGlobal>,
-    #[max_len(40)]
+    #[max_len(20)]
     pub fee_config_mappings: Vec<FeeConfig>,
-    #[max_len(40)]
+    #[max_len(20)]
     pub trade_fee_mappings: Vec<TradeFee>,
-    #[max_len(40)]
+    #[max_len(20)]
     pub trade_fee_config_mappings: Vec<TradeFeeConfig>,
-    #[max_len(40)]
+    #[max_len(20)]
     pub dapp_config_mappings: Vec<DappConfig>,
-    #[max_len(40)]
+    #[max_len(20)]
     pub native_token_trade_fee_config_mappings: Vec<NativeTokenTradeFeeConfig>,
 }
 
@@ -167,13 +169,13 @@ impl MappingFeeConfig {
             .iter_mut()
             .find(|pair| pair.key == key)
         {
-            pair.dapp = dapp;
+            pair.dapps.push(dapp);
             pair.molecular = molecular;
             pair.denominator = denominator;
         } else {
             self.trade_fee_config_mappings.push(TradeFeeConfig {
                 key,
-                dapp,
+                dapps: vec![dapp],
                 molecular,
                 denominator,
             });
@@ -186,11 +188,11 @@ impl MappingFeeConfig {
             .iter_mut()
             .find(|pair| pair.key == key)
         {
-            pair.dapp = dapp;
+            pair.dapps.push(dapp);
             pair.value = value;
         } else {
             self.dapp_config_mappings
-                .push(DappConfig { key, dapp, value });
+                .push(DappConfig { key, dapps: vec![dapp], value });
         }
     }
 
@@ -214,6 +216,22 @@ impl MappingFeeConfig {
                     molecular,
                     denominator,
                 });
+        }
+    }
+
+    pub fn remove_trade_fee_config_dapp(&mut self, key: u64, dapp: [u8; 32]) {
+        if let Some(pair) = self.trade_fee_config_mappings.iter_mut().find(|pair| pair.key == key) {
+            pair.dapps.retain(|&stored_dapp| stored_dapp != dapp);
+        } else {
+            panic!("TradeFeeConfig key not found");
+        }
+    }
+
+    pub fn remove_dapp_config_dapp(&mut self, key: u64, dapp: [u8; 32]) {
+        if let Some(pair) = self.dapp_config_mappings.iter_mut().find(|pair| pair.key == key) {
+            pair.dapps.retain(|&stored_dapp| stored_dapp != dapp);
+        } else {
+            panic!("DappConfig key not found");
         }
     }
 
@@ -244,14 +262,14 @@ impl MappingFeeConfig {
     pub fn get_trade_fee_config(&self, key: u64, dapp: [u8; 32]) -> Option<TradeFeeConfig> {
         self.trade_fee_config_mappings
             .iter()
-            .find(|pair| pair.key == key && pair.dapp == dapp)
+            .find(|pair| pair.key == key && pair.dapps.iter().any(|&stored_dapp| stored_dapp == dapp))
             .cloned()
     }
 
     pub fn get_dapp_config(&mut self, key: u64, dapp: [u8; 32]) -> Option<DappConfig> {
         self.dapp_config_mappings
             .iter()
-            .find(|pair| pair.key == key && pair.dapp == dapp)
+            .find(|pair| pair.key == key && pair.dapps.iter().any(|&stored_dapp| stored_dapp == dapp))
             .cloned()
     }
 
@@ -526,6 +544,36 @@ impl BatchSetExchangeRate<'_>{
                 denominator_decimals[i],
             );
         }
+        Ok(())
+    }
+}
+
+impl RemoveTradeFeeConfigDapp<'_>{
+    pub fn remove_this_trade_fee_config_dapp(
+        ctx: Context<RemoveTradeFeeConfigDapp>,
+        key: u64,
+        dapp: [u8; 32]
+    )-> Result<()> {
+        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        mapping_fee_config.remove_trade_fee_config_dapp(
+            key,
+            dapp
+        );
+        Ok(())
+    }
+}
+
+impl RemoveDappConfigDapp<'_>{
+    pub fn remove_this_dapp_config_dapp(
+        ctx: Context<RemoveDappConfigDapp>,
+        key: u64,
+        dapp: [u8; 32]
+    )-> Result<()> {
+        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        mapping_fee_config.remove_dapp_config_dapp(
+            key,
+            dapp
+        );
         Ok(())
     }
 }
@@ -996,6 +1044,39 @@ pub struct SetExchangeRate<'info> {
 
 #[derive(Accounts)]
 pub struct BatchSetExchangeRate<'info> {
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(mut)]
+    pub user: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+
+#[derive(Accounts)]
+pub struct RemoveTradeFeeConfigDapp<'info> {
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+    pub vizing: Account<'info, VizingPadSettings>,
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(mut)]
+    pub user: Signer<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct RemoveDappConfigDapp<'info> {
     #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
         , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing: Account<'info, VizingPadSettings>,
