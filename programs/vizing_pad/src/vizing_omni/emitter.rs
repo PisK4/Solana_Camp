@@ -34,7 +34,9 @@ pub struct VizingMessageAuthority {
 
 impl VizingEmitterInitialize<'_> {
     pub fn handler(ctx: Context<Self>) -> Result<()> {
-        ctx.accounts.message_pda_authority.bump = *ctx.bumps.get("message_pda_authority").unwrap();
+        let (_, message_pda_authority_bump) =
+            Pubkey::find_program_address(&[b"message_pda_authority"], ctx.program_id);
+        ctx.accounts.message_pda_authority.bump = message_pda_authority_bump;
         Ok(())
     }
 }
