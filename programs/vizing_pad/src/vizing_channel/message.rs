@@ -1,5 +1,6 @@
 use crate::governance::*;
 use crate::library::*;
+use crate::MappingFeeConfig;
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
@@ -18,6 +19,12 @@ pub struct LaunchOp<'info> {
     /// CHECK: We need this account as to receive the fee
     #[account(mut, address = vizing_pad_config.fee_collector @VizingError::FeeCollectorInvalid)]
     pub vizing_pad_fee_collector: AccountInfo<'info>,
+
+    #[account(
+        seeds = [b"init_mapping_fee_config".as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
 
     pub system_program: Program<'info, System>,
 }

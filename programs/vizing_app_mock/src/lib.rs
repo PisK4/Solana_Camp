@@ -32,16 +32,19 @@ pub mod vizing_app_mock {
             relayer: VIZING_RELAYER_DEFAULT,
             sender: ctx.accounts.user.key(),
             value: 886,
-            dest_chainid: 1,
+            dest_chainid: 28516,
             addition_params: AdditionalParams {
                 mode: 0,
                 signature: vec![],
             },
             message: Message {
                 mode: 1,
-                target_program: [0; 32],
+                target_program: [
+                    227, 2, 10, 198, 15, 69, 132, 42, 116, 127, 96, 8, 57, 13, 13, 40, 221, 187,
+                    217, 141, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                ],
                 execute_gas_limit: VIZING_GASLIMIT_DEFAULT,
-                max_fee_per_gas: 0,
+                max_fee_per_gas: 100,
                 signature: vec![],
             },
         };
@@ -54,8 +57,11 @@ pub mod vizing_app_mock {
             &ctx.accounts.vizing_app_message_authority.to_account_info(),
             &ctx.accounts.vizing_pad_config.to_account_info(),
             &ctx.accounts.vizing_pad_fee_collector.to_account_info(),
+            &ctx.accounts.mapping_fee_config.to_account_info(),
             &ctx.accounts.system_program.to_account_info(),
         )
+
+        // Ok(())
     }
 
     #[access_control(assert_vizing_authority(&ctx.accounts.vizing_authority))]
@@ -114,6 +120,9 @@ pub struct LaunchAppOpTemplate<'info> {
 
     /// CHECK: 3. Vizing Pad
     pub vizing_pad_program: AccountInfo<'info>,
+
+    /// CHECK: 4. Vizing fee account
+    pub mapping_fee_config: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
 }

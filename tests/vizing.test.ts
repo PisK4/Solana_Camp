@@ -12,6 +12,18 @@ function padStringTo32Bytes(str: string): Buffer {
   return buffer;
 }
 
+function ethereumAddressToU8Array(address: string): number[] {
+  //remove 0x
+  const cleanAddress = address.startsWith("0x") ? address.slice(2) : address;
+  const bytes = new Uint8Array(32);
+  for (let i = 0; i < 32; i++) {
+    const byte = parseInt(cleanAddress.substr(i * 2, 2), 16);
+    bytes[i] = byte;
+  }
+  const addressArray: number[] = Array.from(bytes);
+  return addressArray;
+}
+
 describe("Vizing Test", () => {
   const provider = anchor.AnchorProvider.env();
 
@@ -29,12 +41,14 @@ describe("Vizing Test", () => {
   const vizingMessageAuthoritySeed = Buffer.from(
     "Vizing_Message_Authority_Seed"
   );
+  const vizingGasSystemSeed = Buffer.from("init_mapping_fee_config");
 
   let vizingPadConfigs: anchor.web3.PublicKey;
   let vizingAuthority: anchor.web3.PublicKey;
   let vizingAppConfig: anchor.web3.PublicKey;
   let vizingFeeRouter: anchor.web3.PublicKey;
   let vizingMessageAuthority: anchor.web3.PublicKey;
+  let vizingGasSystem: anchor.web3.PublicKey;
 
   const feeCollectorKeyPair = anchor.web3.Keypair.fromSeed(
     Buffer.from(padStringTo32Bytes("fee_collector"))
@@ -204,6 +218,114 @@ describe("Vizing Test", () => {
         console.log("could not initialize vizing pad twice");
       }
     }
+
+    {
+      const seed = [vizingGasSystemSeed];
+      const [gasSys, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+        seed,
+        vizingProgram.programId
+      );
+
+      vizingGasSystem = gasSys;
+
+      console.log(
+        `vizingGasSystem: ${vizingGasSystem.toBase58()}, bump: ${bump}`
+      );
+      const id = new anchor.BN(28516);
+      let basePrice = new anchor.BN(500);
+      let reserve = new anchor.BN(0);
+      let molecular = new anchor.BN(0);
+      let denominator = new anchor.BN(0);
+      let molecular_decimal = 1;
+      let denominator_decimal = 1;
+
+      await vizingProgram.methods
+        .initFeeConfig(
+          id,
+          basePrice,
+          reserve,
+          molecular,
+          denominator,
+          molecular_decimal,
+          denominator_decimal
+        )
+        .accounts({
+          vizing: vizingPadConfigs,
+          mappingFeeConfig: vizingGasSystem,
+          user: provider.wallet.publicKey,
+        })
+        .rpc();
+
+      let new_global_base_price = new anchor.BN(500);
+      let new_default_gas_limit = new anchor.BN(1000);
+      let new_amount_in_threshold = new anchor.BN(100000000);
+      await vizingProgram.methods
+        .setThisGasGlobal(
+          id,
+          new_global_base_price,
+          new_default_gas_limit,
+          new_amount_in_threshold,
+          molecular,
+          denominator
+        )
+        .accounts({
+          mappingFeeConfig: vizingGasSystem,
+          vizing: vizingPadConfigs,
+          user: provider.wallet.publicKey,
+        })
+        .signers([])
+        .rpc();
+
+      let dapp = ethereumAddressToU8Array("0x00");
+      console.log("dapp: ", dapp);
+
+      let dapp2 = ethereumAddressToU8Array(
+        "0xE3020Ac60f45842A747F6008390d0D28dDbBD98D"
+      );
+      console.log("dapp2: ", dapp2);
+
+      let tradeFeeConfig_dapps = [dapp, dapp2];
+      let tradeFeeConfig_destChainIds = [
+        new anchor.BN(28516),
+        new anchor.BN(28516),
+      ];
+      let tradeFeeConfig_moleculars = [new anchor.BN(5), new anchor.BN(5)];
+      let tradeFeeConfig_denominators = [new anchor.BN(10), new anchor.BN(10)];
+      let base_price_group = [new anchor.BN(100), new anchor.BN(200)];
+
+      await vizingProgram.methods
+        .batchSetThisTradeFeeConfigMap(
+          tradeFeeConfig_dapps,
+          tradeFeeConfig_destChainIds,
+          tradeFeeConfig_moleculars,
+          tradeFeeConfig_denominators,
+          base_price_group
+        )
+        .accounts({
+          vizing: vizingPadConfigs,
+          mappingFeeConfig: vizingGasSystem,
+          user: provider.wallet.publicKey,
+        })
+        .rpc();
+    }
+
+    {
+      const [recordMessageAuthority, recordMessageBump] =
+        anchor.web3.PublicKey.findProgramAddressSync(
+          [Buffer.from("init_current_record_message")],
+          vizingProgram.programId
+        );
+
+      await vizingProgram.methods
+        .initRecordMessage()
+        .accounts({
+          currentRecordMessage: recordMessageAuthority,
+          vizing: vizingPadConfigs,
+          user: provider.wallet.publicKey,
+        })
+        .signers([])
+        .rpc();
+    }
   });
 
   it("modify Vizing Pad", async () => {
@@ -330,10 +452,10 @@ describe("Vizing Test", () => {
 
   it("Launch", async () => {
     const message = {
-      mode: 5,
+      mode: 1,
       targetProgram: Buffer.from([
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-        21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+        227, 2, 10, 198, 15, 69, 132, 42, 116, 127, 96, 8, 57, 13, 13, 40, 221,
+        187, 217, 141, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       ]),
       executeGasLimit: new anchor.BN(6),
       maxFeePerGas: new anchor.BN(7),
@@ -354,7 +476,7 @@ describe("Vizing Test", () => {
       ]),
       sender: provider.wallet.publicKey,
       value: new anchor.BN(3),
-      destChainid: new anchor.BN(4),
+      destChainid: new anchor.BN(28516),
       additionParams: additionParams,
       message: message,
     };
@@ -408,6 +530,7 @@ describe("Vizing Test", () => {
             vizingAppMessageAuthority: provider.wallet.publicKey,
             vizingPadConfig: vizingPadConfigs,
             vizingPadFeeCollector: anchor.web3.Keypair.generate().publicKey,
+            mappingFeeConfig: vizingGasSystem,
           })
           .rpc();
         throw new Error("should not come here");
@@ -430,6 +553,7 @@ describe("Vizing Test", () => {
           vizingAppMessageAuthority: provider.wallet.publicKey,
           vizingPadConfig: vizingPadConfigs,
           vizingPadFeeCollector: feeCollectorKeyPair.publicKey,
+          mappingFeeConfig: vizingGasSystem,
         })
         .rpc();
       console.log(`launch: ${tx}`);
@@ -463,6 +587,7 @@ describe("Vizing Test", () => {
           vizingPadConfig: vizingPadConfigs,
           vizingPadFeeCollector: feeCollectorKeyPair.publicKey,
           vizingPadProgram: vizingProgram.programId,
+          mappingFeeConfig: vizingGasSystem,
         })
         .rpc();
       console.log(`launchVizing: ${tx}`);
@@ -581,7 +706,7 @@ describe("Vizing Test", () => {
       .rpc();
 
     const message = {
-      mode: 5,
+      mode: 1,
       targetProgram: targetProgram,
       executeGasLimit: new anchor.BN(6),
       maxFeePerGas: new anchor.BN(7),
@@ -599,7 +724,7 @@ describe("Vizing Test", () => {
       ]),
       erliestArrivalTimestamp: new anchor.BN(1),
       latestArrivalTimestamp: new anchor.BN(2),
-      srcChainid: new anchor.BN(3),
+      srcChainid: new anchor.BN(28516),
       srcTxHash: Buffer.from([
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
         21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
