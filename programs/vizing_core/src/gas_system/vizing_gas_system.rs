@@ -3,6 +3,7 @@ use anchor_lang::prelude::*;
 use crate::library::*;
 use crate::governance::*;
 
+//40 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone ,InitSpace)]
 pub struct GasSystemGlobal {
     pub key: u64,
@@ -13,6 +14,7 @@ pub struct GasSystemGlobal {
     pub denominator: u64,
 }
 
+//24 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone ,InitSpace)]
 pub struct NativeTokenTradeFeeConfig {
     pub key: u64,
@@ -749,6 +751,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
                 base_price,
                 dapp
             )?;
+            msg!("dapp_base_price: {:?}",dapp_base_price);
 
             if price < dapp_base_price {
                 return None; 
@@ -772,6 +775,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
                     dest_chain_id,
                     amount_out
                 )?;
+                msg!("exact_output: {:?}",amount_in);
             }
             let trade_fee2 = compute_trade_fee2(
                 trade_fee_config_molecular,
@@ -782,6 +786,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
                 dest_chain_id,
                 amount_in
             )?;
+            msg!("compute_trade_fee2: {:?}",trade_fee2);
             final_fee = trade_fee2.checked_add(amount_in)?.checked_add(fee)?;
         }
         if amount_in > token_amount_limit{

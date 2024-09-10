@@ -45,7 +45,9 @@ pub struct VizingMessageAuthority {
 
 impl VizingEmitterInitialize<'_> {
     pub fn handler(ctx: Context<Self>) -> Result<()> {
-        ctx.accounts.message_pda_authority.bump = *ctx.bumps.get("message_pda_authority").unwrap();
+        let (_, message_pda_authority_bump) =
+            Pubkey::find_program_address(&[b"message_pda_authority"], ctx.program_id);
+        ctx.accounts.message_pda_authority.bump = message_pda_authority_bump;
         Ok(())
     }
 }
@@ -67,7 +69,7 @@ pub struct LaunchParams {
 pub struct Message {
     pub mode: u8,
     pub target_contract: [u8; 32],
-    pub execute_gas_limit: u64,
+    pub execute_gas_limit: u32,
     pub max_fee_per_gas: u64,
     #[max_len(1024)]
     pub signature: Vec<u8>,
