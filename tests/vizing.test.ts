@@ -232,10 +232,10 @@ describe("Vizing Test", () => {
         `vizingGasSystem: ${vizingGasSystem.toBase58()}, bump: ${bump}`
       );
       const id = new anchor.BN(28516);
-      let basePrice = new anchor.BN(500);
+      let basePrice = new anchor.BN(anchor.web3.LAMPORTS_PER_SOL);
       let reserve = new anchor.BN(0);
       let molecular = new anchor.BN(0);
-      let denominator = new anchor.BN(0);
+      let denominator = new anchor.BN(10);
       let molecular_decimal = 1;
       let denominator_decimal = 1;
 
@@ -256,9 +256,11 @@ describe("Vizing Test", () => {
         })
         .rpc();
 
-      let new_global_base_price = new anchor.BN(500);
-      let new_default_gas_limit = new anchor.BN(1000);
-      let new_amount_in_threshold = new anchor.BN(100000000);
+      let new_global_base_price = new anchor.BN(anchor.web3.LAMPORTS_PER_SOL);
+      let new_default_gas_limit = new anchor.BN(2);
+      let new_amount_in_threshold = new anchor.BN(
+        anchor.web3.LAMPORTS_PER_SOL * 100
+      );
       await vizingProgram.methods
         .setThisGasGlobal(
           id,
@@ -277,21 +279,22 @@ describe("Vizing Test", () => {
         .rpc();
 
       let dapp = ethereumAddressToU8Array("0x00");
-      console.log("dapp: ", dapp);
 
       let dapp2 = ethereumAddressToU8Array(
         "0xE3020Ac60f45842A747F6008390d0D28dDbBD98D"
       );
-      console.log("dapp2: ", dapp2);
 
       let tradeFeeConfig_dapps = [dapp, dapp2];
       let tradeFeeConfig_destChainIds = [
         new anchor.BN(28516),
         new anchor.BN(28516),
       ];
-      let tradeFeeConfig_moleculars = [new anchor.BN(5), new anchor.BN(5)];
+      let tradeFeeConfig_moleculars = [new anchor.BN(0), new anchor.BN(0)];
       let tradeFeeConfig_denominators = [new anchor.BN(10), new anchor.BN(10)];
-      let base_price_group = [new anchor.BN(100), new anchor.BN(200)];
+      let base_price_group = [
+        new anchor.BN(anchor.web3.LAMPORTS_PER_SOL),
+        new anchor.BN(anchor.web3.LAMPORTS_PER_SOL),
+      ];
 
       await vizingProgram.methods
         .batchSetThisTradeFeeConfigMap(
@@ -457,8 +460,8 @@ describe("Vizing Test", () => {
         227, 2, 10, 198, 15, 69, 132, 42, 116, 127, 96, 8, 57, 13, 13, 40, 221,
         187, 217, 141, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       ]),
-      executeGasLimit: new anchor.BN(6),
-      maxFeePerGas: new anchor.BN(7),
+      executeGasLimit: new anchor.BN(1),
+      maxFeePerGas: new anchor.BN(1000000000),
       signature: Buffer.from("1234"),
     };
 
@@ -596,15 +599,18 @@ describe("Vizing Test", () => {
         feeCollectorKeyPair.publicKey
       );
 
+      const diff = feeReceiverBalanceAfter - feeReceiverBalanceBefore;
+
       console.log(
         `feeReceiverBalanceBefore: ${
           feeReceiverBalanceBefore / anchor.web3.LAMPORTS_PER_SOL
         }, feeReceiverBalanceAfter: ${
           feeReceiverBalanceAfter / anchor.web3.LAMPORTS_PER_SOL
-        }`
+        }
+        diff: ${diff / anchor.web3.LAMPORTS_PER_SOL}`
       );
 
-      expect(feeReceiverBalanceAfter).to.greaterThan(feeReceiverBalanceBefore);
+      expect(diff).to.equal(anchor.web3.LAMPORTS_PER_SOL + 886);
     }
   });
 

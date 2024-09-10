@@ -192,8 +192,8 @@ impl LandingOp<'_> {
     #[access_control(landing_check(&ctx))]
     pub fn vizing_landing<'info>(ctx: &mut Context<'_, '_, '_, 'info, LandingOp<'info>>, params: LandingParams) -> Result<()> {
         let balance_before = ctx.accounts.relayer.lamports();
-        let mut traget = ctx.accounts.target_program.to_account_info();
-        if traget.executable {
+        let mut target = ctx.accounts.target_program.to_account_info();
+        if target.executable {
             let account_info = ctx
             .remaining_accounts
             .iter()
@@ -205,13 +205,13 @@ impl LandingOp<'_> {
             .collect::<Vec<_>>();
 
             if params.value > 0 {
-                traget = ctx.remaining_accounts[1].to_account_info();
+                target = ctx.remaining_accounts[1].to_account_info();
                 transfer(
                     CpiContext::new(
                         ctx.accounts.system_program.to_account_info(),
                         Transfer {
                             from: ctx.accounts.relayer.to_account_info(),
-                            to: traget
+                            to: target
                         },
                     ),
                     params.value,
@@ -238,7 +238,7 @@ impl LandingOp<'_> {
                         ctx.accounts.system_program.to_account_info(),
                         Transfer {
                             from: ctx.accounts.relayer.to_account_info(),
-                            to: traget
+                            to: target
                         },
                     ),
                     params.value,
@@ -316,7 +316,7 @@ pub struct LandingParams {
 pub struct LandingMessage {
     pub mode: u8,
     pub target_program: Pubkey,
-    pub execute_gas_limit: u64,
+    pub execute_gas_limit: u32,
     pub max_fee_per_gas: u64,
     #[max_len(1024)]
     pub signature: Vec<u8>,

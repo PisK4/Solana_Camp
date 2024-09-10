@@ -43,8 +43,8 @@ pub mod vizing_app_mock {
                     227, 2, 10, 198, 15, 69, 132, 42, 116, 127, 96, 8, 57, 13, 13, 40, 221, 187,
                     217, 141, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 ],
-                execute_gas_limit: VIZING_GASLIMIT_DEFAULT,
-                max_fee_per_gas: 100,
+                execute_gas_limit: 1,
+                max_fee_per_gas: 1000000000,
                 signature: vec![],
             },
         };
