@@ -1,17 +1,15 @@
-pub mod gas_system;
 pub mod governance;
 pub mod library;
-pub mod state;
 pub mod vizing_channel;
 pub mod vizing_omni;
-
+pub mod gas_system;
 use anchor_lang::prelude::*;
-use gas_system::*;
 use governance::*;
 use vizing_channel::*;
 use vizing_omni::*;
+use gas_system::*;
 
-declare_id!("8yMiHYqR84hJsqvo5KAeviEyEFxgHaTECFSsm8UQp4p5");
+declare_id!("vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE");
 
 #[program]
 pub mod vizing_core {
@@ -24,7 +22,10 @@ pub mod vizing_core {
         LaunchOp::vizing_launch(&mut ctx, params)
     }
 
-    pub fn landing(mut ctx: Context<LandingOp>, params: LandingParams) -> Result<()> {
+    pub fn landing<'info>(
+        mut ctx: Context<'_, '_, '_, 'info, LandingOp<'info>>,
+        params: LandingParams,
+    ) -> Result<()> {
         LandingOp::vizing_landing(&mut ctx, params)
     }
 
@@ -299,7 +300,7 @@ pub mod vizing_core {
         dest_chain_ids: Vec<u64>,
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
-        values: Vec<u64>
+        values: Vec<u64>,
     ) -> Result<()> {
         BatchSetTradeFeeConfigMap::batch_set_trade_fee_and_dapp_config_map(
             ctx,
@@ -307,7 +308,7 @@ pub mod vizing_core {
             dest_chain_ids,
             moleculars,
             denominators,
-            values
+            values,
         )
     }
 
@@ -506,14 +507,14 @@ pub mod vizing_core {
     /// @param message The message we want to send to the destination chain
      */
 
-    pub fn estimate_vizing_gas_fee(
-        ctx: Context<EstimateVizingGasFee>,
+    pub fn estimate_vizing_gas_fee1(
+        ctx: Context<EstimateVizingGasFee1>,
         value: u64,
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message: Vec<u8>,
     ) -> Result<u64> {
-        EstimateVizingGasFee::get_estimate_vizing_gas_fee(
+        EstimateVizingGasFee1::get_estimate_vizing_gas_fee(
             ctx,
             value,
             dest_chain_id,
@@ -522,4 +523,20 @@ pub mod vizing_core {
         )
     }
 
+    pub fn estimate_vizing_gas_fee2(
+        ctx: Context<EstimateVizingGasFee2>,
+        value: u64,
+        dest_chain_id: u64,
+        _addition_params: Vec<u8>,
+        message: Message,
+    ) -> Result<u64> {
+        EstimateVizingGasFee2::get_estimate_vizing_gas_fee(
+            ctx,
+            value,
+            dest_chain_id,
+            _addition_params,
+            message,
+        )
+    }
+    
 }

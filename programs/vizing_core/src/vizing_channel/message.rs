@@ -5,26 +5,40 @@ use anchor_lang::solana_program::program::set_return_data;
 use crate::gas_system::*;
 use crate::governance::*;
 use crate::library::*;
-use crate::state::*;
 use crate::vizing_omni::*;
+
+
+#[account]
+#[derive(InitSpace)]
+pub struct CurrentRecordMessage {
+    pub compute_trade_fee1: u64,
+    pub compute_trade_fee2: u64,
+    pub estimate_price1: u64,
+    pub estimate_price2: u64,
+    pub estimate_gas: u64,
+    pub estimate_total_fee: u64,
+    pub exact_output: u64,
+    pub exact_input: u64,
+    pub estimate_vizing_gas_fee: u64,
+    pub init_state: bool
+}
 
 #[derive(Accounts)]
 pub struct LaunchOp<'info> {
     /// CHECK: We need signer to claim ownership
-    #[account(signer)]
-    pub fee_payer: AccountInfo<'info>,
-
+    #[account(mut, signer)]
+    pub vizing_app_fee_payer: AccountInfo<'info>,
     /// CHECK: We need signer to claim ownership
     #[account(signer)]
-    pub message_authority: AccountInfo<'info>,
+    pub vizing_app_message_authority: AccountInfo<'info>,
 
-    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
-        , constraint = vizing.is_paused != true @VizingError::VizingNotActivated)]
-    pub vizing: Account<'info, VizingPadSettings>,
+    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing_pad_config.bump
+        , constraint = vizing_pad_config.is_paused != true @VizingError::VizingNotActivated)]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
 
     /// CHECK: We need this account as to receive the fee
-    #[account(mut, constraint = fee_collector.key() == vizing.fee_receiver @VizingError::FeeCollectorInvalid)]
-    pub fee_collector: AccountInfo<'info>,
+    #[account(mut, address = vizing_pad_config.fee_collector @VizingError::FeeCollectorInvalid)]
+    pub vizing_pad_fee_collector: AccountInfo<'info>,
 
     #[account(
         mut,
@@ -32,16 +46,13 @@ pub struct LaunchOp<'info> {
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+
     pub system_program: Program<'info, System>,
 }
 
+
 impl LaunchOp<'_> {
     pub fn vizing_launch(ctx: &mut Context<LaunchOp>, params: LaunchParams) -> Result<()> {
-        msg!(
-            "message_authority: {}",
-            ctx.accounts.message_authority.key()
-        );
-
         msg!(
             "erliest_arrival_timestamp: {}",
             params.erliest_arrival_timestamp
@@ -54,7 +65,13 @@ impl LaunchOp<'_> {
 
         msg!("dest_chainid: {}", params.dest_chainid);
 
-        msg!("addition_params: {:?}", params.addition_params);
+        msg!("mode: {}", params.message.mode);
+
+        // msg!("target_contract: {}", params.message.target_contract);
+
+        msg!("execute_gas_limit: {}", params.message.execute_gas_limit);
+
+        msg!("max_fee_per_gas: {}", params.message.max_fee_per_gas);
 
         msg!("signature: {:?}", params.message.signature);
 
@@ -95,14 +112,12 @@ impl LaunchOp<'_> {
             &serialized_data,
         ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
 
-        // mock fee
-        // let fee: u64 = 1000000000;
         transfer(
             CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
                 Transfer {
-                    from: ctx.accounts.fee_payer.to_account_info(),
-                    to: ctx.accounts.fee_collector.to_account_info(),
+                    from: ctx.accounts.vizing_app_fee_payer.to_account_info(),
+                    to: ctx.accounts.vizing_pad_fee_collector.to_account_info(),
                 },
             ),
             fee,
@@ -113,12 +128,12 @@ impl LaunchOp<'_> {
             latest_arrival_timestamp: params.latest_arrival_timestamp,
             relayer: params.relayer,
             sender: params.sender,
-            src_contract: ctx.accounts.message_authority.key(),
+            src_contract: ctx.accounts.vizing_app_message_authority.key(),
             value: params.value,
             fee: fee,
             dest_chainid: params.dest_chainid,
             addition_params: params.addition_params,
-            message: params.message.clone(),
+            message: params.message,
         });
 
         Ok(())
@@ -129,52 +144,92 @@ impl LaunchOp<'_> {
 #[instruction(params: LandingParams)]
 pub struct LandingOp<'info> {
     /// CHECK: We need signer to claim ownership
-    #[account(signer)]
+    #[account(mut, signer)]
     pub relayer: AccountInfo<'info>,
 
-    #[account(mut, 
+    #[account(
         seeds = [contants::VIZING_PAD_SETTINGS_SEED], 
         bump = vizing.bump,
         constraint = vizing.trusted_relayers.contains(&relayer.key()) @VizingError::NotRelayer, 
         constraint = vizing.is_paused != true @VizingError::VizingNotActivated
     )]
-    pub vizing: Account<'info, VizingPadSettings>,
+    pub vizing: Account<'info, VizingPadConfigs>,
 
     /// CHECK: We need this PDA as a signer
-    #[account(seeds = [contants::VIZING_AUTHORITY_SEED],bump = vizing_authority.bump)]
+    #[account(seeds = [VIZING_AUTHORITY_SEED],bump = vizing_authority.bump)]
     pub vizing_authority: Account<'info, VizingAuthorityParams>,
 
     /// CHECK: target contract
-    #[account(mut, constraint = target_contract.key() == params.message.target_contract @VizingError::TargetContractInvalid)]
-    pub target_contract: AccountInfo<'info>,
+    #[account(mut, address = params.message.target_program @VizingError::TargetContractInvalid)]
+    pub target_program: AccountInfo<'info>,
+
+    #[account(
+        seeds = [VIZING_APP_CONFIG_SEED, &vizing_app_configs.vizing_app_program_id.to_bytes()],
+        bump = vizing_app_configs.bump,
+        constraint = vizing_app_configs.vizing_app_program_id == target_program.key() @VizingError::TargetContractInvalid
+    )]
+    pub vizing_app_configs: Option<Account<'info, VizingAppConfig>>,
 
     pub system_program: Program<'info, System>,
 }
 
 impl LandingOp<'_> {
-    pub fn vizing_landing(ctx: &mut Context<LandingOp>, params: LandingParams) -> Result<()> {
+    #[access_control(landing_check(&ctx))]
+    pub fn vizing_landing<'info>(ctx: &mut Context<'_, '_, '_, 'info, LandingOp<'info>>, params: LandingParams) -> Result<()> {
         let balance_before = ctx.accounts.relayer.lamports();
-
-        let account_info = ctx
+        let mut traget = ctx.accounts.target_program.to_account_info();
+        if traget.executable {
+            let account_info = ctx
             .remaining_accounts
             .iter()
             .map(|acc| {
                 let mut account = acc.to_account_metas(None)[0].clone();
                 account.is_signer = account.pubkey == ctx.accounts.vizing_authority.key();
                 account
-            }).collect::<Vec<_>>();
+            })
+            .collect::<Vec<_>>();
 
-        let ix = Instruction {
-            program_id: ctx.accounts.target_contract.key(),
-            accounts: account_info,
-            data: build_landing_ix_data(&params)?,
-        };
+            if params.value > 0 {
+                traget = ctx.remaining_accounts[1].to_account_info();
+                transfer(
+                    CpiContext::new(
+                        ctx.accounts.system_program.to_account_info(),
+                        Transfer {
+                            from: ctx.accounts.relayer.to_account_info(),
+                            to: traget
+                        },
+                    ),
+                    params.value,
+                )?;
+            }
 
-        invoke_signed(
-            &ix,
-            &[ctx.remaining_accounts].concat(),
-            &[&[VIZING_AUTHORITY_SEED, &[ctx.accounts.vizing_authority.bump]]],
-        ).map_err(|_| VizingError::CallingFailed)?;
+            let ix = Instruction {
+                program_id: ctx.accounts.target_program.key(),
+                accounts: account_info,
+                data: build_landing_ix_data(&params)?,
+            };
+    
+            invoke_signed(
+                &ix,
+                &[ctx.remaining_accounts].concat(),
+                &[&[VIZING_AUTHORITY_SEED, &[ctx.accounts.vizing_authority.bump]]],
+            )
+            .map_err(|_| VizingError::CallingFailed)?;
+
+        }else{
+            if params.value > 0 {
+                transfer(
+                    CpiContext::new(
+                        ctx.accounts.system_program.to_account_info(),
+                        Transfer {
+                            from: ctx.accounts.relayer.to_account_info(),
+                            to: traget
+                        },
+                    ),
+                    params.value,
+                )?;
+            }
+        }
 
         require!(
             ctx.accounts.relayer.lamports() <= balance_before + params.value,
@@ -199,11 +254,57 @@ impl LandingOp<'_> {
     }
 }
 
+fn landing_check(ctx: &Context<LandingOp>) -> Result<()> {
+    if let Some(config) = ctx.accounts.vizing_app_configs.clone() {
+        let vizing_apps = config.vizing_app_accounts.clone();
+        let remaining_accounts = ctx.remaining_accounts.iter().map(|a| a.key).collect::<Vec<_>>();
+        for app in vizing_apps {
+            if !remaining_accounts.contains(&&app) {
+                return Err(VizingError::VizingAppNotInRemainingAccounts.into());
+            }
+        }
+    }
+    Ok(())
+}
+
 fn build_landing_ix_data(params: &LandingParams) -> Result<Vec<u8>> {
-    let mut data = Vec::with_capacity(LandingParams::INIT_SPACE);
+    let vizing_message = VizingMessage {
+        src_chainid: params.src_chainid,
+        src_contract: params.src_contract,
+        value: params.value,
+        signature: params.message.signature.clone(),
+    };
+    let mut data = Vec::with_capacity(VizingMessage::INIT_SPACE);
     data.extend(RECEIVE_FROM_VIZING_DISCRIMINATOR);
-    params.serialize(&mut data)?;
+    vizing_message.serialize(&mut data)?;
     Ok(data)
+}
+
+
+#[account]
+#[derive(InitSpace)]
+pub struct LandingParams {
+    pub message_id: [u8; 32],
+    pub erliest_arrival_timestamp: u64,
+    pub latest_arrival_timestamp: u64,
+    pub src_chainid: u64,
+    pub src_tx_hash: [u8; 32],
+    pub src_contract: [u8; 32],
+    pub src_chain_nonce: u32,
+    pub sender: [u8; 32],
+    pub value: u64,
+    pub addition_params: AdditionalParams,
+    pub message: LandingMessage,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+pub struct LandingMessage {
+    pub mode: u8,
+    pub target_program: Pubkey,
+    pub execute_gas_limit: u64,
+    pub max_fee_per_gas: u64,
+    #[max_len(1024)]
+    pub signature: Vec<u8>,
 }
 
 //get
@@ -220,7 +321,7 @@ pub struct InitCurrentRecordMessage<'info> {
     pub current_record_message: Account<'info, CurrentRecordMessage>,
     #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
         , constraint = vizing.owner == user.key() @VizingError::NotOwner)]
-    pub vizing: Account<'info, VizingPadSettings>,
+    pub vizing: Account<'info, VizingPadConfigs>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -585,7 +686,7 @@ impl ExactInput<'_> {
 }
 
 #[derive(Accounts)]
-pub struct EstimateVizingGasFee<'info> {
+pub struct EstimateVizingGasFee1<'info> {
     #[account(
         mut,
         seeds = [b"init_mapping_fee_config".as_ref()],
@@ -599,9 +700,9 @@ pub struct EstimateVizingGasFee<'info> {
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
 }
-impl EstimateVizingGasFee<'_>{
+impl EstimateVizingGasFee1<'_>{
     pub fn get_estimate_vizing_gas_fee (
-        ctx: Context<EstimateVizingGasFee>,
+        ctx: Context<EstimateVizingGasFee1>,
         value: u64,
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
@@ -643,56 +744,76 @@ impl EstimateVizingGasFee<'_>{
         set_return_data(&vizing_gas_fee.to_le_bytes());
         Ok(vizing_gas_fee)
     }
+}
 
-    
-    // pub fn get_estimate_vizing_gas_fee (
-    //     ctx: Context<EstimateVizingGasFee>,
-    //     value: u64,
-    //     dest_chain_id: u64,
-    //     _addition_params: Vec<u8>,
-    //     message: Message
-    // ) -> Result<u64> {  
+#[derive(Accounts)]
+pub struct EstimateVizingGasFee2<'info> {
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
+}
+impl EstimateVizingGasFee2<'_>{
+    pub fn get_estimate_vizing_gas_fee (
+        ctx: Context<EstimateVizingGasFee2>,
+        value: u64,
+        dest_chain_id: u64,
+        _addition_params: Vec<u8>,
+        message: Message
+    ) -> Result<u64> {  
 
-    //     let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-    //     let current_record_message = &mut ctx.accounts.current_record_message;
+        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let current_record_message = &mut ctx.accounts.current_record_message;
 
-    //     let serialized_data: Vec<u8> = message.try_to_vec()?;
-    //     let Some((_, dapp, _, _, _))=message_monitor::slice_message(&serialized_data) else { todo!() };
+        let serialized_data: Vec<u8> = message.try_to_vec()?;
+        let Some((_, dapp, _, _, _))=message_monitor::slice_message(&serialized_data) else { todo!() };
 
-    //     msg!("dapp: {:?}",dapp);
-    //     let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
-    //     let get_fee_config = mapping_fee_config
-    //         .get_fee_config(dest_chain_id)
-    //         .ok_or(errors::ErrorCode::FeeConfigNotFound)?;
-    //     let get_trade_fee_config = mapping_fee_config
-    //         .get_trade_fee_config(dest_chain_id, dapp)
-    //         .ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
-    //     let get_dapp_config = mapping_fee_config
-    //         .get_dapp_config(dest_chain_id, dapp)
-    //         .ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+        msg!("dapp: {:?}",dapp);
+        let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
+        let get_fee_config = mapping_fee_config
+            .get_fee_config(dest_chain_id)
+            .ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+        let get_trade_fee_config = mapping_fee_config
+            .get_trade_fee_config(dest_chain_id, dapp)
+            .ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+        let dapp_config_value = get_trade_fee_config.value;
         
-    //     let vizing_gas_fee = vizing_gas_system::estimate_gas(
-    //         get_gas_system_global.global_base_price,
-    //         get_fee_config.base_price,
-    //         get_dapp_config.value,
-    //         get_fee_config.molecular_decimal,
-    //         get_fee_config.denominator_decimal,
-    //         get_fee_config.molecular,
-    //         get_trade_fee_config.molecular,
-    //         get_trade_fee_config.denominator,
-    //         get_gas_system_global.molecular,
-    //         get_gas_system_global.denominator,
-    //         get_gas_system_global.default_gas_limit,
-    //         value,
-    //         dest_chain_id,
-    //         &serialized_data,
-    //     ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
-    //     current_record_message.estimate_vizing_gas_fee=vizing_gas_fee;
-    //     //set return vizing_gas_fee
-    //     set_return_data(&vizing_gas_fee.to_le_bytes());
-    //     Ok(vizing_gas_fee)
-    // }
+        let vizing_gas_fee = vizing_gas_system::estimate_gas(
+            get_gas_system_global.global_base_price,
+            get_fee_config.base_price,
+            dapp_config_value,
+            get_fee_config.molecular_decimal,
+            get_fee_config.denominator_decimal,
+            get_fee_config.molecular,
+            get_trade_fee_config.molecular,
+            get_trade_fee_config.denominator,
+            get_gas_system_global.molecular,
+            get_gas_system_global.denominator,
+            get_gas_system_global.default_gas_limit,
+            value,
+            dest_chain_id,
+            &serialized_data,
+        ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
+        current_record_message.estimate_vizing_gas_fee=vizing_gas_fee;
+        //set return vizing_gas_fee
+        set_return_data(&vizing_gas_fee.to_le_bytes());
+        Ok(vizing_gas_fee)
+    }
     
 }
+
+
+
+
+
+
 
 

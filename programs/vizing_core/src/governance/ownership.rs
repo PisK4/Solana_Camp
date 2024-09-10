@@ -1,5 +1,5 @@
-use anchor_lang::prelude::*;
 use crate::library::*;
+use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 #[instruction(params: InitVizingPadParams)]
@@ -7,11 +7,11 @@ pub struct InitVizingPad<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + VizingPadSettings::INIT_SPACE,
+        space = 8 + VizingPadConfigs::INIT_SPACE,
         seeds = [VIZING_PAD_SETTINGS_SEED],
         bump,
     )]
-    pub vizing: Account<'info, VizingPadSettings>,
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
 
     /// CHECK: We need this PDA as a signer
     #[account(
@@ -21,7 +21,7 @@ pub struct InitVizingPad<'info> {
         seeds = [VIZING_AUTHORITY_SEED],
         bump,
     )]
-    pub vizing_authority: Account<'info, VizingAuthorityParams>,
+    pub vizing_pad_authority: Account<'info, VizingAuthorityParams>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
@@ -30,28 +30,29 @@ pub struct InitVizingPad<'info> {
 }
 
 impl InitVizingPad<'_> {
-    pub fn initialize_vizing_pad(
-        ctx: &mut Context<InitVizingPad>,
-        params: InitVizingPadParams,
-    ) -> Result<()> {
+    pub fn initialize_vizing_pad(ctx: &mut Context<InitVizingPad>, params: InitVizingPadParams) -> Result<()> {
         // init vizing settings
-        let (_, bump) =
-            Pubkey::find_program_address(&[contants::VIZING_PAD_SETTINGS_SEED], &ctx.program_id);
-        ctx.accounts.vizing.bump = bump;
-        ctx.accounts.vizing.owner = params.owner;
-        ctx.accounts.vizing.fee_receiver = params.fee_receiver;
-        ctx.accounts.vizing.engine_admin = params.engine_admin;
-        ctx.accounts.vizing.station_admin = params.station_admin;
-        ctx.accounts.vizing.gas_pool_admin = params.gas_pool_admin;
-        ctx.accounts.vizing.registered_validator = params.registered_validator;
-        ctx.accounts.vizing.is_paused = params.is_paused;
+        let (_, bump) = Pubkey::find_program_address(
+            &[VIZING_PAD_SETTINGS_SEED],
+            &ctx.program_id,
+        );
+        ctx.accounts.vizing_pad_config.bump = bump;
+        ctx.accounts.vizing_pad_config.owner = params.owner;
+        ctx.accounts.vizing_pad_config.fee_collector = params.fee_collector;
+        ctx.accounts.vizing_pad_config.engine_admin = params.engine_admin;
+        ctx.accounts.vizing_pad_config.station_admin = params.station_admin;
+        ctx.accounts.vizing_pad_config.gas_pool_admin = params.gas_pool_admin;
+        ctx.accounts.vizing_pad_config.registered_validator = params.registered_validator;
+        ctx.accounts.vizing_pad_config.is_paused = params.is_paused;
 
-        ctx.accounts.vizing.trusted_relayers = params.trusted_relayers;
+        ctx.accounts.vizing_pad_config.trusted_relayers = params.trusted_relayers;
 
-        let (_, bump) =
-            Pubkey::find_program_address(&[contants::VIZING_AUTHORITY_SEED], &ctx.program_id);
+        let (_, bump) = Pubkey::find_program_address(
+            &[VIZING_AUTHORITY_SEED],
+            &ctx.program_id,
+        );
 
-        ctx.accounts.vizing_authority.bump = bump;
+        ctx.accounts.vizing_pad_authority.bump = bump;
 
         Ok(())
     }
@@ -61,24 +62,24 @@ impl InitVizingPad<'_> {
 #[derive(InitSpace)]
 pub struct InitVizingPadParams {
     pub owner: Pubkey,
-    pub fee_receiver: Pubkey,
+    pub fee_collector: Pubkey,
     pub engine_admin: Pubkey,
     pub station_admin: Pubkey,
     pub gas_pool_admin: Pubkey,
     #[max_len(96)]
     pub trusted_relayers: Vec<Pubkey>,
-    pub registered_validator: Pubkey,
+    pub registered_validator: Pubkey,   
     pub is_paused: bool,
 }
 
 #[account]
 #[derive(InitSpace)]
-pub struct VizingPadSettings {
+pub struct VizingPadConfigs {
     // immutable
     pub bump: u8,
     // configurable
     pub owner: Pubkey,
-    pub fee_receiver: Pubkey,
+    pub fee_collector: Pubkey,
     pub engine_admin: Pubkey,
     pub station_admin: Pubkey,
     pub gas_pool_admin: Pubkey,
@@ -94,21 +95,18 @@ pub struct ModifySettings<'info> {
     pub owner: Signer<'info>,
     #[account(mut, has_one = owner @ VizingError::NotOwner, seeds = [contants::VIZING_PAD_SETTINGS_SEED], bump = vizing.bump, 
      constraint = vizing.owner != contants::SYSTEM_ACCOUNT
-        && vizing.fee_receiver != contants::SYSTEM_ACCOUNT
+        && vizing.fee_collector != contants::SYSTEM_ACCOUNT
         && vizing.engine_admin != contants::SYSTEM_ACCOUNT
         && vizing.gas_pool_admin != contants::SYSTEM_ACCOUNT
         && vizing.station_admin != contants::SYSTEM_ACCOUNT
         && vizing.registered_validator != contants::SYSTEM_ACCOUNT)]
-    pub vizing: Account<'info, VizingPadSettings>,
+    pub vizing: Account<'info, VizingPadConfigs>,
 }
 
 impl ModifySettings<'_> {
-    pub fn owner_management(
-        ctx: &mut Context<ModifySettings>,
-        params: &OwnerManagementParams,
-    ) -> Result<()> {
+    pub fn owner_management(ctx: &mut Context<ModifySettings>, params: &OwnerManagementParams) -> Result<()> {
         ctx.accounts.vizing.owner = params.owner;
-        ctx.accounts.vizing.fee_receiver = params.fee_receiver;
+        ctx.accounts.vizing.fee_collector = params.fee_collector;
         ctx.accounts.vizing.engine_admin = params.engine_admin;
         ctx.accounts.vizing.gas_pool_admin = params.gas_pool_admin;
         ctx.accounts.vizing.station_admin = params.station_admin;
@@ -122,7 +120,7 @@ impl ModifySettings<'_> {
 #[derive(InitSpace)]
 pub struct OwnerManagementParams {
     pub owner: Pubkey,
-    pub fee_receiver: Pubkey,
+    pub fee_collector: Pubkey,
     pub engine_admin: Pubkey,
     pub gas_pool_admin: Pubkey,
     pub station_admin: Pubkey,
@@ -132,16 +130,17 @@ pub struct OwnerManagementParams {
     pub is_paused: bool,
 }
 
+
 #[derive(Accounts)]
 pub struct PauseEngine<'info> {
     pub engine_admin: Signer<'info>,
     #[account(mut, has_one = engine_admin @ VizingError::NotEngineAdmin, seeds = [contants::VIZING_PAD_SETTINGS_SEED], bump = vizing.bump, 
      constraint = vizing.owner != contants::SYSTEM_ACCOUNT
-        && vizing.fee_receiver != contants::SYSTEM_ACCOUNT)]
-    pub vizing: Account<'info, VizingPadSettings>,
+        && vizing.fee_collector != contants::SYSTEM_ACCOUNT)]
+    pub vizing: Account<'info, VizingPadConfigs>,    
 }
 
-impl PauseEngine<'_> {
+impl  PauseEngine<'_> {
     pub fn pause_engine(ctx: &mut Context<PauseEngine>) -> Result<()> {
         ctx.accounts.vizing.is_paused = true;
         Ok(())
@@ -153,6 +152,7 @@ impl PauseEngine<'_> {
     }
 }
 
+
 #[derive(Accounts)]
 #[instruction(relayer: Pubkey)]
 pub struct InitialRelayer<'info> {
@@ -162,7 +162,7 @@ pub struct InitialRelayer<'info> {
     #[account(mut, has_one = station_admin @ VizingError::NotOwner, seeds = [contants::VIZING_PAD_SETTINGS_SEED], bump = vizing.bump, 
      constraint = vizing.owner != contants::SYSTEM_ACCOUNT
         && vizing.station_admin != contants::SYSTEM_ACCOUNT)]
-    pub vizing: Account<'info, VizingPadSettings>,
+    pub vizing: Account<'info, VizingPadConfigs>,
 
     #[account(
         init,
@@ -185,7 +185,7 @@ pub struct GrantRelayer<'info> {
     #[account(mut, has_one = station_admin @ VizingError::NotStationAdmin, seeds = [contants::VIZING_PAD_SETTINGS_SEED], bump = vizing.bump, 
      constraint = vizing.owner != contants::SYSTEM_ACCOUNT
         || vizing.station_admin != contants::SYSTEM_ACCOUNT)]
-    pub vizing: Account<'info, VizingPadSettings>,
+    pub vizing: Account<'info, VizingPadConfigs>,
 
     pub system_program: Program<'info, System>,
 }
@@ -198,10 +198,7 @@ pub struct RelayerSettings {
 }
 
 impl GrantRelayer<'_> {
-    pub fn grant_relayer(
-        ctx: &mut Context<GrantRelayer>,
-        _new_trusted_relayers: Vec<Pubkey>,
-    ) -> Result<()> {
+    pub fn grant_relayer(ctx: &mut Context<GrantRelayer>, _new_trusted_relayers: Vec<Pubkey>) -> Result<()> {
         ctx.accounts.vizing.trusted_relayers = _new_trusted_relayers;
         Ok(())
     }
@@ -215,23 +212,23 @@ pub struct GrantFeeCollector<'info> {
     #[account(mut, has_one = gas_pool_admin @ VizingError::NotGasPoolAdmin, seeds = [contants::VIZING_PAD_SETTINGS_SEED], bump = vizing.bump, 
      constraint = vizing.owner != contants::SYSTEM_ACCOUNT
         || vizing.gas_pool_admin != contants::SYSTEM_ACCOUNT)]
-    pub vizing: Account<'info, VizingPadSettings>,
+    pub vizing: Account<'info, VizingPadConfigs>,
 
     pub system_program: Program<'info, System>,
 }
 
+
 impl GrantFeeCollector<'_> {
-    pub fn grant_fee_collector(
-        ctx: &mut Context<GrantFeeCollector>,
-        _fee_collector: Pubkey,
-    ) -> Result<()> {
-        ctx.accounts.vizing.fee_receiver = _fee_collector;
+    pub fn grant_fee_collector(ctx: &mut Context<GrantFeeCollector>, _fee_collector: Pubkey) -> Result<()> {
+        ctx.accounts.vizing.fee_collector = _fee_collector;
         Ok(())
     }
 }
+
 
 #[account]
 #[derive(InitSpace)]
 pub struct VizingAuthorityParams {
     pub bump: u8,
 }
+

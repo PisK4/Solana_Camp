@@ -1618,7 +1618,14 @@ name = "vizing_core"
 version = "0.1.0"
 dependencies = [
  "anchor-lang",
- "vizing_app",
+ "vizing_pad",
+]
+
+[[package]]
+name = "vizing_pad"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
 ]
 
 [[package]]
