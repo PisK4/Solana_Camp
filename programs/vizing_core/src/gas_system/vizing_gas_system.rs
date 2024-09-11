@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 use crate::library::*;
 use crate::governance::*;
 
-//40 bytes
+//48 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone ,InitSpace)]
 pub struct GasSystemGlobal {
     pub key: u64,
@@ -33,6 +33,7 @@ pub struct FeeConfig {
     pub molecular_decimal: u8,
     pub denominator_decimal: u8,
 }
+
 //24 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct TradeFee {
@@ -51,6 +52,7 @@ pub struct TradeFeeAndDappConfig {
     pub denominator: u64,
     pub value: u64,
 }
+
 
 #[account]
 #[derive(InitSpace)]
@@ -216,42 +218,100 @@ impl MappingFeeConfig {
     pub fn get_gas_system_global(
         &mut self,
         key: u64,
-    ) -> Option<GasSystemGlobal> {
-        self.gas_system_global_mappings
+    ) -> GasSystemGlobal {
+        if let Some(pair) = self.gas_system_global_mappings
             .iter()
             .find(|pair| pair.key == key)
             .cloned()
+        {
+            pair
+        } else {
+            GasSystemGlobal {
+                key: 0,
+                global_base_price: 0,
+                default_gas_limit: 0,
+                amount_in_threshold: 0,
+                molecular: 0,
+                denominator: 0,
+            }
+        }
+        
     }
 
-    pub fn get_fee_config(&self, key: u64) -> Option<FeeConfig> {
-        self.fee_config_mappings
+    pub fn get_fee_config(&self, key: u64) -> FeeConfig {
+        if let Some(pair) = self.fee_config_mappings
             .iter()
             .find(|pair| pair.key == key)
             .cloned()
+        {
+            pair 
+        } else {
+            FeeConfig {
+                key: 0,
+                base_price: 0,
+                reserve: 0,
+                molecular: 0,
+                denominator: 0,
+                molecular_decimal: 0,
+                denominator_decimal: 0,
+            }
+        }
     }
 
-    pub fn get_trade_fee(&self, key: u64) -> Option<TradeFee> {
-        self.trade_fee_mappings
+    pub fn get_trade_fee(&self, key: u64) -> TradeFee {
+        if let Some(pair) = self.trade_fee_mappings
             .iter()
             .find(|pair| pair.key == key)
             .cloned()
+        {
+            pair
+        }
+        else{
+            TradeFee {
+                key: 0,
+                molecular: 0,
+                denominator: 0
+            }
+        }
     }
 
-    pub fn get_trade_fee_config(&self, key: u64, dapp: [u8; 32]) -> Option<TradeFeeAndDappConfig> {
-        self.trade_fee_config_mappings
+    pub fn get_trade_fee_config(&self, key: u64, dapp: [u8; 32]) -> TradeFeeAndDappConfig {
+        if let Some(pair) = self.trade_fee_config_mappings
             .iter()
             .find(|pair| pair.key == key && pair.dapps.iter().any(|&stored_dapp| stored_dapp == dapp))
             .cloned()
+        {
+            pair
+        }
+        else{
+            TradeFeeAndDappConfig {
+                key: 0,
+                dapps: Vec::new(),
+                molecular: 0,
+                denominator: 0,
+                value: 0
+            }
+        }
     }
 
     pub fn get_native_token_trade_fee_config(
         &mut self,
         key: u64,
-    ) -> Option<NativeTokenTradeFeeConfig> {
-        self.native_token_trade_fee_config_mappings
+    ) -> NativeTokenTradeFeeConfig {
+        if let Some(pair) = self.native_token_trade_fee_config_mappings
             .iter()
             .find(|pair| pair.key == key)
             .cloned()
+        {
+            pair
+        }
+        else{
+            NativeTokenTradeFeeConfig {
+                key: 0,
+                molecular: 0,
+                denominator: 0
+            }
+        }
     }
 }
 
@@ -339,7 +399,7 @@ impl SetTokenFeeConfig<'_>{
         denominator: u64,
     ) -> Result<()> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        let gas_system_global = mapping_fee_config.get_gas_system_global(key).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
+        let gas_system_global = mapping_fee_config.get_gas_system_global(key);
         mapping_fee_config.set_gas_system_global(
             key,
             gas_system_global.global_base_price,
@@ -379,25 +439,22 @@ impl SetExchangeRate<'_>{
         denominator_decimal: u8,
     ) -> Result<()> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let mut fee_config = mapping_fee_config.get_fee_config(chain_id);
 
-        if let Some(mut fee_config) = mapping_fee_config.get_fee_config(chain_id) {
-            fee_config.molecular = molecular;
-            fee_config.denominator = denominator;
-            fee_config.molecular_decimal = molecular_decimal;
-            fee_config.denominator_decimal = denominator_decimal;
+        fee_config.molecular = molecular;
+        fee_config.denominator = denominator;
+        fee_config.molecular_decimal = molecular_decimal;
+        fee_config.denominator_decimal = denominator_decimal;
 
-            mapping_fee_config.set_fee_config(
-                chain_id,
-                fee_config.base_price,
-                fee_config.reserve,
-                fee_config.molecular,
-                fee_config.denominator,
-                fee_config.molecular_decimal,
-                fee_config.denominator_decimal,
-            );
-        } else {
-            return err!(errors::ErrorCode::FeeConfigNotFound);
-        }
+        mapping_fee_config.set_fee_config(
+            chain_id,
+            fee_config.base_price,
+            fee_config.reserve,
+            fee_config.molecular,
+            fee_config.denominator,
+            fee_config.molecular_decimal,
+            fee_config.denominator_decimal,
+        );
         Ok(())
     }
 } 
@@ -462,7 +519,7 @@ impl BatchSetDappPriceConfigInDiffChain<'_>{
         );
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         for (i, &current_id) in chain_ids.iter().enumerate() {
-            let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(current_id, dapps[i]).ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+            let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(current_id, dapps[i]);
             mapping_fee_config.set_trade_fee_and_dapp_config(current_id, dapps[i],get_trade_fee_config.molecular,get_trade_fee_config.denominator, base_prices[i]);
         }
 
@@ -480,7 +537,7 @@ impl BatchSetDappPriceConfigInSameChain<'_>{
         require!(dapps.len() == base_prices.len(), errors::ErrorCode::InvalidLength);
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         for (i, _) in base_prices.iter().enumerate() {
-            let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(chain_id, dapps[i]).ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+            let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(chain_id, dapps[i]);
             mapping_fee_config.set_trade_fee_and_dapp_config(chain_id, dapps[i],get_trade_fee_config.molecular,get_trade_fee_config.denominator, base_prices[i]);
         }
         Ok(())
@@ -505,9 +562,7 @@ impl BatchSetExchangeRate<'_>{
         );
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         for (i, &current_id) in chain_ids.iter().enumerate() {
-            let fee_config = mapping_fee_config
-                .get_fee_config(current_id)
-                .ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+            let fee_config = mapping_fee_config.get_fee_config(current_id);
             let this_base_price = fee_config.base_price;
             let this_reserve = fee_config.reserve;
             mapping_fee_config.set_fee_config(
