@@ -1951,6 +1951,117 @@ describe("Vizing Test", () => {
     }
   }
 
+  //launch success multi mode
+  it("Launch test success multi mode", async () => {
+    /** 
+    //big number value launch
+    //mode1
+    let thisTestValue2 = new anchor.BN(1000000);
+    const testMessage1 = {
+      mode: 1,
+      targetContract: dapp,
+      executeGasLimit: executeGasLimit,
+      maxFeePerGas: maxFeePerGas,
+      signature: Buffer.from("transfer from bob to alice do mode 1"),
+    };
+    let this_fee_mode1 = await EstimateTotalFee(
+      nullChainId,
+      thisTestValue2,
+      testMessage1
+    );
+    console.log("this_fee_mode1:",this_fee_mode1);
+    const newLaunchParams1 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: launchRelayer,
+      sender: user,
+      value: thisTestValue2,
+      destChainid: nullChainId,
+      additionParams: Buffer.alloc(0),
+      message: testMessage1,
+    };
+    await Launch(newLaunchParams1,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
+
+    //mode 2
+    const testMessage2 = {
+      mode: 2,
+      targetContract: dapp,
+      executeGasLimit: executeGasLimit,
+      maxFeePerGas: maxFeePerGas,
+      signature: Buffer.from("transfer from bob to alice do mode 2"),
+    };
+    const newLaunchParams2 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: launchRelayer,
+      sender: user,
+      value: thisTestValue2,
+      destChainid: nullChainId,
+      additionParams: Buffer.alloc(0),
+      message: testMessage2,
+    };
+    await Launch(newLaunchParams2,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
+    let this_fee_mode2 = await EstimateTotalFee(
+      nullChainId,
+      thisTestValue2,
+      testMessage2
+    );
+    console.log("this_fee_mode2:",this_fee_mode2);
+
+    //mode 3
+    const testMessage3 = {
+      mode: 3,
+      targetContract: dapp,
+      executeGasLimit: executeGasLimit,
+      maxFeePerGas: maxFeePerGas,
+      signature: Buffer.from("transfer from bob to alice do mode 3"),
+    };
+    const newLaunchParams3 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: launchRelayer,
+      sender: user,
+      value: thisTestValue2,
+      destChainid: nullChainId,
+      additionParams: Buffer.alloc(0),
+      message: testMessage3,
+    };
+    await Launch(newLaunchParams3,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
+    let this_fee_mode3 = await EstimateTotalFee(
+      nullChainId,
+      thisTestValue2,
+      testMessage3
+    );
+    console.log("this_fee_mode3:",this_fee_mode3);
+
+    //mode 4
+    const testMessage4 = {
+      mode: 4,
+      targetContract: dapp,
+      executeGasLimit: executeGasLimit,
+      maxFeePerGas: maxFeePerGas,
+      signature: Buffer.from("transfer from bob to alice do mode 4"),
+    };
+    const newLaunchParams4 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: launchRelayer,
+      sender: user,
+      value: thisTestValue2,
+      destChainid: nullChainId,
+      additionParams: Buffer.alloc(0),
+      message: testMessage4,
+    };
+    await Launch(newLaunchParams4,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
+    let this_fee_mode4 = await EstimateTotalFee(
+      nullChainId,
+      thisTestValue2,
+      testMessage4
+    );
+    console.log("this_fee_mode4:",this_fee_mode4);
+    */
+  });
+
   //launch test error
   it("Launch test error", async () => {
     let invalidDapp = Buffer.from("0xdAC17F958D2ee523a2206206994597C13D831ec7"); 

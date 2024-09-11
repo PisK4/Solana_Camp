@@ -1,7 +1,7 @@
 pub mod message_monitor {
 
     pub fn slice_message(message: &[u8]) -> Option<(u8, [u8; 32], u32, u64, Vec<u8>)> {
-        if message.len() < 48 {
+        if message.len() < 45 {
             return None;
         }
 
