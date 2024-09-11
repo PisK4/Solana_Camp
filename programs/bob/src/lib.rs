@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use std::mem::size_of;
 
-declare_id!("8GYu5JYsvAYoinbFTvW4AACYB5GxGstz21FmZe3MNFn4");
+declare_id!("bobQhTJQZZk4p98GrskDGxWZpfd5gnap1Hp5JiXpNek");
 
 pub const SENDER_SEED: &[u8] = b"vizing_message_sender";
 

@@ -27,6 +27,8 @@ function ethereumAddressToU8Array(address: string): number[] {
 describe("Vizing Test", () => {
   const provider = anchor.AnchorProvider.env();
 
+  console.log("provider:", provider.publicKey.toBase58());
+
   // Configure the client to use the local cluster.
   anchor.setProvider(provider);
   const vizingProgram = anchor.workspace.VizingCore as Program<VizingCore>;
@@ -257,7 +259,7 @@ describe("Vizing Test", () => {
         .rpc();
 
       let new_global_base_price = new anchor.BN(anchor.web3.LAMPORTS_PER_SOL);
-      let new_default_gas_limit = new anchor.BN(2);
+      let new_default_gas_limit = new anchor.BN(1);
       let new_amount_in_threshold = new anchor.BN(
         anchor.web3.LAMPORTS_PER_SOL * 100
       );
@@ -278,6 +280,36 @@ describe("Vizing Test", () => {
         .signers([])
         .rpc();
 
+      {
+        // ###test loop
+        let id = new anchor.BN(100);
+        for (let i = 0; i < 10; i++) {
+          let new_global_base_price = new anchor.BN(
+            anchor.web3.LAMPORTS_PER_SOL * (i + 1)
+          );
+          let new_default_gas_limit = new anchor.BN(1);
+          let new_amount_in_threshold = new anchor.BN(
+            anchor.web3.LAMPORTS_PER_SOL * 100
+          );
+          await vizingProgram.methods
+            .setThisGasGlobal(
+              id.add(new anchor.BN(i)),
+              new_global_base_price,
+              new_default_gas_limit,
+              new_amount_in_threshold,
+              molecular,
+              denominator
+            )
+            .accounts({
+              mappingFeeConfig: vizingGasSystem,
+              vizing: vizingPadConfigs,
+              user: provider.wallet.publicKey,
+            })
+            .signers([])
+            .rpc();
+        }
+      }
+
       let dapp = ethereumAddressToU8Array(
         "0xE3020Ac60f45842A747F6008390d0D28dDbBD981"
       );
@@ -297,7 +329,6 @@ describe("Vizing Test", () => {
         new anchor.BN(anchor.web3.LAMPORTS_PER_SOL * 2),
         new anchor.BN(anchor.web3.LAMPORTS_PER_SOL * 2),
       ];
-      console.log(base_price_group);
 
       await vizingProgram.methods
         .batchSetThisTradeFeeConfigMap(
@@ -460,8 +491,8 @@ describe("Vizing Test", () => {
     const message = {
       mode: 1,
       targetProgram: Buffer.from([
-        227, 2, 10, 198, 15, 69, 132, 42, 116, 127, 96, 8, 57, 13, 13, 40, 221,
-        187, 217, 141, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 13, 40, 221, 187, 217, 141,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       ]),
       executeGasLimit: new anchor.BN(1),
       maxFeePerGas: new anchor.BN(1000000000),
@@ -481,7 +512,7 @@ describe("Vizing Test", () => {
         21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
       ]),
       sender: provider.wallet.publicKey,
-      value: new anchor.BN(3),
+      value: new anchor.BN(430),
       destChainid: new anchor.BN(28516),
       additionParams: additionParams,
       message: message,
@@ -580,6 +611,57 @@ describe("Vizing Test", () => {
     }
 
     {
+      console.log("###test loop start");
+      let id = new anchor.BN(100);
+      for (let i = 0; i < 10; i++) {
+        const newLaunchParams = {
+          ...launchParams,
+          destChainid: id.add(new anchor.BN(i)),
+          message: {
+            ...launchParams.message,
+            maxFeePerGas: new anchor.BN(anchor.web3.LAMPORTS_PER_SOL * (i + 1)),
+          },
+        };
+
+        const feeReceiverBalanceBefore = await provider.connection.getBalance(
+          feeCollectorKeyPair.publicKey
+        );
+
+        const tx = await vizingProgram.methods
+          .launch(newLaunchParams)
+          .accounts({
+            vizingAppFeePayer: provider.wallet.publicKey,
+            vizingAppMessageAuthority: provider.wallet.publicKey,
+            vizingPadConfig: vizingPadConfigs,
+            vizingPadFeeCollector: feeCollectorKeyPair.publicKey,
+            mappingFeeConfig: vizingGasSystem,
+          })
+          .rpc();
+
+        const feeReceiverBalanceAfter = await provider.connection.getBalance(
+          feeCollectorKeyPair.publicKey
+        );
+
+        const diff = feeReceiverBalanceAfter - feeReceiverBalanceBefore;
+
+        console.log(
+          `chain id: ${id.add(new anchor.BN(i))}, price: ${
+            newLaunchParams.message.maxFeePerGas
+          },feeReceiverBalanceBefore: ${
+            feeReceiverBalanceBefore / anchor.web3.LAMPORTS_PER_SOL
+          }, feeReceiverBalanceAfter: ${
+            feeReceiverBalanceAfter / anchor.web3.LAMPORTS_PER_SOL
+          }, diff: ${diff / anchor.web3.LAMPORTS_PER_SOL}`
+        );
+
+        expect(diff).to.equal(
+          anchor.web3.LAMPORTS_PER_SOL * (i + 1) +
+            newLaunchParams.value.toNumber()
+        );
+      }
+    }
+
+    {
       console.log("launchVizing");
       // vizing app launch
       const feeReceiverBalanceBefore = await provider.connection.getBalance(
@@ -609,11 +691,10 @@ describe("Vizing Test", () => {
           feeReceiverBalanceBefore / anchor.web3.LAMPORTS_PER_SOL
         }, feeReceiverBalanceAfter: ${
           feeReceiverBalanceAfter / anchor.web3.LAMPORTS_PER_SOL
-        }
-        diff: ${diff / anchor.web3.LAMPORTS_PER_SOL}`
+        }, diff: ${diff / anchor.web3.LAMPORTS_PER_SOL}`
       );
 
-      expect(diff).to.equal(anchor.web3.LAMPORTS_PER_SOL + 886);
+      expect(diff).to.equal(anchor.web3.LAMPORTS_PER_SOL + 718);
     }
   });
 

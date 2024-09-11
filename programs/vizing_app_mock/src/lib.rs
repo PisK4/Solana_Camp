@@ -31,7 +31,7 @@ pub mod vizing_app_mock {
             latest_arrival_timestamp: VIZING_LATEST_ARRIVAL_TIMESTAMP_DEFAULT,
             relayer: VIZING_RELAYER_DEFAULT,
             sender: ctx.accounts.user.key(),
-            value: 886,
+            value: 718,
             dest_chainid: 28516,
             addition_params: AdditionalParams {
                 mode: 0,

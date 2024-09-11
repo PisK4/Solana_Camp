@@ -1,21 +1,28 @@
 [features]
 seeds = false
 skip-lint = false
-[programs.localnet]
-bob = "8GYu5JYsvAYoinbFTvW4AACYB5GxGstz21FmZe3MNFn4"
-alice = "6wZDNWprmb9TAZYMAPpT23kHDPABvBLT8jbWQKLHEmBy"
-vizing_core = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
-vizing_pad = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
+[programs.devnet]
+alice = "EM1xuughPx6KVN7H4DSC7xe7KuTzmMH52X4FnHF22wzF"
+bob = "bobQhTJQZZk4p98GrskDGxWZpfd5gnap1Hp5JiXpNek"
 vizing_app = "C17xMdoPdgPSYd7oGEjYf5LQ1mg6k6P3eavCBdMfaF1X"
 vizing_app_mock = "2xiuj4ozxygvkmC1WKJTGZyJXSD8dtbFxWkuJiMLzrTg"
+vizing_core = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
+vizing_pad = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
 
+[programs.localnet]
+alice = "EM1xuughPx6KVN7H4DSC7xe7KuTzmMH52X4FnHF22wzF"
+bob = "bobQhTJQZZk4p98GrskDGxWZpfd5gnap1Hp5JiXpNek"
+vizing_app = "C17xMdoPdgPSYd7oGEjYf5LQ1mg6k6P3eavCBdMfaF1X"
+vizing_app_mock = "2xiuj4ozxygvkmC1WKJTGZyJXSD8dtbFxWkuJiMLzrTg"
+vizing_core = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
+vizing_pad = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
 cluster = "Localnet"
-wallet = "/root/.config/solana/id.json"
+wallet = "./governance/.config/wallet/deployer_keypair.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

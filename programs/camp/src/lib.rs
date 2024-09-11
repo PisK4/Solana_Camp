@@ -9,7 +9,7 @@ use bob::program::Bob;
 // use bob::BobData;
 use bob::{self, cpi::accounts::BobAddOp, BobData, SENDER_SEED};
 
-declare_id!("6wZDNWprmb9TAZYMAPpT23kHDPABvBLT8jbWQKLHEmBy");
+declare_id!("EM1xuughPx6KVN7H4DSC7xe7KuTzmMH52X4FnHF22wzF");
 
 #[program]
 pub mod alice {
