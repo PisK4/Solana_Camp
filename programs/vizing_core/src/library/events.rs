@@ -1,6 +1,6 @@
-use crate::vizing_channel::*;
-use crate::vizing_omni::*;
 use anchor_lang::prelude::*;
+use crate::vizing_channel::LandingMessage;
+use crate::vizing_omni::{AdditionalParams, Message};
 
 #[event]
 pub struct OAppRegisteredEvent {

@@ -48,7 +48,9 @@ pub struct VizingSolReceiverInitialize<'info> {
 
 impl VizingSolReceiverInitialize<'_> {
     pub fn handler(ctx: Context<Self>) -> Result<()> {
-        ctx.accounts.sol_pda_receiver.bump = *ctx.bumps.get("sol_pda_receiver").unwrap();
+        let (_, sol_pda_receiver_bump) =
+            Pubkey::find_program_address(&[b"sol_pda_receiver".as_ref()], ctx.program_id);
+        ctx.accounts.sol_pda_receiver.bump = sol_pda_receiver_bump;
         Ok(())
     }
 }

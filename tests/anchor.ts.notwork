@@ -676,7 +676,10 @@ describe("Test", () => {
         mappingFeeConfigAuthority
       );
       const dappConfigMappings = await mappingFeeConfig.tradeFeeConfigMappings;
-      let dapp_config_value = dappConfigMappings[0].value.toNumber();
+      let dapp_config_value = 0;
+      if (dappConfigMappings && dappConfigMappings.length > 0) {
+          dapp_config_value = dappConfigMappings[0].value.toNumber();
+      }
       if (dapp_config_value > 0) {
         dapp_base_price = dapp_config_value;
       } else {
@@ -728,10 +731,12 @@ describe("Test", () => {
       const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
       const tradeFeeConfigMappings =
         await mappingFeeConfig.tradeFeeConfigMappings;
-      let trade_fee_config_molecular =
-        tradeFeeConfigMappings[0].molecular.toNumber();
-      let trade_fee_config_denominator =
-        tradeFeeConfigMappings[0].denominator.toNumber();
+      let trade_fee_config_molecular = 0;
+      let trade_fee_config_denominator = 0;
+      if (tradeFeeConfigMappings && tradeFeeConfigMappings.length > 0) {
+          trade_fee_config_molecular = tradeFeeConfigMappings[0].molecular.toNumber();
+          trade_fee_config_denominator = tradeFeeConfigMappings[0].denominator.toNumber();
+      }
       let global_trade_fee_molecular = gasSystemGlobal[0].molecular.toNumber();
       let global_trade_fee_denominator =
         gasSystemGlobal[0].denominator.toNumber();
@@ -754,11 +759,14 @@ describe("Test", () => {
         mappingFeeConfigAuthority
       );
       const dappConfigMappings = mappingFeeConfig.tradeFeeConfigMappings;
+      let dapp_config_value = 0;
+      if (dappConfigMappings && dappConfigMappings.length > 0) {
+          dapp_config_value = dappConfigMappings[0].value.toNumber();
+      }
       const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
 
       let gas_system_global_base_price =
         await gasSystemGlobal[0].globalBasePrice.toNumber();
-      let dapp_config_value = dappConfigMappings[0].value.toNumber();
       let dapp_base_price;
       if (dapp_config_value > 0) {
         dapp_base_price = dapp_config_value;

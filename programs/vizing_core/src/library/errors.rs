@@ -38,16 +38,6 @@ pub enum ErrorCode {
     InvalidLength,
     #[msg("Serialization message error.")]
     SerializationError,
-    #[msg("Gas system global not found.")]
-    GasSystemGlobalNotFound,
-    #[msg("Fee config not found.")]
-    FeeConfigNotFound,
-    #[msg("Trade fee not found.")]
-    TradeFeeNotFound,
-    #[msg("Trade fee config not found.")]
-    TradeFeeConfigNotFound,
-    #[msg("AmountInThresholds not found.")]
-    AmountInThresholdsNotFound,
     #[msg("ComputeTradeFee1 not found.")]
     ComputeTradeFee1NotFound,
     #[msg("ComputeTradeFee2 not found.")]

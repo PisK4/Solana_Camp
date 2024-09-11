@@ -17,7 +17,7 @@ pub const VIZING_MESSAGE_AUTHORITY_SEED: &[u8] = b"Vizing_Message_Authority_Seed
 pub const VIZING_ERLIEST_ARRIVAL_TIMESTAMP_DEFAULT: u64 = 0;
 pub const VIZING_LATEST_ARRIVAL_TIMESTAMP_DEFAULT: u64 = 0;
 pub const VIZING_RELAYER_DEFAULT: [u8; 32] = [0; 32];
-pub const VIZING_GASLIMIT_DEFAULT: u64 = 0;
+pub const VIZING_GASLIMIT_DEFAULT: u64 = 10000000;
 
 #[derive(Accounts)]
 pub struct VizingEmitterInitialize<'info> {

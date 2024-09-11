@@ -278,7 +278,9 @@ describe("Vizing Test", () => {
         .signers([])
         .rpc();
 
-      let dapp = ethereumAddressToU8Array("0x00");
+      let dapp = ethereumAddressToU8Array(
+        "0xE3020Ac60f45842A747F6008390d0D28dDbBD981"
+      );
 
       let dapp2 = ethereumAddressToU8Array(
         "0xE3020Ac60f45842A747F6008390d0D28dDbBD98D"
@@ -292,9 +294,10 @@ describe("Vizing Test", () => {
       let tradeFeeConfig_moleculars = [new anchor.BN(0), new anchor.BN(0)];
       let tradeFeeConfig_denominators = [new anchor.BN(10), new anchor.BN(10)];
       let base_price_group = [
-        new anchor.BN(anchor.web3.LAMPORTS_PER_SOL),
-        new anchor.BN(anchor.web3.LAMPORTS_PER_SOL),
+        new anchor.BN(anchor.web3.LAMPORTS_PER_SOL * 2),
+        new anchor.BN(anchor.web3.LAMPORTS_PER_SOL * 2),
       ];
+      console.log(base_price_group);
 
       await vizingProgram.methods
         .batchSetThisTradeFeeConfigMap(
@@ -623,6 +626,9 @@ describe("Vizing Test", () => {
         [Buffer.from(resultDataSeed)],
         vizingAppMockProgram.programId
       );
+    console.log(
+      `resultDataAccount: ${resultDataAccount.toBase58()}, bump: ${resultDataBump}`
+    );
 
     const targetProgram = vizingAppMockProgram.programId;
 
@@ -650,7 +656,7 @@ describe("Vizing Test", () => {
       vizingAppConfig = vizingAppContract;
 
       const registerParams = {
-        solPdaReciver: solPdaReceiver,
+        solPdaReceiver: solPdaReceiver,
         vizingAppAccounts: [resultDataAccount],
         vizingAppProgramId: targetProgram,
       };
@@ -666,6 +672,10 @@ describe("Vizing Test", () => {
 
       const fetchedVizingAppConfig =
         await vizingProgram.account.vizingAppConfig.fetch(vizingAppConfig);
+
+      expect(fetchedVizingAppConfig.solPdaReceiver.toBase58()).to.equal(
+        solReceiver.toBase58()
+      );
 
       expect(fetchedVizingAppConfig.vizingAppAccounts[0].toBase58()).to.equal(
         resultDataAccount.toBase58()

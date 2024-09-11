@@ -6,6 +6,7 @@ use crate::gas_system::*;
 use crate::governance::*;
 use crate::library::*;
 use crate::vizing_omni::*;
+use crate::vizing_omni::VIZING_APP_CONFIG_SEED;
 
 
 #[account]
@@ -99,14 +100,9 @@ impl LaunchOp<'_> {
         let dapp = &params.message.target_program;
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
 
-        let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
-        let get_fee_config = mapping_fee_config
-            .get_fee_config(dest_chain_id)
-            .ok_or(errors::ErrorCode::FeeConfigNotFound)?;
-        msg!("target_program: {:?}", params.message.target_program);
-        let get_trade_fee_config = mapping_fee_config
-            .get_trade_fee_config(dest_chain_id, *dapp)
-            .ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+        let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
+        let get_fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
+        let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id, *dapp);
         let dapp_config_value=get_trade_fee_config.value;
 
         let fee = vizing_gas_system::estimate_total_fee(
@@ -375,8 +371,8 @@ impl ComputeTradeFee1<'_> {
     ) -> Result<u64> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let current_record_message = &mut ctx.accounts.current_record_message;
-        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
-        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
+        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
         let fee: u64 = vizing_gas_system::compute_trade_fee1(
             fee_config.molecular,
             fee_config.denominator,
@@ -415,8 +411,8 @@ impl ComputeTradeFee2<'_> {
         amount_out: u64,
     ) -> Result<u64> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
-        let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,target_contract).ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
+        let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,target_contract);
         let current_record_message = &mut ctx.accounts.current_record_message;
         let fee: u64 = vizing_gas_system::compute_trade_fee2(
             trade_fee_config.molecular,
@@ -456,8 +452,8 @@ impl EstimatePrice1<'_> {
         dest_chain_id: u64,
     ) -> Result<u64> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
-        let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,target_contract).ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
+        let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,target_contract);
         let current_record_message = &mut ctx.accounts.current_record_message;
         let dapp_config_value=trade_fee_config.value;
 
@@ -495,8 +491,8 @@ impl EstimatePrice2<'_> {
         dest_chain_id: u64,
     ) -> Result<u64> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
-        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
+        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
         let current_record_message = &mut ctx.accounts.current_record_message;
 
         let base_price: u64 = vizing_gas_system::estimate_price2(
@@ -535,13 +531,13 @@ impl EstimateGas<'_> {
     ) -> Result<u64> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let current_record_message = &mut ctx.accounts.current_record_message;
-        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
+        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
 
         let serialized_data: Vec<u8> = message.try_to_vec()?;
         let Some((_, dapp, _, _, _))=message_monitor::slice_message(&serialized_data) else { todo!() };
 
-        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
-        let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,dapp).ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
+        let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,dapp);
         let dapp_config_value = trade_fee_config.value;
 
         let fee: u64 = vizing_gas_system::estimate_gas(
@@ -595,9 +591,9 @@ impl EstimateTotalFee<'_> {
         let serialized_data: Vec<u8> = message.try_to_vec()?;
         let Some((_, dapp, _, _, _))=message_monitor::slice_message(&serialized_data) else { todo!() };
 
-        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
-        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
-        let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,dapp).ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
+        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
+        let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,dapp);
         let dapp_config_value = trade_fee_config.value;
 
         let fee: u64 = vizing_gas_system::estimate_total_fee(
@@ -646,7 +642,7 @@ impl ExactOutput<'_> {
         amount_out: u64,
     ) -> Result<u64> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
         let current_record_message = &mut ctx.accounts.current_record_message;
 
         let amount_in: u64 = vizing_gas_system::exact_output(
@@ -684,7 +680,7 @@ impl ExactInput<'_> {
         amount_in: u64,
     ) -> Result<u64> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id).ok_or(errors::ErrorCode::FeeConfigNotFound)?;
+        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
         let current_record_message = &mut ctx.accounts.current_record_message;
 
         let amount_out: u64 = vizing_gas_system::exact_input(
@@ -729,13 +725,9 @@ impl EstimateVizingGasFee1<'_>{
         msg!("message: {:?}",message);
         let Some((_, dapp, _, _, _))=message_monitor::slice_message(&message) else { todo!() };
         
-        let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
-        let get_fee_config = mapping_fee_config
-            .get_fee_config(dest_chain_id)
-            .ok_or(errors::ErrorCode::FeeConfigNotFound)?;
-        let get_trade_fee_config = mapping_fee_config
-            .get_trade_fee_config(dest_chain_id, dapp)
-            .ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+        let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
+        let get_fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
+        let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id, dapp);
         let dapp_config_value = get_trade_fee_config.value;
         
         let vizing_gas_fee = vizing_gas_system::estimate_gas(
@@ -792,13 +784,9 @@ impl EstimateVizingGasFee2<'_>{
         let Some((_, dapp, _, _, _))=message_monitor::slice_message(&serialized_data) else { todo!() };
 
         msg!("dapp: {:?}",dapp);
-        let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id).ok_or(errors::ErrorCode::GasSystemGlobalNotFound)?;
-        let get_fee_config = mapping_fee_config
-            .get_fee_config(dest_chain_id)
-            .ok_or(errors::ErrorCode::FeeConfigNotFound)?;
-        let get_trade_fee_config = mapping_fee_config
-            .get_trade_fee_config(dest_chain_id, dapp)
-            .ok_or(errors::ErrorCode::TradeFeeConfigNotFound)?;
+        let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
+        let get_fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
+        let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id, dapp);
         let dapp_config_value = get_trade_fee_config.value;
         
         let vizing_gas_fee = vizing_gas_system::estimate_gas(
