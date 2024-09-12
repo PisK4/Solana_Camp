@@ -92,10 +92,12 @@ describe("Vizing Test", () => {
   let chainId = Buffer.from([4]);
   let chainId2 = Buffer.from([5]);
   console.log("chainId buffer:", chainId, chainId2);
-  let base_price = new anchor.BN(500);
-  let reserve = new anchor.BN(1000);
+  let global_base_price = new anchor.BN(500);
+  let reserve = new anchor.BN(1000000);
   let molecular = new anchor.BN(5);
   let denominator = new anchor.BN(10);
+  let default_gas_limit = new anchor.BN(100);
+  let amount_in_threshold = new anchor.BN(100_000_000_000); //100 sol
   let molecular_decimal = 6;
   let denominator_decimal = 6;
 
@@ -229,7 +231,7 @@ describe("Vizing Test", () => {
     }
   });
 
-  it("Initializes fee_config", async() => {
+  it("Initializes gas global", async() => {
       //init_mapping_fee_config
       [mappingFeeConfigAuthority, mappingFeeConfigBump] =
       await PublicKey.findProgramAddress(
@@ -241,39 +243,37 @@ describe("Vizing Test", () => {
         mappingFeeConfigAuthority.toString()
       );
       console.log("mappingFeeConfigBump:", mappingFeeConfigBump);
-    try {
-      const mappingFeeConfig =
-        await vizingProgram.account.mappingFeeConfig.fetch(
-          mappingFeeConfigAuthority
-        );
-      console.log("mappingFeeConfig:", mappingFeeConfig);
-    } catch (e) {
       try {
-        const initFeeConfig = await vizingProgram.methods
-          .initFeeConfig(
+        const mappingFeeConfig =
+          await vizingProgram.account.mappingFeeConfig.fetch(
+            mappingFeeConfigAuthority
+          );
+        const gasSystemGlobalMappings =
+          mappingFeeConfig.gasSystemGlobalMappings;
+        console.log("gasSystemGlobalMappings:", gasSystemGlobalMappings);
+      } catch (e) {
+        const initGasGlobal = await vizingProgram.methods
+          .initGasGlobal(
             id,
-            base_price,
-            reserve,
+            global_base_price,
+            default_gas_limit,
+            amount_in_threshold,
             molecular,
-            denominator,
-            molecular_decimal,
-            denominator_decimal
+            denominator
           )
           .accounts({
-            vizing: vizingPadConfigs,
             mappingFeeConfig: mappingFeeConfigAuthority,
+            vizing: vizingPadConfigs,
             user: user,
             systemProgram: PROGRAM_ID,
           })
           .signers([])
           .rpc();
-        console.log(`initFeeConfig:${initFeeConfig}'`);
+        console.log(`initGasGlobal:${initGasGlobal}'`);
         // Confirm transaction
-        await provider.connection.confirmTransaction(initFeeConfig);
-      } catch (e) {
-        console.log("initFeeConfig error:", e);
+        await provider.connection.confirmTransaction(initGasGlobal);
+        console.log("InitGasGlobal error:", e);
       }
-    }
   })
 
   it("Initializes record message", async() => {

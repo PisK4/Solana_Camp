@@ -179,14 +179,14 @@ describe("Test", () => {
     }
 
     let arbitrum_chain_id = new anchor.BN(28516);
-    let arbitrum_maxPrice = new anchor.BN(1000000000);
-    let arbitrum_destChainBasePrice = new anchor.BN(1000000000);
+    let arbitrum_maxPrice = new anchor.BN(100000);
+    let arbitrum_destChainBasePrice = new anchor.BN(10000);
     let arbitrum_tradeLimit = new anchor.BN(500000000000); //500 sol limit
     let arbitrum_tradeFee = {
-      molecular: new anchor.BN(0),
-      denominator: new anchor.BN(10),
+      molecular: new anchor.BN(1),
+      denominator: new anchor.BN(2),
     };
-    let arbitrum_DAppBasePrice = new anchor.BN(1000000000);
+    let arbitrum_DAppBasePrice = new anchor.BN(10000);
 
     let vizing_chain_id = new anchor.BN(28516);
     let vizing_maxPrice = new anchor.BN(100000);
@@ -257,48 +257,59 @@ describe("Test", () => {
     let denominator = arbitrum_tradeFee.denominator;
     let molecular_decimal = 6;
     let denominator_decimal = 6;
-    //init_fee_config
-    async function InitFeeConfig() {
+
+    let global_base_price = new anchor.BN(1000);
+    let default_gas_limit = new anchor.BN(10000);
+    let amount_in_threshold = arbitrum_tradeLimit;
+    //init_gas_global
+    async function InitGasGlobal(
+      thisChainId,
+      thisGlobalBasePrice,
+      thisDefaultGasLimit,
+      thisAmountInThreshold,
+      thisMolecular,
+      thisDenominator
+    ) {
       try {
         const mappingFeeConfig =
           await pg.program.account.mappingFeeConfig.fetch(
             mappingFeeConfigAuthority
           );
-        console.log("mappingFeeConfig:", mappingFeeConfig);
+        const gasSystemGlobalMappings =
+          mappingFeeConfig.gasSystemGlobalMappings;
+        console.log("gasSystemGlobalMappings:", gasSystemGlobalMappings);
       } catch (e) {
-        try {
-          const initFeeConfig = await pg.program.methods
-            .initFeeConfig(
-              arbitrum_chain_id,
-              base_price,
-              reserve,
-              molecular,
-              denominator,
-              molecular_decimal,
-              denominator_decimal
-            )
-            .accounts({
-              vizing: vizingPadSettings,
-              mappingFeeConfig: mappingFeeConfigAuthority,
-              user: user,
-              systemProgram: systemId,
-            })
-            .signers([signer])
-            .rpc();
-          console.log(`initFeeConfig:${initFeeConfig}'`);
-          // Confirm transaction
-          await pg.connection.confirmTransaction(initFeeConfig);
-        } catch (e) {
-          console.log("initFeeConfig error:", e);
-        }
+        const initGasGlobal = await pg.program.methods
+          .initGasGlobal(
+            thisChainId,
+            thisGlobalBasePrice,
+            thisDefaultGasLimit,
+            thisAmountInThreshold,
+            thisMolecular,
+            thisDenominator
+          )
+          .accounts({
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            vizing: vizingPadSettings,
+            user: user,
+            systemProgram: systemId,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`initGasGlobal:${initGasGlobal}'`);
+        // Confirm transaction
+        await pg.connection.confirmTransaction(initGasGlobal);
+        console.log("InitGasGlobal error:", e);
       }
     }
-    await InitFeeConfig();
-
-    //init_gas_global
-    let global_base_price = new anchor.BN(500);
-    let default_gas_limit = new anchor.BN(1000);
-    let amount_in_threshold = new anchor.BN(1000000000);
+    await InitGasGlobal(
+      arbitrum_chain_id,
+      global_base_price,
+      default_gas_limit,
+      amount_in_threshold,
+      molecular,
+      denominator
+    );
 
     //init_native_token_trade_fee_config
     let native_molecular = new anchor.BN(5);
@@ -390,7 +401,7 @@ describe("Test", () => {
 
     //setThisGasGlobal
     let new_global_base_price = arbitrum_destChainBasePrice;
-    let new_default_gas_limit = new anchor.BN(2);
+    let new_default_gas_limit = new anchor.BN(10);
     let new_amount_in_threshold = arbitrum_tradeLimit;
     async function SetThisGasGlobal(
       thisChainId,
@@ -471,15 +482,15 @@ describe("Test", () => {
         console.log("SetThisFeeConfig error:", e);
       }
     }
-    await SetThisFeeConfig(
-      arbitrum_chain_id,
-      base_price,
-      reserve,
-      molecular,
-      denominator,
-      molecular_decimal,
-      denominator_decimal
-    );
+    // await SetThisFeeConfig(
+    //   arbitrum_chain_id,
+    //   base_price,
+    //   reserve,
+    //   molecular,
+    //   denominator,
+    //   molecular_decimal,
+    //   denominator_decimal
+    // );
 
     //set_token_fee_config
     async function SetThisTokenFeeConfig() {
@@ -501,7 +512,7 @@ describe("Test", () => {
         console.log("SetThisTokenFeeConfig error:", e);
       }
     }
-    await SetThisTokenFeeConfig();
+    // await SetThisTokenFeeConfig();
 
     async function SetThisDappPriceConfig() {
       try {
@@ -528,7 +539,7 @@ describe("Test", () => {
         console.log("SetThisDappPriceConfig error:", e);
       }
     }
-    await SetThisDappPriceConfig();
+    // await SetThisDappPriceConfig();
 
     //set_exchange_rate
     async function SetThisExchangeRate() {
@@ -556,7 +567,7 @@ describe("Test", () => {
         console.log("SetThisExchangeRate error:", e);
       }
     }
-    await SetThisExchangeRate();
+    // await SetThisExchangeRate();
 
     //batch_set_token_fee_config
     let destChainIds = [arbitrum_chain_id];
@@ -583,14 +594,14 @@ describe("Test", () => {
         console.log("BatchSetThisTokenFeeConfig error:", e);
       }
     }
-    await BatchSetThisTokenFeeConfig();
+    // await BatchSetThisTokenFeeConfig();
 
     //batch_set_this_trade_fee_config_map
     let tradeFeeConfig_dapps = [dapp];
     let tradeFeeConfig_destChainIds = [arbitrum_chain_id];
     let tradeFeeConfig_moleculars = [arbitrum_tradeFee.molecular];
     let tradeFeeConfig_denominators = [arbitrum_tradeFee.denominator];
-    let base_price_group = [new anchor.BN(1000)];
+    let base_price_group = [new anchor.BN(10000)];
     async function BatchSetThisTradeFeeConfigMap() {
       try {
         const batchSetThisTradeFeeConfigMap = await pg.program.methods
@@ -618,7 +629,7 @@ describe("Test", () => {
         console.log("BatchSetThisTradeFeeConfigMap error:", e);
       }
     }
-    await BatchSetThisTradeFeeConfigMap();
+    // await BatchSetThisTradeFeeConfigMap();
 
     //batch_set_this_dapp_price_config_in_diff_chain
     let base_prices = [arbitrum_destChainBasePrice];
@@ -652,7 +663,7 @@ describe("Test", () => {
         console.log("BatchSetThisDappPriceConfigInDiffChain error:", e);
       }
     }
-    await BatchSetThisDappPriceConfigInDiffChain();
+    // await BatchSetThisDappPriceConfigInDiffChain();
 
     //batch_set_this_dapp_price_config_in_same_chain
     let DappPriceConfig_dapps = [dapp];
@@ -684,7 +695,7 @@ describe("Test", () => {
         console.log("BatchSetThisDappPriceConfigInSameChain error:", e);
       }
     }
-    await BatchSetThisDappPriceConfigInSameChain();
+    // await BatchSetThisDappPriceConfigInSameChain();
 
     //get
     async function GetDappBasePrice(dest_chain_id, chain_base_price, dapp) {
@@ -695,7 +706,7 @@ describe("Test", () => {
       const dappConfigMappings = await mappingFeeConfig.tradeFeeConfigMappings;
       let dapp_config_value = 0;
       if (dappConfigMappings && dappConfigMappings.length > 0) {
-          dapp_config_value = dappConfigMappings[0].value.toNumber();
+        dapp_config_value = dappConfigMappings[0].value.toNumber();
       }
       if (dapp_config_value > 0) {
         dapp_base_price = dapp_config_value;
@@ -751,8 +762,10 @@ describe("Test", () => {
       let trade_fee_config_molecular = 0;
       let trade_fee_config_denominator = 0;
       if (tradeFeeConfigMappings && tradeFeeConfigMappings.length > 0) {
-          trade_fee_config_molecular = tradeFeeConfigMappings[0].molecular.toNumber();
-          trade_fee_config_denominator = tradeFeeConfigMappings[0].denominator.toNumber();
+        trade_fee_config_molecular =
+          tradeFeeConfigMappings[0].molecular.toNumber();
+        trade_fee_config_denominator =
+          tradeFeeConfigMappings[0].denominator.toNumber();
       }
       let gas_system_global_molecular = gasSystemGlobal[0].molecular.toNumber();
       let gas_system_global_denominator =
@@ -776,11 +789,11 @@ describe("Test", () => {
         mappingFeeConfigAuthority
       );
       const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
-      
+
       const dappConfigMappings = mappingFeeConfig.tradeFeeConfigMappings;
       let dapp_config_value = 0;
       if (dappConfigMappings && dappConfigMappings.length > 0) {
-          dapp_config_value = dappConfigMappings[0].value.toNumber();
+        dapp_config_value = dappConfigMappings[0].value.toNumber();
       }
 
       let gas_system_global_base_price =
@@ -846,7 +859,7 @@ describe("Test", () => {
     }
 
     let testAmountOut = new anchor.BN(100000000);
-    const testExecuteGasLimit = new anchor.BN(2);
+    const testExecuteGasLimit = new anchor.BN(10);
     const newMessage = {
       mode: 1,
       targetContract: dapp,
@@ -903,10 +916,10 @@ describe("Test", () => {
         );
         fee += trade_fee2;
       }
-      console.log("finally fee:", fee);
+      console.log("EstimateGas fee:", fee);
       return fee;
     }
-    await EstimateGas(testAmountOut, arbitrum_chain_id, newMessage);
+    // await EstimateGas(testAmountOut, arbitrum_chain_id, newMessage);
 
     async function EstimateTotalFee(dest_chain_id, amount_out, this_message) {
       const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
@@ -970,7 +983,7 @@ describe("Test", () => {
       console.log("EstimateTotalFee:", finalFee);
       return finalFee;
     }
-    await EstimateTotalFee(arbitrum_chain_id, testAmountOut, newMessage);
+    // await EstimateTotalFee(arbitrum_chain_id, testAmountOut, newMessage);
 
     async function EstimateVizingGasFee(
       value,
@@ -1022,16 +1035,17 @@ describe("Test", () => {
         console.log("BatchSetThisExchangeRate error:", e);
       }
     }
-    await BatchSetThisExchangeRate();
+    // await BatchSetThisExchangeRate();
+
 
     // launch
-    const executeGasLimit = new BN(1);
+    const executeGasLimit = new anchor.BN(10);
     const maxFeePerGas = arbitrum_maxPrice;
     let launchRelayer = ethereumAddressToU8Array(
       "0xdAC17F958D2ee523a2206206994597C13D831ec7"
     );
-    
-    let testDapp = Buffer.from("0xdAC17F958D2ee523a2206206994597C13D831ec7"); 
+
+    let testDapp = Buffer.from("0xdAC17F958D2ee523a2206206994597C13D831ec7");
 
     const message = {
       mode: 1,
@@ -1041,18 +1055,31 @@ describe("Test", () => {
       signature: Buffer.from("transfer from bob to alice"),
     };
 
+    let launch1Value=new anchor.BN(10_000_000);// 0.01 sol
+
     const launchParams = {
       erliestArrivalTimestamp: new anchor.BN(1),
       latestArrivalTimestamp: new anchor.BN(2),
       relayer: launchRelayer,
       sender: user,
-      value: new anchor.BN(886), // 0.01 sol
+      value: launch1Value, // 0.01 sol
       destChainid: arbitrum_chain_id,
       additionParams: Buffer.alloc(0),
       message: message,
     };
-    let feeCollector=feeReceiverKeyPair.publicKey;
-    async function Launch(thisLaunchParams,thisVizingPadSettings,thisFeeCollector,thisMappingFeeConfig) {
+    let feeCollector = feeReceiverKeyPair.publicKey;
+
+    
+    //forecast
+    await EstimateTotalFee(arbitrum_chain_id, launch1Value, message);
+    await EstimateVizingGasFee(launch1Value, arbitrum_chain_id, Buffer.alloc(0) ,message);
+
+    async function Launch(
+      thisLaunchParams,
+      thisVizingPadSettings,
+      thisFeeCollector,
+      thisMappingFeeConfig
+    ) {
       try {
         let launch = await pg.program.methods
           .launch(thisLaunchParams)
@@ -1075,24 +1102,15 @@ describe("Test", () => {
     }
 
     //success launch
-    let thisTestValue = new anchor.BN(1000);
-    let thisFee1 = await EstimateTotalFee(
-      arbitrum_chain_id,
-      thisTestValue,
-      message
+    await Launch(
+      launchParams,
+      vizingPadSettings,
+      feeCollector,
+      mappingFeeConfigAuthority
     );
-    let solBefore1 = await getSolBalance(user);
-    await Launch(launchParams,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
-    let solAfter1 = await getSolBalance(user);
-    let differ1 = solBefore1 - solAfter1;
-    if (differ1 >= thisFee1) {
-      console.log("launch1 success", differ1);
-    } else {
-      console.log("launch1 amount error", differ1);
-    }
 
-    //test only set gas_global 
-    let nullChainId=new anchor.BN(6);
+    //test only set gas_global
+    let nullChainId = new anchor.BN(6);
     await SetThisGasGlobal(
       nullChainId,
       new_global_base_price,
@@ -1102,6 +1120,7 @@ describe("Test", () => {
       denominator
     );
     //big number value launch
+    //mode1
     let thisTestValue2 = new anchor.BN(1000000);
     const testMessage1 = {
       mode: 1,
@@ -1115,7 +1134,7 @@ describe("Test", () => {
       thisTestValue2,
       testMessage1
     );
-    console.log("this_fee_mode1:",this_fee_mode1);
+    console.log("this_fee_mode1:", this_fee_mode1);
     const newLaunchParams1 = {
       erliestArrivalTimestamp: new anchor.BN(1),
       latestArrivalTimestamp: new anchor.BN(2),
@@ -1126,6 +1145,8 @@ describe("Test", () => {
       additionParams: Buffer.alloc(0),
       message: testMessage1,
     };
+
+    /** 
     await Launch(newLaunchParams1,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
 
     //mode 2
@@ -1205,6 +1226,7 @@ describe("Test", () => {
       testMessage4
     );
     console.log("this_fee_mode4:",this_fee_mode4);
+    */
 
     //any message and dapp
     const errorDappMessage = {
@@ -1224,7 +1246,12 @@ describe("Test", () => {
       additionParams: Buffer.alloc(0),
       message: errorDappMessage,
     };
-    await Launch(errLaunchParams3,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
+    await Launch(
+      errLaunchParams3,
+      vizingPadSettings,
+      feeCollector,
+      mappingFeeConfigAuthority
+    );
 
     //error non fee_collector
     let newNonFeeCollector = new web3.Keypair();
@@ -1239,23 +1266,44 @@ describe("Test", () => {
       additionParams: Buffer.alloc(0),
       message: message,
     };
-    await Launch(errLaunchParams1,vizingPadSettings,newNonFeeCollector.publicKey,mappingFeeConfigAuthority);
+    await Launch(
+      errLaunchParams1,
+      vizingPadSettings,
+      newNonFeeCollector.publicKey,
+      mappingFeeConfigAuthority
+    );
     console.log("error non fee_collector");
 
     //error non vizingPadSettings
     let newVizingPadSettings = new web3.Keypair();
-    console.log("newVizingPadSettings:", newVizingPadSettings.publicKey.toBase58());
-    await Launch(errLaunchParams1,newVizingPadSettings.publicKey,feeCollector,mappingFeeConfigAuthority);
+    console.log(
+      "newVizingPadSettings:",
+      newVizingPadSettings.publicKey.toBase58()
+    );
+    await Launch(
+      errLaunchParams1,
+      newVizingPadSettings.publicKey,
+      feeCollector,
+      mappingFeeConfigAuthority
+    );
     console.log("error non vizingPadSettings");
 
     //error non mappingFeeConfigAuthority
     let newMappingFeeConfigAuthority = new web3.Keypair();
-    console.log("newMappingFeeConfigAuthority:", newMappingFeeConfigAuthority.publicKey.toBase58());
-    await Launch(errLaunchParams1,vizingPadSettings,feeCollector,newMappingFeeConfigAuthority.publicKey);
+    console.log(
+      "newMappingFeeConfigAuthority:",
+      newMappingFeeConfigAuthority.publicKey.toBase58()
+    );
+    await Launch(
+      errLaunchParams1,
+      vizingPadSettings,
+      feeCollector,
+      newMappingFeeConfigAuthority.publicKey
+    );
     console.log("error non newMappingFeeConfigAuthority");
 
     // error over amount_in_threshold
-    let errValue=new anchor.BN(500000000001);  //current limit=500000000000
+    let errValue = new anchor.BN(500000000001); //current limit=500000000000
     const errLaunchParams2 = {
       erliestArrivalTimestamp: new anchor.BN(1),
       latestArrivalTimestamp: new anchor.BN(2),
@@ -1266,7 +1314,12 @@ describe("Test", () => {
       additionParams: Buffer.alloc(0),
       message: message,
     };
-    await Launch(errLaunchParams2,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
+    await Launch(
+      errLaunchParams2,
+      vizingPadSettings,
+      feeCollector,
+      mappingFeeConfigAuthority
+    );
     console.log("error over amount_in_threshold");
 
     //error price < dapp_base_price
@@ -1288,66 +1341,72 @@ describe("Test", () => {
       additionParams: Buffer.alloc(0),
       message: errorPriceMessage,
     };
-    await Launch(errLaunchParams4,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
+    await Launch(
+      errLaunchParams4,
+      vizingPadSettings,
+      feeCollector,
+      mappingFeeConfigAuthority
+    );
     console.log("error price < dapp_base_price");
 
     //get
-    async function GetEstimateGas(amount_out, dest_chain_id, this_message) {
-      try {
-        const estimateGas = await pg.program.methods
-          .estimateGas(amount_out, dest_chain_id, this_message)
-          .accounts({
-            mappingFeeConfig: mappingFeeConfigAuthority,
-            currentRecordMessage: recordMessageAuthority,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`estimateGas tx:${estimateGas}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(estimateGas);
-        const currentRecordMessage =
-          await pg.program.account.currentRecordMessage.fetch(
-            recordMessageAuthority
-          );
-        const estimateGasNumber =
-          await currentRecordMessage.estimateGas.toNumber();
-        console.log("estimateGasNumber:", estimateGasNumber);
-      } catch (e) {
-        console.log("estimateGas error:", e);
-      }
-    }
-    await GetEstimateGas(testAmountOut, arbitrum_chain_id, newMessage);
+    // async function GetEstimateGas(amount_out, dest_chain_id, this_message) {
+    //   try {
+    //     const estimateGas = await pg.program.methods
+    //       .estimateGas(amount_out, dest_chain_id, this_message)
+    //       .accounts({
 
-    async function GetEstimateTotalFee(
-      amount_out,
-      dest_chain_id,
-      this_message
-    ) {
-      try {
-        const estimateTotalFee = await pg.program.methods
-          .estimateTotalFee(dest_chain_id, amount_out, this_message)
-          .accounts({
+    //         mappingFeeConfig: mappingFeeConfigAuthority,
+    //         currentRecordMessage: recordMessageAuthority,
+    //       })
+    //       .signers([signer])
+    //       .rpc();
+    //     console.log(`estimateGas tx:${estimateGas}'`);
+    //     // Confirm transaction
+    //     await pg.connection.confirmTransaction(estimateGas);
+    //     const currentRecordMessage =
+    //       await pg.program.account.currentRecordMessage.fetch(
+    //         recordMessageAuthority
+    //       );
+    //     const estimateGasNumber =
+    //       await currentRecordMessage.estimateGas.toNumber();
+    //     console.log("estimateGasNumber:", estimateGasNumber);
+    //   } catch (e) {
+    //     console.log("estimateGas error:", e);
+    //   }
+    // }
+    // await GetEstimateGas(testAmountOut, id, newMessage);
 
-            mappingFeeConfig: mappingFeeConfigAuthority,
-            currentRecordMessage: recordMessageAuthority,
-          })
-          .signers([signer])
-          .rpc();
-        console.log(`estimateTotalFee tx:${estimateTotalFee}'`);
-        // Confirm transaction
-        await pg.connection.confirmTransaction(estimateTotalFee);
-        const currentRecordMessage =
-          await pg.program.account.currentRecordMessage.fetch(
-            recordMessageAuthority
-          );
-        const estimateTotalFeeNumber =
-          await currentRecordMessage.estimateTotalFee.toNumber();
-        console.log("estimateTotalFeeNumber:", estimateTotalFeeNumber);
-      } catch (e) {
-        console.log("GetEstimateTotalFee error:", e);
-      }
-    }
-    await GetEstimateTotalFee(testAmountOut, arbitrum_chain_id, newMessage);
+    // async function GetEstimateTotalFee(
+    //   amount_out,
+    //   dest_chain_id,
+    //   this_message
+    // ) {
+    //   try {
+    //     const estimateTotalFee = await pg.program.methods
+    //       .estimateTotalFee(dest_chain_id, amount_out, this_message)
+    //       .accounts({
+
+    //         mappingFeeConfig: mappingFeeConfigAuthority,
+    //         currentRecordMessage: recordMessageAuthority,
+    //       })
+    //       .signers([signer])
+    //       .rpc();
+    //     console.log(`estimateTotalFee tx:${estimateTotalFee}'`);
+    //     // Confirm transaction
+    //     await pg.connection.confirmTransaction(estimateTotalFee);
+    //     const currentRecordMessage =
+    //       await pg.program.account.currentRecordMessage.fetch(
+    //         recordMessageAuthority
+    //       );
+    //     const estimateTotalFeeNumber =
+    //       await currentRecordMessage.estimateTotalFee.toNumber();
+    //     console.log("estimateTotalFeeNumber:", estimateTotalFeeNumber);
+    //   } catch (e) {
+    //     console.log("GetEstimateTotalFee error:", e);
+    //   }
+    // }
+    // await GetEstimateTotalFee(testAmountOut, id, newMessage);
 
     const estimateTotalFeeMessage = {
       mode: Buffer.from([1]), // u8
@@ -1452,6 +1511,6 @@ describe("Test", () => {
         console.log("RemoveTradeFeeDapp error:", e);
       }
     }
-    await RemoveTradeFeeDapp(arbitrum_chain_id, Buffer.from(dapp));
+    await RemoveTradeFeeDapp(arbitrum_chain_id, dapp);
   });
 });

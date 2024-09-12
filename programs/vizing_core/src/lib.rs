@@ -97,34 +97,30 @@ pub mod vizing_core {
     // ***********  governance end ************
 
     /*
-    /// @notice owner initialize fee config mapping in MappingFeeConfig
-    /// @param key evm chainId
-    /// @param basePrice  base price
-    /// @param reserve  reserve
-    /// @param molecular  molecular
-    /// @param denominator  denominator
-    /// @param molecularDecimal  molecular decimal
-    /// @param denominatorDecimal  denominator decimal
+    /// @notice gas pool admin initialize global params in MappingFeeConfig
+    /// @param global_base_price global base price
+    /// @param default_gas_limit  global default gas limit
+    /// @param amount_in_threshold  global amountIn threshold
+    /// @param molecular  global molecular
+    /// @param denominator  global denominator
      */
-    pub fn init_fee_config(
-        ctx: Context<InitFeeConfig>,
+    pub fn init_gas_global(
+        ctx: Context<InitGasGlobal>,
         key: u64,
-        base_price: u64,
-        reserve: u64,
+        global_base_price: u64,
+        default_gas_limit: u64,
+        amount_in_threshold: u64,
         molecular: u64,
         denominator: u64,
-        molecular_decimal: u8,
-        denominator_decimal: u8,
     ) -> Result<()> {
-        InitFeeConfig::initialize_fee_config(
+        InitGasGlobal::initialize_gas_global(
             ctx,
             key,
-            base_price,
-            reserve,
+            global_base_price,
+            default_gas_limit,
+            amount_in_threshold,
             molecular,
             denominator,
-            molecular_decimal,
-            denominator_decimal,
         )
     }
 

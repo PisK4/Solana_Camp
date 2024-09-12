@@ -316,27 +316,25 @@ impl MappingFeeConfig {
     }
 }
 
-impl InitFeeConfig<'_>{
-    pub fn initialize_fee_config(
-        ctx: Context<InitFeeConfig>,
+impl InitGasGlobal<'_>{
+    pub fn initialize_gas_global(
+        ctx: Context<InitGasGlobal>,
         key: u64,
-        base_price: u64,
-        reserve: u64,
+        global_base_price: u64,
+        default_gas_limit: u64,
+        amount_in_threshold: u64,
         molecular: u64,
         denominator: u64,
-        molecular_decimal: u8,
-        denominator_decimal: u8,
     ) -> Result<()> {
         require!(molecular>0 && denominator>0,ErrorCode::ZeroNumber);
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        mapping_fee_config.set_fee_config(
+        mapping_fee_config.set_gas_system_global(
             key,
-            base_price,
-            reserve,
+            global_base_price,
+            default_gas_limit,
+            amount_in_threshold,
             molecular,
-            denominator,
-            molecular_decimal,
-            denominator_decimal,
+            denominator
         );
         Ok(())
     }
@@ -926,9 +924,9 @@ impl RemoveTradeFeeConfigDapp<'_>{
 
 //init
 #[derive(Accounts)]
-pub struct InitFeeConfig<'info> {
+pub struct InitGasGlobal<'info> {
     #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
-        , constraint = vizing.owner == user.key() @VizingError::NotGasPoolAdmin)]
+        , constraint = vizing.owner == user.key() @VizingError::NotOwner)]
     pub vizing: Account<'info, VizingPadConfigs>,
     #[account(
         init,
