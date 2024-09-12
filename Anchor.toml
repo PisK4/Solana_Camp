@@ -1,6 +1,7 @@
 [features]
 seeds = false
 skip-lint = false
+
 [programs.devnet]
 alice = "EM1xuughPx6KVN7H4DSC7xe7KuTzmMH52X4FnHF22wzF"
 bob = "bobQhTJQZZk4p98GrskDGxWZpfd5gnap1Hp5JiXpNek"
@@ -18,11 +19,13 @@ vizing_core = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
 vizing_pad = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
 
 [registry]
-url = "https://api.apr.dev"
+url = "https://rpc.ankr.com/solana_devnet"
 
 [provider]
-cluster = "Localnet"
+#cluster = "Localnet"
+cluster = "devnet"
 wallet = "./governance/.config/wallet/deployer_keypair.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+init = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/initial.vizing.ts"

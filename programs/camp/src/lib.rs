@@ -15,6 +15,11 @@ declare_id!("EM1xuughPx6KVN7H4DSC7xe7KuTzmMH52X4FnHF22wzF");
 pub mod alice {
     use super::*;
 
+    pub fn initialize(_ctx: Context<Initialize>) -> Result<()> {
+        msg!("Alice Initialized");
+        Ok(())
+    }
+
     pub fn sender_account_initializer(
         _ctx: Context<VizingSender>,
         sender_id: Pubkey,
@@ -86,4 +91,10 @@ pub struct VizingSender<'info> {
     pub signer: Signer<'info>,
 
     system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct Initialize<'info> {
+    #[account(mut)]
+    pub signer: Signer<'info>,
 }

@@ -8,7 +8,19 @@ import { VizingAppMock } from "../target/types/vizing_app_mock";
 
 function padStringTo32Bytes(str: string): Buffer {
   const buffer = Buffer.alloc(32);
-  buffer.write(str);
+  buffer.write(str.replace("0x", ""), "hex");
+  return buffer;
+}
+
+function padEthereumAddressToBuffer(address: string): Buffer {
+  const cleanAddress = address.startsWith("0x") ? address.slice(2) : address;
+  const buffer = Buffer.alloc(32);
+  buffer.write(
+    cleanAddress,
+    32 - cleanAddress.length / 2,
+    cleanAddress.length / 2,
+    "hex"
+  );
   return buffer;
 }
 
@@ -94,6 +106,10 @@ describe("Vizing Test", () => {
       Buffer.from(padStringTo32Bytes("registered_validator_2"))
     ),
   ];
+
+  const EVM_src_address = "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD";
+  const EVM_address_buffer = padEthereumAddressToBuffer(EVM_src_address);
+  console.log(EVM_address_buffer);
 
   it("account setup", async () => {
     console.log("feeCollector: ", feeCollectorKeyPair.publicKey.toBase58());
@@ -252,7 +268,6 @@ describe("Vizing Test", () => {
           denominator_decimal
         )
         .accounts({
-          vizing: vizingPadConfigs,
           mappingFeeConfig: vizingGasSystem,
           user: provider.wallet.publicKey,
         })
@@ -275,9 +290,9 @@ describe("Vizing Test", () => {
         .accounts({
           mappingFeeConfig: vizingGasSystem,
           vizing: vizingPadConfigs,
-          user: provider.wallet.publicKey,
+          user: gasPoolAdminKeyPair.publicKey,
         })
-        .signers([])
+        .signers([gasPoolAdminKeyPair])
         .rpc();
 
       {
@@ -303,19 +318,19 @@ describe("Vizing Test", () => {
             .accounts({
               mappingFeeConfig: vizingGasSystem,
               vizing: vizingPadConfigs,
-              user: provider.wallet.publicKey,
+              user: gasPoolAdminKeyPair.publicKey,
             })
-            .signers([])
+            .signers([gasPoolAdminKeyPair])
             .rpc();
         }
       }
 
-      let dapp = ethereumAddressToU8Array(
+      let dapp = padEthereumAddressToBuffer(
         "0xE3020Ac60f45842A747F6008390d0D28dDbBD981"
       );
 
-      let dapp2 = ethereumAddressToU8Array(
-        "0xE3020Ac60f45842A747F6008390d0D28dDbBD98D"
+      let dapp2 = padEthereumAddressToBuffer(
+        "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
       );
 
       let tradeFeeConfig_dapps = [dapp, dapp2];
@@ -341,8 +356,9 @@ describe("Vizing Test", () => {
         .accounts({
           vizing: vizingPadConfigs,
           mappingFeeConfig: vizingGasSystem,
-          user: provider.wallet.publicKey,
+          user: gasPoolAdminKeyPair.publicKey,
         })
+        .signers([gasPoolAdminKeyPair])
         .rpc();
     }
 
@@ -357,7 +373,6 @@ describe("Vizing Test", () => {
         .initRecordMessage()
         .accounts({
           currentRecordMessage: recordMessageAuthority,
-          vizing: vizingPadConfigs,
           user: provider.wallet.publicKey,
         })
         .signers([])
@@ -490,12 +505,9 @@ describe("Vizing Test", () => {
   it("Launch", async () => {
     const message = {
       mode: 1,
-      targetProgram: Buffer.from([
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 13, 40, 221, 187, 217, 141,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-      ]),
+      targetProgram: EVM_address_buffer,
       executeGasLimit: new anchor.BN(1),
-      maxFeePerGas: new anchor.BN(1000000000),
+      maxFeePerGas: new anchor.BN(2000000000),
       signature: Buffer.from("1234"),
     };
 
@@ -826,10 +838,7 @@ describe("Vizing Test", () => {
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
         21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
       ]),
-      srcContract: Buffer.from([
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-        21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
-      ]),
+      srcContract: EVM_address_buffer,
       srcChainNonce: new anchor.BN(4),
       sender: Buffer.from([
         1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,

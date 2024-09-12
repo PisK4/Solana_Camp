@@ -330,9 +330,6 @@ pub struct InitCurrentRecordMessage<'info> {
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
-    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
-        , constraint = vizing.owner == user.key() @VizingError::NotOwner)]
-    pub vizing: Account<'info, VizingPadConfigs>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,

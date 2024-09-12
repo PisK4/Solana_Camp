@@ -903,9 +903,6 @@ impl RemoveTradeFeeConfigDapp<'_>{
 //init
 #[derive(Accounts)]
 pub struct InitFeeConfig<'info> {
-    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
-        , constraint = vizing.owner == user.key() @VizingError::NotGasPoolAdmin)]
-    pub vizing: Account<'info, VizingPadConfigs>,
     #[account(
         init,
         payer = user, 
@@ -927,7 +924,7 @@ pub struct SetGasGlobal<'info> {
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
-    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump)]
+    #[account(constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin, seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump)]
     pub vizing: Account<'info, VizingPadConfigs>,
     #[account(mut)]
     pub user: Signer<'info>,
@@ -969,7 +966,7 @@ pub struct SetTokenFeeConfig<'info> {
 #[derive(Accounts)]
 pub struct BatchSetTokenFeeConfig<'info> {
     #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
-        // , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin
         )]
     pub vizing: Account<'info, VizingPadConfigs>,
     #[account(
@@ -986,7 +983,7 @@ pub struct BatchSetTokenFeeConfig<'info> {
 #[derive(Accounts)]
 pub struct BatchSetTradeFeeConfigMap<'info> {
     #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing.bump
-        // , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin
+        , constraint = vizing.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin
     )]
     pub vizing: Account<'info, VizingPadConfigs>,
     #[account(

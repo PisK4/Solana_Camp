@@ -6,6 +6,12 @@ declare_id!("2xiuj4ozxygvkmC1WKJTGZyJXSD8dtbFxWkuJiMLzrTg");
 
 pub const RESULT_DATA_SEED: &[u8] = b"result_data_seed";
 
+// const demo address = "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD";
+pub const TRUSTED_ENDPOINT: [u8; 32] = [
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xc9, 0x1a, 0x3a,
+    0xfd, 0x70, 0x39, 0x5c, 0xd4, 0x96, 0xc6, 0x47, 0xd5, 0xa6, 0xcc, 0x9d, 0x4b, 0x2b, 0x7f, 0xad,
+];
+
 #[program]
 pub mod vizing_app_mock {
 
@@ -66,6 +72,19 @@ pub mod vizing_app_mock {
 
     #[access_control(assert_vizing_authority(&ctx.accounts.vizing_authority))]
     pub fn receive_from_vizing(ctx: Context<LandingAppOp>, params: VizingMessage) -> Result<()> {
+        require!(
+            TRUSTED_ENDPOINT == params.src_contract,
+            ErrorCode::ConstraintAddress
+        );
+
+        msg!("src_chainid: {}", params.src_chainid);
+
+        msg!("src_contract: {:?}", params.src_contract);
+
+        msg!("value: {}", params.value);
+
+        msg!("signature: {:?}", params.signature);
+
         msg!(
             "authority from vizing: {}",
             ctx.accounts.vizing_authority.key()
@@ -89,14 +108,6 @@ pub mod vizing_app_mock {
         ctx.accounts.result_account.result = c;
 
         msg!("{} + {} = {}", a_number, b_number, c);
-
-        msg!("src_chainid: {}", params.src_chainid);
-
-        msg!("src_contract: {:?}", params.src_contract);
-
-        msg!("value: {}", params.value);
-
-        msg!("signature: {:?}", params.signature);
 
         Ok(())
     }
