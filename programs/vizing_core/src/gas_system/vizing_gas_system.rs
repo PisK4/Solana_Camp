@@ -765,6 +765,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
     pub fn estimate_price1(
         gas_system_global_base_price: u64,
         dapp_config_value: u64,
+        _target_contract: [u8; 32],
         _dest_chain_id: u64,
     ) -> Option<u64> {
         let dapp_base_price: u64;
