@@ -513,6 +513,7 @@ describe("Vizing Test", () => {
       console.log("SetThisFeeConfig error:", e);
     }
   }
+  let base_price=new anchor.BN(500);
   it("Set fee config", async() => {
     //chainId1
     await SetThisFeeConfig(
@@ -811,10 +812,23 @@ describe("Vizing Test", () => {
     const mappingFeeConfig = await vizingProgram.account.mappingFeeConfig.fetch(
       mappingFeeConfigAuthority
     );
-    const dappConfigMappings = await mappingFeeConfig.tradeFeeConfigMappings;
+    const tradeFeeConfigMappings = mappingFeeConfig.tradeFeeConfigMappings;
+    const tradeFeeConfigMapping = tradeFeeConfigMappings.find(
+      (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
+    );
+    const tradeFeeConfigMappingResult = tradeFeeConfigMapping
+      ? tradeFeeConfigMapping
+      : 0;
+    let isTargetInDapps = false;
+    if (tradeFeeConfigMappingResult != 0) {
+      isTargetInDapps = tradeFeeConfigMapping.dapps.some(
+        (contract) => contract.toString() === dapp.toString()
+      );
+    }
+
     let dapp_config_value = 0;
-    if (dappConfigMappings && dappConfigMappings.length > 0) {
-        dapp_config_value = dappConfigMappings[0].value.toNumber();
+    if (isTargetInDapps) {
+      dapp_config_value = tradeFeeConfigMapping.value.toNumber();
     }
     if (dapp_config_value > 0) {
       dapp_base_price = dapp_config_value;
@@ -825,77 +839,168 @@ describe("Vizing Test", () => {
     return dapp_base_price;
   }
 
-  async function ComputeTradeFee1(dest_chain_id,amount_out) {
+  async function ExactOutput(dest_chain_id, amount_out) {
     const mappingFeeConfig = await vizingProgram.account.mappingFeeConfig.fetch(
       mappingFeeConfigAuthority
     );
-    const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
-    const feeConfigMappings =
-      mappingFeeConfig.feeConfigMappings;
-    let fee_config_molecular =
-    feeConfigMappings[0].molecular.toNumber();
-    let fee_config_denominator =
-    feeConfigMappings[0].denominator.toNumber();
-    let gas_system_global_molecular = gasSystemGlobal[0].molecular.toNumber();
-    let gas_system_global_denominator =
-      gasSystemGlobal[0].denominator.toNumber();
-    let fee;
-    if (fee_config_denominator == 0) {
-      fee =
-        (amount_out * gas_system_global_molecular) /
-        gas_system_global_denominator;
-    } else {
-      fee =
-        (amount_out * fee_config_molecular) /
-        fee_config_denominator;
+    const feeConfigMappings = mappingFeeConfig.feeConfigMappings;
+    const feeConfigMapping = feeConfigMappings.find(
+      (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
+    );
+    const feeConfigMappingResult = feeConfigMapping ? feeConfigMapping : 0;
+    let fee_config_molecular_decimal = 0;
+    let fee_config_denominator_decimal = 0;
+    if (feeConfigMappingResult != 0) {
+      fee_config_molecular_decimal = feeConfigMapping.molecularDecimal;
+      fee_config_denominator_decimal = feeConfigMapping.denominatorDecimal;
     }
-    console.log("ComputeTradeFee2:", fee);
-    return fee;
+
+    let this_amount_out;
+    if (fee_config_molecular_decimal != fee_config_denominator_decimal) {
+      if (fee_config_molecular_decimal > fee_config_denominator_decimal) {
+        this_amount_out =
+          amount_out /
+          (10 ^
+            (fee_config_molecular_decimal - fee_config_denominator_decimal));
+      } else {
+        this_amount_out =
+          amount_out /
+          (10 ^
+            (fee_config_denominator_decimal - fee_config_molecular_decimal));
+      }
+    } else {
+      this_amount_out = amount_out;
+    }
+
+    let amount_in =
+      (this_amount_out * fee_config_denominator_decimal) /
+      fee_config_denominator_decimal;
+    console.log("ExactOutput:", amount_in);
+    return amount_in;
   }
 
-  async function ComputeTradeFee2(target_contract,dest_chain_id,amount_out) {
+  async function ComputeTradeFee1(dest_chain_id, amount_out) {
+    let computeTradeFee1;
     const mappingFeeConfig = await vizingProgram.account.mappingFeeConfig.fetch(
       mappingFeeConfigAuthority
     );
-    const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
-    const tradeFeeConfigMappings =
-        await mappingFeeConfig.tradeFeeConfigMappings;
-      let trade_fee_config_molecular = 0;
-      let trade_fee_config_denominator = 0;
-      if (tradeFeeConfigMappings && tradeFeeConfigMappings.length > 0) {
-          trade_fee_config_molecular = tradeFeeConfigMappings[0].molecular.toNumber();
-          trade_fee_config_denominator = tradeFeeConfigMappings[0].denominator.toNumber();
-      }
-      let gas_system_global_molecular = gasSystemGlobal[0].molecular.toNumber();
-      let gas_system_global_denominator =
-        gasSystemGlobal[0].denominator.toNumber();
-    let fee;
-    if (trade_fee_config_denominator > 0) {
-      fee =
-        (amount_out * trade_fee_config_molecular) /
-        trade_fee_config_denominator;
-    } else {
-      fee =
-        (amount_out * gas_system_global_molecular) /
-        gas_system_global_denominator;
+    const tradeFeeMappings = mappingFeeConfig.tradeFeeMappings;
+    const gasSystemGlobalMappings = mappingFeeConfig.gasSystemGlobalMappings;
+    let tradeFee_molecular = 0;
+    let tradeFee_denominator = 0;
+    let gasSystemGlobal_molecular = 0;
+    let gasSystemGlobal_denominator = 0;
+    const gasSystemGlobalMapping = gasSystemGlobalMappings.find(
+      (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
+    );
+    const tradeFeeMapping = tradeFeeMappings.find(
+      (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
+    );
+    const gasSystemGlobalMappingResult = gasSystemGlobalMapping
+      ? gasSystemGlobalMapping
+      : 0;
+    const tradeFeeMappingResult = tradeFeeMapping ? tradeFeeMapping : 0;
+    if (gasSystemGlobalMappingResult != 0) {
+      gasSystemGlobal_molecular = gasSystemGlobalMapping.molecular.toNumber();
+      gasSystemGlobal_denominator =
+        gasSystemGlobalMapping.denominator.toNumber();
     }
-    console.log("ComputeTradeFee2:", fee);
-    return fee;
+
+    if (tradeFeeMappingResult != 0) {
+      tradeFee_molecular = tradeFeeMapping.molecular.toNumber();
+      tradeFee_denominator = tradeFeeMapping.denominator.toNumber();
+    }
+    if (tradeFee_denominator == 0) {
+      computeTradeFee1 =
+        (amount_out * gasSystemGlobal_molecular) /
+        gasSystemGlobal_denominator;
+    } else {
+      if (tradeFee_molecular != 0 && tradeFee_denominator != 0) {
+        return 0;
+      } else {
+        computeTradeFee1 =
+          (amount_out * tradeFee_molecular) / tradeFee_denominator;
+      }
+    }
+    return computeTradeFee1;
+  }
+
+  async function ComputeTradeFee2(
+    target_contract,
+    dest_chain_id,
+    amount_out
+  ) {
+    const isNonZero = target_contract.some((byte) => byte !== 0);
+    let computeTradeFee2;
+    const mappingFeeConfig = await vizingProgram.account.mappingFeeConfig.fetch(
+      mappingFeeConfigAuthority
+    );
+    const tradeFeeConfigMappings = mappingFeeConfig.tradeFeeConfigMappings;
+    let trade_fee_config_molecular = 0;
+    let trade_fee_config_denominator = 0;
+    const tradeFeeConfigMapping = tradeFeeConfigMappings.find(
+      (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
+    );
+    const tradeFeeConfigMappingResult = tradeFeeConfigMapping
+      ? tradeFeeConfigMapping
+      : 0;
+    let isTargetInDapps = false;
+    if (tradeFeeConfigMappingResult != 0) {
+      isTargetInDapps = tradeFeeConfigMapping.dapps.some(
+        (contract) => contract.toString() === dapp.toString()
+      );
+    }
+    if (isTargetInDapps) {
+      trade_fee_config_molecular = tradeFeeConfigMapping.molecular.toNumber();
+      trade_fee_config_denominator =
+        tradeFeeConfigMapping.denominator.toNumber();
+    }
+    if (trade_fee_config_denominator != 0 && isNonZero) {
+      if (
+        trade_fee_config_molecular != 0 &&
+        trade_fee_config_denominator != 0
+      ) {
+        computeTradeFee2 =
+          (amount_out * trade_fee_config_molecular) /
+          trade_fee_config_denominator;
+      } else {
+        return 0;
+      }
+    } else {
+      computeTradeFee2 = await ComputeTradeFee1(dest_chain_id, amount_out);
+    }
+    console.log("ComputeTradeFee2:", computeTradeFee2);
+    return computeTradeFee2;
   }
 
   async function EstimatePrice1(target_contract, dest_chain_id) {
     const mappingFeeConfig = await vizingProgram.account.mappingFeeConfig.fetch(
       mappingFeeConfigAuthority
     );
-    const dappConfigMappings = mappingFeeConfig.tradeFeeConfigMappings;
-    let dapp_config_value = 0;
-    if (dappConfigMappings && dappConfigMappings.length > 0) {
-        dapp_config_value = dappConfigMappings[0].value.toNumber();
+    const gasSystemGlobalMappings = mappingFeeConfig.gasSystemGlobalMappings;
+    const tradeFeeConfigMappings = mappingFeeConfig.tradeFeeConfigMappings;
+    const gasSystemGlobalMapping = gasSystemGlobalMappings.find(
+      (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
+    );
+    const tradeFeeConfigMapping = tradeFeeConfigMappings.find(
+      (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
+    );
+    const tradeFeeConfigMappingResult = tradeFeeConfigMapping
+      ? tradeFeeConfigMapping
+      : 0;
+    let isTargetInDapps = false;
+    if (tradeFeeConfigMappingResult != 0) {
+      isTargetInDapps = tradeFeeConfigMapping.dapps.some(
+        (contract) => contract.toString() === target_contract.toString()
+      );
     }
-    const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
+    let dapp_config_value = 0;
+    if (isTargetInDapps) {
+      dapp_config_value = tradeFeeConfigMapping.value.toNumber();
+    }
 
     let gas_system_global_base_price =
-      await gasSystemGlobal[0].globalBasePrice.toNumber();
+      gasSystemGlobalMapping.globalBasePrice.toNumber();
     let dapp_base_price;
     if (dapp_config_value > 0) {
       dapp_base_price = dapp_config_value;
@@ -911,12 +1016,29 @@ describe("Vizing Test", () => {
       mappingFeeConfigAuthority
     );
     const feeConfigMappings = await mappingFeeConfig.feeConfigMappings;
-    const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
+    const gasSystemGlobalMappings = mappingFeeConfig.gasSystemGlobalMappings;
 
-    let gas_system_global_base_price =
-      await gasSystemGlobal[0].globalBasePrice.toNumber();
-    let fee_config_base_price =
-      await feeConfigMappings[0].basePrice.toNumber();
+    const gasSystemGlobalMapping = gasSystemGlobalMappings.find(
+      (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
+    );
+    const feeConfigMapping = feeConfigMappings.find(
+      (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
+    );
+
+    const gasSystemGlobalMappingResult = gasSystemGlobalMapping
+      ? gasSystemGlobalMapping
+      : 0;
+    const feeConfigMappingResult = feeConfigMapping ? feeConfigMapping : 0;
+
+    let gas_system_global_base_price = 0;
+    let fee_config_base_price = 0;
+    if (gasSystemGlobalMappingResult != 0) {
+      gas_system_global_base_price =
+        gasSystemGlobalMapping.globalBasePrice.toNumber();
+    }
+    if (feeConfigMappingResult != 0) {
+      fee_config_base_price = feeConfigMapping.basePrice.toNumber();
+    }
     let base_price;
     if (fee_config_base_price > 0) {
       base_price = fee_config_base_price;
@@ -927,55 +1049,33 @@ describe("Vizing Test", () => {
     return base_price;
   }
 
-  async function ExactOutput(dest_chain_id, amount_out) {
-    const mappingFeeConfig = await vizingProgram.account.mappingFeeConfig.fetch(
-      mappingFeeConfigAuthority
-    );
-    const feeConfigMappings = await mappingFeeConfig.feeConfigMappings;
-    const fee_config_molecular_decimal =
-      feeConfigMappings[0].molecularDecimal;
-    const fee_config_denominator_decimal =
-      feeConfigMappings[0].denominatorDecimal;
-    let this_amount_out;
-    if (fee_config_molecular_decimal != fee_config_denominator_decimal) {
-      if (fee_config_molecular_decimal > fee_config_denominator_decimal) {
-        this_amount_out =
-          (amount_out / 10) ^
-          (fee_config_molecular_decimal - fee_config_denominator_decimal);
-      } else {
-        this_amount_out =
-          (amount_out / 10) ^
-          (fee_config_denominator_decimal - fee_config_molecular_decimal);
-      }
-    } else {
-      this_amount_out = amount_out;
-    }
-
-    let amount_in =
-      (this_amount_out * fee_config_denominator_decimal) /
-      fee_config_denominator_decimal;
-    console.log("ExactOutput:", amount_in);
-    return amount_in;
-  }
-
   async function ExactInput(dest_chain_id, amount_in) {
     const mappingFeeConfig = await vizingProgram.account.mappingFeeConfig.fetch(
       mappingFeeConfigAuthority
     );
-    const feeConfigMappings = await mappingFeeConfig.feeConfigMappings;
-    let fee_config_molecular_decimal = feeConfigMappings[0].molecularDecimal;
-    let fee_config_denominator_decimal =
-      feeConfigMappings[0].denominatorDecimal;
+    const feeConfigMappings = mappingFeeConfig.feeConfigMappings;
+    const feeConfigMapping = feeConfigMappings.find(
+      (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
+    );
+    const feeConfigMappingResult = feeConfigMapping ? feeConfigMapping : 0;
+    let fee_config_molecular_decimal = 0;
+    let fee_config_denominator_decimal = 0;
+    if (feeConfigMappingResult != 0) {
+      fee_config_molecular_decimal = feeConfigMapping.molecularDecimal;
+      fee_config_denominator_decimal = feeConfigMapping.denominatorDecimal;
+    }
     let this_amount_in;
     if (fee_config_molecular_decimal != fee_config_denominator_decimal) {
       if (fee_config_molecular_decimal > fee_config_denominator_decimal) {
         this_amount_in =
-          (amount_in * 10) ^
-          (fee_config_molecular_decimal - fee_config_denominator_decimal);
+          amount_in *
+          (10 ^
+            (fee_config_molecular_decimal - fee_config_denominator_decimal));
       } else {
         this_amount_in =
-          (amount_in / 10) ^
-          (fee_config_denominator_decimal - fee_config_molecular_decimal);
+          amount_in /
+          (10 ^
+            (fee_config_denominator_decimal - fee_config_molecular_decimal));
       }
     } else {
       this_amount_in = amount_in;
@@ -992,12 +1092,32 @@ describe("Vizing Test", () => {
       mappingFeeConfigAuthority
     );
     const feeConfigMappings = mappingFeeConfig.feeConfigMappings;
-    const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
+    const gasSystemGlobalMappings = mappingFeeConfig.gasSystemGlobalMappings;
+    const feeConfigMapping = feeConfigMappings.find(
+      (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
+    );
+    const gasSystemGlobalMapping = gasSystemGlobalMappings.find(
+      (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
+    );
+    const feeConfigMappingResult = feeConfigMapping ? feeConfigMapping : 0;
+    const gasSystemGlobalMappingResult = gasSystemGlobalMapping
+      ? gasSystemGlobalMapping
+      : 0;
+
     let base_price;
     let fee;
-    const feeConfigBasePrice = feeConfigMappings[0].basePrice.toNumber();
-    const global_base_price = gasSystemGlobal[0].globalBasePrice.toNumber();
-    const default_gas_limit = gasSystemGlobal[0].defaultGasLimit.toNumber();
+    let feeConfigBasePrice = 0;
+    let global_base_price = 0;
+    let default_gas_limit = 0;
+    let fee_config_molecular = 0;
+    if (feeConfigMappingResult != 0) {
+      feeConfigBasePrice = feeConfigMapping.basePrice.toNumber();
+      fee_config_molecular = feeConfigMapping.molecular.toNumber();
+    }
+    if (gasSystemGlobalMappingResult != 0) {
+      global_base_price = gasSystemGlobalMapping.globalBasePrice.toNumber();
+      default_gas_limit = gasSystemGlobalMapping.defaultGasLimit.toNumber();
+    }
     if (feeConfigBasePrice > 0) {
       base_price = feeConfigBasePrice;
     } else {
@@ -1024,7 +1144,6 @@ describe("Vizing Test", () => {
 
     if (amount_out > 0) {
       let output_amount_in;
-      let fee_config_molecular = feeConfigMappings[0].molecular.toNumber();
       if (fee_config_molecular != 0) {
         output_amount_in = await ExactOutput(dest_chain_id, amount_out);
       }
@@ -1036,23 +1155,43 @@ describe("Vizing Test", () => {
       );
       fee += trade_fee2;
     }
-    console.log("finally fee:", fee);
+    console.log("EstimateGas fee:", fee);
     return fee;
   }
+  // await EstimateGas(testAmountOut, id, newMessage);
 
   async function EstimateTotalFee(dest_chain_id, amount_out, this_message) {
     const mappingFeeConfig = await vizingProgram.account.mappingFeeConfig.fetch(
       mappingFeeConfigAuthority
     );
     const feeConfigMappings = mappingFeeConfig.feeConfigMappings;
-    const gasSystemGlobal = mappingFeeConfig.gasSystemGlobalMappings;
+    const gasSystemGlobalMappings = mappingFeeConfig.gasSystemGlobalMappings;
 
-    const token_amount_limit =
-      gasSystemGlobal[0].amountInThreshold.toNumber();
-
-    const feeConfigBasePrice = feeConfigMappings[0].basePrice.toNumber();
-    const global_base_price = gasSystemGlobal[0].globalBasePrice.toNumber();
-    const default_gas_limit = gasSystemGlobal[0].defaultGasLimit.toNumber();
+    const feeConfigMapping = feeConfigMappings.find(
+      (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
+    );
+    const gasSystemGlobalMapping = gasSystemGlobalMappings.find(
+      (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
+    );
+    const feeConfigMappingResult = feeConfigMapping ? feeConfigMapping : 0;
+    const gasSystemGlobalMappingResult = gasSystemGlobalMapping
+      ? gasSystemGlobalMapping
+      : 0;
+    let feeConfigBasePrice = 0;
+    let token_amount_limit = 0;
+    let global_base_price = 0;
+    let default_gas_limit = 0;
+    let fee_config_molecular = 0;
+    if (feeConfigMappingResult != 0) {
+      feeConfigBasePrice = feeConfigMapping.basePrice.toNumber();
+      fee_config_molecular = feeConfigMapping.molecular.toNumber();
+    }
+    if (gasSystemGlobalMappingResult != 0) {
+      token_amount_limit =
+        gasSystemGlobalMapping.amountInThreshold.toNumber();
+      global_base_price = gasSystemGlobalMapping.globalBasePrice.toNumber();
+      default_gas_limit = gasSystemGlobalMapping.defaultGasLimit.toNumber();
+    }
 
     let base_price;
     let fee;
@@ -1081,7 +1220,6 @@ describe("Vizing Test", () => {
     let output_amount_in = amount_out;
     let finalFee;
     if (amount_out.toNumber() > 0) {
-      let fee_config_molecular = feeConfigMappings[0].molecular.toNumber();
       if (fee_config_molecular != 0) {
         output_amount_in = await ExactOutput(
           dest_chain_id,
@@ -1929,14 +2067,14 @@ describe("Vizing Test", () => {
     }
   });
 
-  async function Launch(thisLaunchParams,thisVizingPadSettings,thisFeeCollector,thisMappingFeeConfig) {
+  async function Launch(thisLaunchParams,thisvizingPadConfigs,thisFeeCollector,thisMappingFeeConfig) {
     try {
       let launch = await vizingProgram.methods
         .launch(thisLaunchParams)
         .accounts({
           vizingAppFeePayer: user,
           messageAuthority: user,
-          vizing: thisVizingPadSettings,
+          vizing: thisvizingPadConfigs,
           feeCollector: thisFeeCollector,
           mappingFeeConfig: thisMappingFeeConfig,
           systemProgram: vizingProgram.programId,
@@ -1980,7 +2118,7 @@ describe("Vizing Test", () => {
       additionParams: Buffer.alloc(0),
       message: testMessage1,
     };
-    await Launch(newLaunchParams1,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
+    await Launch(newLaunchParams1,vizingPadConfigs,feeCollector,mappingFeeConfigAuthority);
 
     //mode 2
     const testMessage2 = {
@@ -2000,7 +2138,7 @@ describe("Vizing Test", () => {
       additionParams: Buffer.alloc(0),
       message: testMessage2,
     };
-    await Launch(newLaunchParams2,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
+    await Launch(newLaunchParams2,vizingPadConfigs,feeCollector,mappingFeeConfigAuthority);
     let this_fee_mode2 = await EstimateTotalFee(
       nullChainId,
       thisTestValue2,
@@ -2026,7 +2164,7 @@ describe("Vizing Test", () => {
       additionParams: Buffer.alloc(0),
       message: testMessage3,
     };
-    await Launch(newLaunchParams3,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
+    await Launch(newLaunchParams3,vizingPadConfigs,feeCollector,mappingFeeConfigAuthority);
     let this_fee_mode3 = await EstimateTotalFee(
       nullChainId,
       thisTestValue2,
@@ -2052,7 +2190,7 @@ describe("Vizing Test", () => {
       additionParams: Buffer.alloc(0),
       message: testMessage4,
     };
-    await Launch(newLaunchParams4,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
+    await Launch(newLaunchParams4,vizingPadConfigs,feeCollector,mappingFeeConfigAuthority);
     let this_fee_mode4 = await EstimateTotalFee(
       nullChainId,
       thisTestValue2,
@@ -2060,6 +2198,139 @@ describe("Vizing Test", () => {
     );
     console.log("this_fee_mode4:",this_fee_mode4);
     */
+  });
+
+  //launch different molecular_decimal and denominator_decimal
+  it("Launch test decimal", async () => {
+    let launchRelayer = ethereumAddressToU8Array(
+      "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+    );
+    //test molecular_decimal=8,denominator_decimal=125
+    console.log("test molecular_decimal=6,denominator_decimal=103:");
+    await SetThisFeeConfig(
+      id,
+      base_price,
+      reserve,
+      molecular,
+      denominator,
+      8,
+      125
+    );
+    const executeGasLimit = new anchor.BN(6);
+    const maxFeePerGas = new anchor.BN(2000);
+    const testMessage = {
+      mode: 1,
+      targetContract: dapp,
+      executeGasLimit: executeGasLimit,
+      maxFeePerGas: maxFeePerGas,
+      signature: Buffer.from("transfer from bob to alice do mode 1"),
+    };
+    const launchParams = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: launchRelayer,
+      sender: user,
+      value: 1_000_000, // 0.01 sol
+      destChainid: id,
+      additionParams: Buffer.alloc(0),
+      message: testMessage,
+    };
+    await Launch(
+      testMessage,
+      vizingPadConfigs,
+      feeCollectorKeyPair.publicKey,
+      mappingFeeConfigAuthority
+    );
+
+    //test molecular_decimal=0,denominator_decimal=0
+    console.log("test molecular_decimal=0,denominator_decimal=0:");
+    await SetThisFeeConfig(
+      id,
+      base_price,
+      reserve,
+      molecular,
+      denominator,
+      0,
+      0
+    );
+    await Launch(
+      launchParams,
+      vizingPadConfigs,
+      feeCollectorKeyPair.publicKey,
+      mappingFeeConfigAuthority
+    );
+
+    //test molecular_decimal=0,denominator_decimal=9
+    console.log("test molecular_decimal=0,denominator_decimal=9:");
+    await SetThisFeeConfig(
+      id,
+      base_price,
+      reserve,
+      molecular,
+      denominator,
+      0,
+      9
+    );
+    await Launch(
+      launchParams,
+      vizingPadConfigs,
+      feeCollectorKeyPair.publicKey,
+      mappingFeeConfigAuthority
+    );
+
+    //test molecular_decimal=9,denominator_decimal=0
+    console.log("test molecular_decimal=9,denominator_decimal=0:");
+    await SetThisFeeConfig(
+      id,
+      base_price,
+      reserve,
+      molecular,
+      denominator,
+      9,
+      0
+    );
+    await Launch(
+      launchParams,
+      vizingPadConfigs,
+      feeCollectorKeyPair.publicKey,
+      mappingFeeConfigAuthority
+    );
+
+    //test molecular_decimal=9,denominator_decimal=18
+    console.log("test molecular_decimal=9,denominator_decimal=18:");
+    await SetThisFeeConfig(
+      id,
+      base_price,
+      reserve,
+      molecular,
+      denominator,
+      9,
+      18
+    );
+    await Launch(
+      launchParams,
+      vizingPadConfigs,
+      feeCollectorKeyPair.publicKey,
+      mappingFeeConfigAuthority
+    );
+
+    //test molecular_decimal=18,denominator_decimal=9
+    console.log("test molecular_decimal=18,denominator_decimal=9:");
+    await SetThisFeeConfig(
+      id,
+      base_price,
+      reserve,
+      molecular,
+      denominator,
+      18,
+      9
+    );
+    await Launch(
+      launchParams,
+      vizingPadConfigs,
+      feeCollectorKeyPair.publicKey,
+      mappingFeeConfigAuthority
+    );
   });
 
   //launch test error
@@ -2112,12 +2383,12 @@ describe("Vizing Test", () => {
       console.log("error non fee_collector");
     }
 
-    //error non vizingPadSettings
+    //error non vizingPadConfigs
     {
-      let newVizingPadSettings = new anchor.web3.Keypair();
-      console.log("newVizingPadSettings:", newVizingPadSettings.publicKey.toBase58());
-      await Launch(errLaunchParams1,newVizingPadSettings.publicKey,feeCollectorKeyPair.publicKey,mappingFeeConfigAuthority);
-      console.log("error non vizingPadSettings");
+      let newvizingPadConfigs = new anchor.web3.Keypair();
+      console.log("newvizingPadConfigs:", newvizingPadConfigs.publicKey.toBase58());
+      await Launch(errLaunchParams1,newvizingPadConfigs.publicKey,feeCollectorKeyPair.publicKey,mappingFeeConfigAuthority);
+      console.log("error non vizingPadConfigs");
     }
 
     //error non mappingFeeConfigAuthority
