@@ -88,11 +88,14 @@ impl LaunchOp<'_> {
 
         let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
         let get_fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
+        let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
         let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id, *dapp);
         let dapp_config_value=get_trade_fee_config.value;
 
         let fee = vizing_gas_system::estimate_total_fee(
             get_gas_system_global.amount_in_threshold,
+            trade_fee.molecular,
+            trade_fee.denominator,
             get_trade_fee_config.molecular,
             get_trade_fee_config.denominator,
             get_gas_system_global.molecular,
@@ -358,10 +361,10 @@ impl ComputeTradeFee1<'_> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let current_record_message = &mut ctx.accounts.current_record_message;
         let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
-        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
+        let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
         let fee: u64 = vizing_gas_system::compute_trade_fee1(
-            fee_config.molecular,
-            fee_config.denominator,
+            trade_fee.molecular,
+            trade_fee.denominator,
             gas_system_global.molecular,
             gas_system_global.denominator,
             dest_chain_id,
@@ -399,8 +402,11 @@ impl ComputeTradeFee2<'_> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
         let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,target_contract);
+        let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
         let current_record_message = &mut ctx.accounts.current_record_message;
         let fee: u64 = vizing_gas_system::compute_trade_fee2(
+            trade_fee.molecular,
+            trade_fee.denominator,
             trade_fee_config.molecular,
             trade_fee_config.denominator,
             gas_system_global.molecular,
@@ -524,6 +530,7 @@ impl EstimateGas<'_> {
 
         let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
         let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,dapp);
+        let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
         let dapp_config_value = trade_fee_config.value;
 
         let fee: u64 = vizing_gas_system::estimate_gas(
@@ -533,6 +540,8 @@ impl EstimateGas<'_> {
             fee_config.molecular_decimal,
             fee_config.denominator_decimal,
             fee_config.molecular,
+            trade_fee.molecular,
+            trade_fee.denominator,
             trade_fee_config.molecular,
             trade_fee_config.denominator,
             gas_system_global.molecular,
@@ -580,10 +589,13 @@ impl EstimateTotalFee<'_> {
         let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
         let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
         let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,dapp);
+        let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
         let dapp_config_value = trade_fee_config.value;
 
         let fee: u64 = vizing_gas_system::estimate_total_fee(
             gas_system_global.amount_in_threshold,
+            trade_fee.molecular,
+            trade_fee.denominator,
             trade_fee_config.molecular,
             trade_fee_config.denominator,
             gas_system_global.molecular,
@@ -714,6 +726,7 @@ impl EstimateVizingGasFee1<'_>{
         let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
         let get_fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
         let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id, dapp);
+        let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
         let dapp_config_value = get_trade_fee_config.value;
         
         let vizing_gas_fee = vizing_gas_system::estimate_gas(
@@ -723,6 +736,8 @@ impl EstimateVizingGasFee1<'_>{
             get_fee_config.molecular_decimal,
             get_fee_config.denominator_decimal,
             get_fee_config.molecular,
+            trade_fee.molecular,
+            trade_fee.denominator,
             get_trade_fee_config.molecular,
             get_trade_fee_config.denominator,
             get_gas_system_global.molecular,
@@ -773,6 +788,7 @@ impl EstimateVizingGasFee2<'_>{
         let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
         let get_fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
         let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id, dapp);
+        let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
         let dapp_config_value = get_trade_fee_config.value;
         
         let vizing_gas_fee = vizing_gas_system::estimate_gas(
@@ -782,6 +798,8 @@ impl EstimateVizingGasFee2<'_>{
             get_fee_config.molecular_decimal,
             get_fee_config.denominator_decimal,
             get_fee_config.molecular,
+            trade_fee.molecular,
+            trade_fee.denominator,
             get_trade_fee_config.molecular,
             get_trade_fee_config.denominator,
             get_gas_system_global.molecular,
