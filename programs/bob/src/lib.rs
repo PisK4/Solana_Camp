@@ -19,6 +19,15 @@ pub mod bob {
         Ok(())
     }
 
+    pub fn initialize2(ctx: Context<Initialize>) -> Result<()> {
+        msg!(
+            "Data Account Initialized: {}",
+            ctx.accounts.bob_data_account.key()
+        );
+
+        Ok(())
+    }
+
     pub fn sender_account_initializer(
         _ctx: Context<VizingSender>,
         sender_id: Pubkey,

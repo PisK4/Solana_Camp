@@ -22,10 +22,11 @@ vizing_pad = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
 url = "https://rpc.ankr.com/solana_devnet"
 
 [provider]
-#cluster = "Localnet"
-cluster = "devnet"
+cluster = "Localnet"
+#cluster = "devnet"
 wallet = "./governance/.config/wallet/deployer_keypair.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+init_bob = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/initial.bob.ts"
 init = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/initial.vizing.ts"

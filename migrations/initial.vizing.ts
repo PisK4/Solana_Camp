@@ -21,6 +21,9 @@ export async function main() {
   const vizingProgram = anchor.workspace.Alice as Program<VizingCore>;
 
   console.log("vizingProgram.programId:", vizingProgram.programId);
+
+  const balance = await connection.getBalance(provider.wallet.publicKey);
+  console.log("balance:", balance);
 }
 
 main()

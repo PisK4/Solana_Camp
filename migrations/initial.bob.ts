@@ -2,7 +2,6 @@ import * as anchor from "@coral-xyz/anchor";
 import { Wallet, AnchorProvider, Program } from "@project-serum/anchor";
 import { Alice } from "../target/types/alice";
 import { Bob } from "../target/types/bob";
-import { fetchData } from "@coral-xyz/anchor/dist/cjs/utils/registry";
 
 describe("Vizing Deploy", () => {
   console.log("### Deploy start");
@@ -14,6 +13,16 @@ describe("Vizing Deploy", () => {
     "confirmed"
   );
 
+  // const connection = new anchor.web3.Connection(
+  //   anchor.web3.clusterApiUrl("devnet"),
+  //   "confirmed"
+  // );
+
+  // const connection = new anchor.web3.Connection(
+  //   "https://solana-devnet.g.alchemy.com/v2/-m2gJ2Fiv4w403IMR27nGoHUyonc0azl",
+  //   "confirmed"
+  // );
+
   const provider = new anchor.AnchorProvider(connection, wallet, {
     commitment: "confirmed",
   });
@@ -23,17 +32,19 @@ describe("Vizing Deploy", () => {
   const aliceProgram = anchor.workspace.Alice as Program<Alice>;
   const bobProgram = anchor.workspace.Bob as Program<Bob>;
 
-  it.skip("Initializes Alice", async () => {
+  it("Initializes Alice", async () => {
+    const keypair = anchor.web3.Keypair.generate();
     const tx = await aliceProgram.methods
       .initialize()
       .accounts({
-        signer: provider.wallet.publicKey,
+        signer: keypair.publicKey,
       })
+      .signers([keypair])
       .rpc();
     console.log(`initialize: ${tx}`);
   });
 
-  it("Initializes Bob", async () => {
+  it.skip("Initializes Bob", async () => {
     const keypair = anchor.web3.Keypair.generate();
     console.log("keypair:", keypair);
     console.log("keypair.publicKey:", keypair.publicKey.toBase58());
