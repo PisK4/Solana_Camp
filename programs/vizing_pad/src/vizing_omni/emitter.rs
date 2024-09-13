@@ -123,7 +123,7 @@ pub struct TradeFeeAndDappConfig {
 #[account]
 #[derive(InitSpace)]
 pub struct MappingFeeConfig {
-    #[max_len(1)]
+    #[max_len(20)]
     pub gas_system_global_mappings: Vec<GasSystemGlobal>,
     #[max_len(20)]
     pub fee_config_mappings: Vec<FeeConfig>,

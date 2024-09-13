@@ -36,6 +36,8 @@ pub enum VizingError {
 pub enum ErrorCode {
     #[msg("Invalid length.")]
     InvalidLength,
+    #[msg("Input zero number.")]
+    ZeroNumber,
     #[msg("Serialization message error.")]
     SerializationError,
     #[msg("ComputeTradeFee1 not found.")]

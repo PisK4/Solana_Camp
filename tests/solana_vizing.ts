@@ -92,10 +92,12 @@ describe("Vizing Test", () => {
   let chainId = Buffer.from([4]);
   let chainId2 = Buffer.from([5]);
   console.log("chainId buffer:", chainId, chainId2);
-  let base_price = new anchor.BN(500);
-  let reserve = new anchor.BN(1000);
+  let global_base_price = new anchor.BN(500);
+  let reserve = new anchor.BN(1000000);
   let molecular = new anchor.BN(5);
   let denominator = new anchor.BN(10);
+  let default_gas_limit = new anchor.BN(100);
+  let amount_in_threshold = new anchor.BN(100_000_000_000); //100 sol
   let molecular_decimal = 6;
   let denominator_decimal = 6;
 
@@ -229,7 +231,7 @@ describe("Vizing Test", () => {
     }
   });
 
-  it("Initializes fee_config", async() => {
+  it("Initializes gas global", async() => {
       //init_mapping_fee_config
       [mappingFeeConfigAuthority, mappingFeeConfigBump] =
       await PublicKey.findProgramAddress(
@@ -241,39 +243,37 @@ describe("Vizing Test", () => {
         mappingFeeConfigAuthority.toString()
       );
       console.log("mappingFeeConfigBump:", mappingFeeConfigBump);
-    try {
-      const mappingFeeConfig =
-        await vizingProgram.account.mappingFeeConfig.fetch(
-          mappingFeeConfigAuthority
-        );
-      console.log("mappingFeeConfig:", mappingFeeConfig);
-    } catch (e) {
       try {
-        const initFeeConfig = await vizingProgram.methods
-          .initFeeConfig(
+        const mappingFeeConfig =
+          await vizingProgram.account.mappingFeeConfig.fetch(
+            mappingFeeConfigAuthority
+          );
+        const gasSystemGlobalMappings =
+          mappingFeeConfig.gasSystemGlobalMappings;
+        console.log("gasSystemGlobalMappings:", gasSystemGlobalMappings);
+      } catch (e) {
+        const initGasGlobal = await vizingProgram.methods
+          .initGasGlobal(
             id,
-            base_price,
-            reserve,
+            global_base_price,
+            default_gas_limit,
+            amount_in_threshold,
             molecular,
-            denominator,
-            molecular_decimal,
-            denominator_decimal
+            denominator
           )
           .accounts({
-            vizing: vizingPadConfigs,
             mappingFeeConfig: mappingFeeConfigAuthority,
+            vizing: vizingPadConfigs,
             user: user,
             systemProgram: PROGRAM_ID,
           })
           .signers([])
           .rpc();
-        console.log(`initFeeConfig:${initFeeConfig}'`);
+        console.log(`initGasGlobal:${initGasGlobal}'`);
         // Confirm transaction
-        await provider.connection.confirmTransaction(initFeeConfig);
-      } catch (e) {
-        console.log("initFeeConfig error:", e);
+        await provider.connection.confirmTransaction(initGasGlobal);
+        console.log("InitGasGlobal error:", e);
       }
-    }
   })
 
   it("Initializes record message", async() => {
@@ -431,25 +431,29 @@ describe("Vizing Test", () => {
     }
   });
 
-  let new_global_base_price = new anchor.BN(500);
-  let new_default_gas_limit = new anchor.BN(1000);
-  let new_amount_in_threshold = new anchor.BN(100000000);
-  it("Set gas global", async() => {
+  async function SetThisGasGlobal(
+    thisChainId,
+    thisGlobalBasePrice,
+    thisDefaultGasLimit,
+    thisAmountInThreshold,
+    thisMolecular,
+    thisDenominator,
+  ) {
     try {
       const setThisGasGlobal = await vizingProgram.methods
         .setThisGasGlobal(
-          id,
-          new_global_base_price,
-          new_default_gas_limit,
-          new_amount_in_threshold,
-          molecular,
-          denominator
+          thisChainId,
+          thisGlobalBasePrice,
+          thisDefaultGasLimit,
+          thisAmountInThreshold,
+          thisMolecular,
+          thisDenominator
         )
         .accounts({
           mappingFeeConfig: mappingFeeConfigAuthority,
           vizing: vizingPadConfigs,
           user: user,
-          systemProgram: PROGRAM_ID,
+          systemProgram: vizingProgram.programId,
         })
         .signers([])
         .rpc();
@@ -459,73 +463,88 @@ describe("Vizing Test", () => {
     } catch (e) {
       console.log("SetThisGasGlobal error:", e);
     }
+  }
+  let new_global_base_price = new anchor.BN(500);
+  let new_default_gas_limit = new anchor.BN(1000);
+  let new_amount_in_threshold = new anchor.BN(100000000);
+  it("Set gas global", async() => {
+    await SetThisGasGlobal(
+      id,
+      new_global_base_price,
+      new_default_gas_limit,
+      new_amount_in_threshold,
+      molecular,
+      denominator
+    );
   })
 
+  async function SetThisFeeConfig(
+    thisChainId,
+    thisBasePrice,
+    thisReserve,
+    thisMolecular,
+    thisDenominator,
+    thisMolecularDecimal,
+    thisDenominatorDecimal
+  ) {
+    try {
+      const setThisFeeConfig = await vizingProgram.methods
+        .setThisFeeConfig(
+          thisChainId,
+          thisBasePrice,
+          thisReserve,
+          thisMolecular,
+          thisDenominator,
+          thisMolecularDecimal,
+          thisDenominatorDecimal
+        )
+        .accounts({
+          vizing: vizingPadConfigs,
+          mappingFeeConfig: mappingFeeConfigAuthority,
+          user: user,
+          systemProgram: vizingProgram.programId,
+        })
+        .signers([])
+        .rpc();
+      console.log(`setThisFeeConfig tx:${setThisFeeConfig}'`);
+      // Confirm transaction
+      await provider.connection.confirmTransaction(setThisFeeConfig);
+    } catch (e) {
+      console.log("SetThisFeeConfig error:", e);
+    }
+  }
   it("Set fee config", async() => {
     //chainId1
-    try {
-      const setThisFeeConfig = await vizingProgram.methods
-        .setThisFeeConfig(
-          id,
-          base_price,
-          reserve,
-          molecular,
-          denominator,
-          molecular_decimal,
-          denominator_decimal
-        )
-        .accounts({
-          vizing: vizingPadConfigs,
-          mappingFeeConfig: mappingFeeConfigAuthority,
-          user: user,
-          systemProgram: PROGRAM_ID,
-        })
-        .signers([])
-        .rpc();
-      console.log(`setThisFeeConfig tx:${setThisFeeConfig}'`);
-      // Confirm transaction
-      await provider.connection.confirmTransaction(setThisFeeConfig);
-    } catch (e) {
-      console.log("SetThisFeeConfig error:", e);
-    }
-
+    await SetThisFeeConfig(
+      id,
+      base_price,
+      reserve,
+      molecular,
+      denominator,
+      molecular_decimal,
+      denominator_decimal  
+    );
     //chainId2
-    try {
-      const setThisFeeConfig = await vizingProgram.methods
-        .setThisFeeConfig(
-          id2,
-          base_price,
-          reserve,
-          molecular,
-          denominator,
-          molecular_decimal,
-          denominator_decimal
-        )
-        .accounts({
-          vizing: vizingPadConfigs,
-          mappingFeeConfig: mappingFeeConfigAuthority,
-          user: user,
-          systemProgram: PROGRAM_ID,
-        })
-        .signers([])
-        .rpc();
-      console.log(`setThisFeeConfig tx:${setThisFeeConfig}'`);
-      // Confirm transaction
-      await provider.connection.confirmTransaction(setThisFeeConfig);
-    } catch (e) {
-      console.log("SetThisFeeConfig error:", e);
-    }
+    await SetThisFeeConfig(
+      id2,
+      base_price,
+      reserve,
+      molecular,
+      denominator,
+      molecular_decimal,
+      denominator_decimal  
+    );
   })
 
-  it("Set token fee config", async() => {
-    try {
-      const setThisTokenFeeConfig = await vizingProgram.methods
-          .setThisTokenFeeConfig(id, molecular, denominator)
+  async function SetThisTokenFeeConfig(thisChainId,thisMolecular,thisDenominator) {
+      try {
+        const setThisTokenFeeConfig = await vizingProgram.methods
+          .setThisTokenFeeConfig(thisChainId, thisMolecular, thisDenominator)
           .accounts({
             vizing: vizingPadConfigs,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
-            systemProgram: PROGRAM_ID,
+            systemProgram: vizingProgram.programId,
           })
           .signers([])
           .rpc();
@@ -535,6 +554,11 @@ describe("Vizing Test", () => {
       } catch (e) {
         console.log("SetThisTokenFeeConfig error:", e);
       }
+  }
+  it("Set token fee config", async() => {
+    await SetThisTokenFeeConfig(
+      id, molecular, denominator
+    );
   })
 
   function ethereumAddressToU8Array(address: string): number[] {
@@ -560,97 +584,124 @@ describe("Vizing Test", () => {
   let dapp3 = ethereumAddressToU8Array(
     "0xd1A48613D41E7BB2C68aD90D5fE5e7041ebA5111"
   );
+
+  async function SetThisDappPriceConfig(thisChainid,thisDapp,thisMolecular,thisDenominator,thisBasePrice) {
+      try {
+        const setThisDappPriceConfig = await vizingProgram.methods
+          .setThisDappPriceConfig(
+            thisChainid,
+            thisDapp,
+            thisMolecular,
+            thisDenominator,
+            thisBasePrice
+          )
+          .accounts({
+            vizing: vizingPadConfigs,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            user: user,
+            systemProgram: vizingProgram.programId,
+          })
+          .signers([])
+          .rpc();
+        console.log(`setThisDappPriceConfig tx:${setThisDappPriceConfig}'`);
+        // Confirm transaction
+        await provider.connection.confirmTransaction(setThisDappPriceConfig);
+      } catch (e) {
+        console.log("SetThisDappPriceConfig error:", e);
+      }
+  }
   it("Set dapp price config", async() => {
-    try {
-      const setThisDappPriceConfig = await vizingProgram.methods
-        .setThisDappPriceConfig(id, dapp, molecular, denominator, base_price)
-        .accounts({
-          vizing: vizingPadConfigs,
-          mappingFeeConfig: mappingFeeConfigAuthority,
-          user: user,
-          systemProgram: PROGRAM_ID,
-        })
-        .signers([])
-        .rpc();
-      console.log(`setThisDappPriceConfig tx:${setThisDappPriceConfig}'`);
-      // Confirm transaction
-      await provider.connection.confirmTransaction(setThisDappPriceConfig);
-    } catch (e) {
-      console.log("SetThisDappPriceConfig error:", e);
-    }
+    await SetThisDappPriceConfig(
+      id, 
+      dapp, 
+      molecular, 
+      denominator, 
+      base_price
+    );
   })
 
+  async function SetThisExchangeRate(thisChainId,thisMolecular,thisDenominator,thisMolecularDecimal,thisDenominatorDecimal) {
+      try {
+        const setThisExchangeRate = await vizingProgram.methods
+          .setThisExchangeRate(
+            thisChainId,
+            thisMolecular,
+            thisDenominator,
+            thisMolecularDecimal,
+            thisDenominatorDecimal
+          )
+          .accounts({
+            vizing: vizingPadConfigs,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            user: user,
+            systemProgram: vizingProgram.programId,
+          })
+          .signers([])
+          .rpc();
+        console.log(`setThisExchangeRate tx:${setThisExchangeRate}'`);
+        // Confirm transaction
+        await provider.connection.confirmTransaction(setThisExchangeRate);
+      } catch (e) {
+        console.log("SetThisExchangeRate error:", e);
+      }
+  }
   it("Set exchange rate", async() => {
-    try {
-      const setThisExchangeRate = await vizingProgram.methods
-        .setThisExchangeRate(
-          id,
-          molecular,
-          denominator,
-          molecular_decimal,
-          denominator_decimal
-        )
-        .accounts({
-          vizing: vizingPadConfigs,
-          mappingFeeConfig: mappingFeeConfigAuthority,
-          user: user,
-          systemProgram: PROGRAM_ID,
-        })
-        .signers([])
-        .rpc();
-      console.log(`setThisExchangeRate tx:${setThisExchangeRate}'`);
-      // Confirm transaction
-      await provider.connection.confirmTransaction(setThisExchangeRate);
-    } catch (e) {
-      console.log("SetThisExchangeRate error:", e);
-    }
+    await SetThisExchangeRate(
+      id,
+      molecular,
+      denominator,
+      molecular_decimal,
+      denominator_decimal  
+    );
   })
 
+  async function BatchSetThisTokenFeeConfig(thisChainIds,thisMoleculars,thisDenominators) {
+      try {
+        const batchSetThisTokenFeeConfig = await vizingProgram.methods
+          .batchSetThisTokenFeeConfig(thisChainIds, thisMoleculars, thisDenominators)
+          .accounts({
+            vizing: vizingPadConfigs,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            user: user,
+            systemProgram: vizingProgram.programId,
+          })
+          .signers([])
+          .rpc();
+        console.log(
+          `batchSetThisTokenFeeConfig:${batchSetThisTokenFeeConfig}'`
+        );
+        // Confirm transaction
+        await provider.connection.confirmTransaction(batchSetThisTokenFeeConfig);
+      } catch (e) {
+        console.log("BatchSetThisTokenFeeConfig error:", e);
+      }
+  }
   let destChainIds = [id];
   let moleculars = [new anchor.BN(5)];
   let denominators = [new anchor.BN(10)];
   it("Batch set token fee config", async() => {
-    try {
-      const batchSetThisTokenFeeConfig = await vizingProgram.methods
-        .batchSetThisTokenFeeConfig(destChainIds, moleculars, denominators)
-        .accounts({
-          vizing: vizingPadConfigs,
-          mappingFeeConfig: mappingFeeConfigAuthority,
-          user: user,
-          systemProgram: PROGRAM_ID,
-        })
-        .signers([])
-        .rpc();
-      console.log(
-        `batchSetThisTokenFeeConfig:${batchSetThisTokenFeeConfig}'`
-      );
-      // Confirm transaction
-      await provider.connection.confirmTransaction(batchSetThisTokenFeeConfig);
-    } catch (e) {
-      console.log("BatchSetThisTokenFeeConfig error:", e);
-    }
+    await BatchSetThisTokenFeeConfig(
+      destChainIds,
+      moleculars,
+      denominators
+    )
   })
 
-  let tradeFeeConfig_dapps = [dapp, dapp2];
-  let tradeFeeConfig_destChainIds = [new anchor.BN(4), new anchor.BN(5)];
-  let tradeFeeConfig_moleculars = [new anchor.BN(5), new anchor.BN(5)];
-  let tradeFeeConfig_denominators = [new anchor.BN(10), new anchor.BN(10)];
-  let base_price_group = [new anchor.BN(100), new anchor.BN(200)];
-  it("Batch set trade fee config mapping", async() => {
+  async function BatchSetThisTradeFeeConfigMap(thisDapps,thisChainIds,thisMoleculars,thisDenominators,thisBasePriceGroup) {
     try {
       const batchSetThisTradeFeeConfigMap = await vizingProgram.methods
         .batchSetThisTradeFeeConfigMap(
-          tradeFeeConfig_dapps,
-          tradeFeeConfig_destChainIds,
-          tradeFeeConfig_moleculars,
-          tradeFeeConfig_denominators,
-          base_price_group
+          thisDapps,
+          thisChainIds,
+          thisMoleculars,
+          thisDenominators,
+          thisBasePriceGroup
         )
         .accounts({
           vizing: vizingPadConfigs,
           mappingFeeConfig: mappingFeeConfigAuthority,
           user: user,
-          systemProgram: PROGRAM_ID,
+          systemProgram: vizingProgram.programId,
         })
         .signers([])
         .rpc();
@@ -662,70 +713,97 @@ describe("Vizing Test", () => {
     } catch (e) {
       console.log("BatchSetThisTradeFeeConfigMap error:", e);
     }
+  }
+  let tradeFeeConfig_dapps = [dapp, dapp2];
+  let tradeFeeConfig_destChainIds = [new anchor.BN(4), new anchor.BN(5)];
+  let tradeFeeConfig_moleculars = [new anchor.BN(5), new anchor.BN(5)];
+  let tradeFeeConfig_denominators = [new anchor.BN(10), new anchor.BN(10)];
+  let base_price_group = [new anchor.BN(100), new anchor.BN(200)];
+  it("Batch set trade fee config mapping", async() => {
+    await BatchSetThisTradeFeeConfigMap(
+          tradeFeeConfig_dapps,
+          tradeFeeConfig_destChainIds,
+          tradeFeeConfig_moleculars,
+          tradeFeeConfig_denominators,
+          base_price_group
+    );
   })
 
-  let base_prices = [new anchor.BN(1000)];
+  async function BatchSetThisDappPriceConfigInDiffChain(thisChainIds,thisDapps,thisBasePriceGroup) {
+      try {
+        const batchSetThisDappPriceConfigInDiffChain = await vizingProgram.methods
+          .batchSetThisDappPriceConfigInDiffChain(
+            thisChainIds,
+            thisDapps,
+            thisDapps
+          )
+          .accounts({
+            vizing: vizingPadConfigs,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            user: user,
+            systemProgram: vizingProgram.programId,
+          })
+          .signers([])
+          .rpc();
+        console.log(
+          `batchSetThisDappPriceConfigInDiffChain tx:${batchSetThisDappPriceConfigInDiffChain}'`
+        );
+        // Confirm transaction
+        await provider.connection.confirmTransaction(
+          batchSetThisDappPriceConfigInDiffChain
+        );
+      } catch (e) {
+        console.log("BatchSetThisDappPriceConfigInDiffChain error:", e);
+      }
+  }
   let diff_destChainIds = [new anchor.BN(4), new anchor.BN(5)];
   let diff_dapps = [dapp, dapp2];
   let diff_base_prices = [new anchor.BN(1000), new anchor.BN(2000)];
   it("Batch set dapp price config in different chain", async() => {
-    try {
-      const batchSetThisDappPriceConfigInDiffChain = await vizingProgram.methods
-        .batchSetThisDappPriceConfigInDiffChain(
-          diff_destChainIds,
-          diff_dapps,
-          diff_base_prices
-        )
-        .accounts({
-          vizing: vizingPadConfigs,
-          mappingFeeConfig: mappingFeeConfigAuthority,
-          user: user,
-          systemProgram: PROGRAM_ID,
-        })
-        .signers([])
-        .rpc();
-      console.log(
-        `batchSetThisDappPriceConfigInDiffChain tx:${batchSetThisDappPriceConfigInDiffChain}'`
-      );
-      // Confirm transaction
-      await provider.connection.confirmTransaction(
-        batchSetThisDappPriceConfigInDiffChain
-      );
-    } catch (e) {
-      console.log("BatchSetThisDappPriceConfigInDiffChain error:", e);
-    }
+    await BatchSetThisDappPriceConfigInDiffChain(
+        diff_destChainIds,
+        diff_dapps,
+        diff_base_prices
+    );
   })
-
+  
+  async function BatchSetThisDappPriceConfigInSameChain(thisChainId,thisDapps,thisBasePriceGroup) {
+      try {
+        const batchSetThisDappPriceConfigInSameChain = await vizingProgram.methods
+          .batchSetThisDappPriceConfigInSameChain(
+            thisChainId,
+            thisDapps,
+            thisBasePriceGroup
+          )
+          .accounts({
+            vizing: vizingPadConfigs,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            user: user,
+            systemProgram: vizingProgram.programId,
+          })
+          .signers([])
+          .rpc();
+        console.log(
+          `batchSetThisDAppPriceConfigInSameChain tx:${batchSetThisDappPriceConfigInSameChain}'`
+        );
+        // Confirm transaction
+        await provider.connection.confirmTransaction(
+          batchSetThisDappPriceConfigInSameChain
+        );
+      } catch (e) {
+        console.log("BatchSetThisDappPriceConfigInSameChain error:", e);
+      }
+  }
   let DappPriceConfig_dapps = [dapp];
   let DappPriceConfig_base_prices = [
       new anchor.BN(1000)
   ];
   it("Batch set dapp price config in same chain", async() => {
-    try {
-      const batchSetThisDappPriceConfigInSameChain = await vizingProgram.methods
-        .batchSetThisDappPriceConfigInSameChain(
-          id,
-          DappPriceConfig_dapps,
-          DappPriceConfig_base_prices
-        )
-        .accounts({
-          vizing: vizingPadConfigs,
-          mappingFeeConfig: mappingFeeConfigAuthority,
-          user: user,
-          systemProgram: PROGRAM_ID,
-        })
-        .signers([])
-        .rpc();
-      console.log(
-        `batchSetThisDAppPriceConfigInSameChain tx:${batchSetThisDappPriceConfigInSameChain}'`
-      );
-      // Confirm transaction
-      await provider.connection.confirmTransaction(
-        batchSetThisDappPriceConfigInSameChain
-      );
-    } catch (e) {
-      console.log("BatchSetThisDappPriceConfigInSameChain error:", e);
-    }
+    await BatchSetThisDappPriceConfigInSameChain(
+      id,
+      DappPriceConfig_dapps,
+      DappPriceConfig_base_prices 
+    );
   })
 
   async function GetDappBasePrice(dest_chain_id, chain_base_price, dapp) {
@@ -1028,7 +1106,32 @@ describe("Vizing Test", () => {
   async function EstimateVizingGasFee(value, dest_chain_id, _addition_params, thisMessage){
     await EstimateGas(value,dest_chain_id,thisMessage);
   }
-
+  
+  async function BatchSetThisExchangeRate(thisChainIds,thisMoleculars,thisDenominators,thisMolecularDecimals,thisDenominatorDecimals) {
+      try {
+        const batchSetThisExchangeRate = await vizingProgram.methods
+          .batchSetThisExchangeRate(
+            thisChainIds,
+            thisMoleculars,
+            thisDenominators,
+            thisMolecularDecimals,
+            thisMolecularDecimals
+          )
+          .accounts({
+            vizing: vizingPadConfigs,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            user: user,
+            systemProgram: vizingProgram.programId,
+          })
+          .signers([])
+          .rpc();
+        console.log(`batchSetThisExchangeRate:${batchSetThisExchangeRate}'`);
+        // Confirm transaction
+        await provider.connection.confirmTransaction(batchSetThisExchangeRate);
+      } catch (e) {
+        console.log("BatchSetThisExchangeRate error:", e);
+      }
+  }
   let batchExchangeRate_destChainIds = [new anchor.BN(4), new anchor.BN(5)];
   let batchExchangeRate_moleculars = [new anchor.BN(10), new anchor.BN(20)];
   let batchExchangeRate_denominators = [
@@ -1038,29 +1141,13 @@ describe("Vizing Test", () => {
   let molecular_decimals = Buffer.from([6, 6]);
   let denominator_decimals = Buffer.from([6, 6]);
   it("Batch set exchange rate", async() => {
-    try {
-      const batchSetThisExchangeRate = await vizingProgram.methods
-        .batchSetThisExchangeRate(
-          batchExchangeRate_destChainIds,
-          batchExchangeRate_moleculars,
-          batchExchangeRate_denominators,
-          molecular_decimals,
-          denominator_decimals
-        )
-        .accounts({
-          vizing: vizingPadConfigs,
-          mappingFeeConfig: mappingFeeConfigAuthority,
-          user: user,
-          systemProgram: PROGRAM_ID,
-        })
-        .signers([])
-        .rpc();
-      console.log(`batchSetThisExchangeRate:${batchSetThisExchangeRate}'`);
-      // Confirm transaction
-      await provider.connection.confirmTransaction(batchSetThisExchangeRate);
-    } catch (e) {
-      console.log("BatchSetThisExchangeRate error:", e);
-    }
+    await BatchSetThisExchangeRate(
+      batchExchangeRate_destChainIds,
+      batchExchangeRate_moleculars,
+      batchExchangeRate_denominators,
+      molecular_decimals,
+      denominator_decimals
+    );
   })
 
   //GetEstimateVizingGasFee
@@ -1840,6 +1927,248 @@ describe("Vizing Test", () => {
     } catch (e) {
       console.log("RemoveTradeFeeDapp error:", e);
     }
+  });
+
+  async function Launch(thisLaunchParams,thisVizingPadSettings,thisFeeCollector,thisMappingFeeConfig) {
+    try {
+      let launch = await vizingProgram.methods
+        .launch(thisLaunchParams)
+        .accounts({
+          vizingAppFeePayer: user,
+          messageAuthority: user,
+          vizing: thisVizingPadSettings,
+          feeCollector: thisFeeCollector,
+          mappingFeeConfig: thisMappingFeeConfig,
+          systemProgram: vizingProgram.programId,
+        })
+        .signers([])
+        .rpc();
+
+      console.log(`Launch tx:${launch}'`);
+      await provider.connection.confirmTransaction(launch);
+    } catch (e) {
+      console.log("launch error:", e);
+    }
+  }
+
+  //launch success multi mode
+  it("Launch test success multi mode", async () => {
+    /** 
+    //big number value launch
+    //mode1
+    let thisTestValue2 = new anchor.BN(1000000);
+    const testMessage1 = {
+      mode: 1,
+      targetContract: dapp,
+      executeGasLimit: executeGasLimit,
+      maxFeePerGas: maxFeePerGas,
+      signature: Buffer.from("transfer from bob to alice do mode 1"),
+    };
+    let this_fee_mode1 = await EstimateTotalFee(
+      nullChainId,
+      thisTestValue2,
+      testMessage1
+    );
+    console.log("this_fee_mode1:",this_fee_mode1);
+    const newLaunchParams1 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: launchRelayer,
+      sender: user,
+      value: thisTestValue2,
+      destChainid: nullChainId,
+      additionParams: Buffer.alloc(0),
+      message: testMessage1,
+    };
+    await Launch(newLaunchParams1,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
+
+    //mode 2
+    const testMessage2 = {
+      mode: 2,
+      targetContract: dapp,
+      executeGasLimit: executeGasLimit,
+      maxFeePerGas: maxFeePerGas,
+      signature: Buffer.from("transfer from bob to alice do mode 2"),
+    };
+    const newLaunchParams2 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: launchRelayer,
+      sender: user,
+      value: thisTestValue2,
+      destChainid: nullChainId,
+      additionParams: Buffer.alloc(0),
+      message: testMessage2,
+    };
+    await Launch(newLaunchParams2,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
+    let this_fee_mode2 = await EstimateTotalFee(
+      nullChainId,
+      thisTestValue2,
+      testMessage2
+    );
+    console.log("this_fee_mode2:",this_fee_mode2);
+
+    //mode 3
+    const testMessage3 = {
+      mode: 3,
+      targetContract: dapp,
+      executeGasLimit: executeGasLimit,
+      maxFeePerGas: maxFeePerGas,
+      signature: Buffer.from("transfer from bob to alice do mode 3"),
+    };
+    const newLaunchParams3 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: launchRelayer,
+      sender: user,
+      value: thisTestValue2,
+      destChainid: nullChainId,
+      additionParams: Buffer.alloc(0),
+      message: testMessage3,
+    };
+    await Launch(newLaunchParams3,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
+    let this_fee_mode3 = await EstimateTotalFee(
+      nullChainId,
+      thisTestValue2,
+      testMessage3
+    );
+    console.log("this_fee_mode3:",this_fee_mode3);
+
+    //mode 4
+    const testMessage4 = {
+      mode: 4,
+      targetContract: dapp,
+      executeGasLimit: executeGasLimit,
+      maxFeePerGas: maxFeePerGas,
+      signature: Buffer.from("transfer from bob to alice do mode 4"),
+    };
+    const newLaunchParams4 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: launchRelayer,
+      sender: user,
+      value: thisTestValue2,
+      destChainid: nullChainId,
+      additionParams: Buffer.alloc(0),
+      message: testMessage4,
+    };
+    await Launch(newLaunchParams4,vizingPadSettings,feeCollector,mappingFeeConfigAuthority);
+    let this_fee_mode4 = await EstimateTotalFee(
+      nullChainId,
+      thisTestValue2,
+      testMessage4
+    );
+    console.log("this_fee_mode4:",this_fee_mode4);
+    */
+  });
+
+  //launch test error
+  it("Launch test error", async () => {
+    let invalidDapp = Buffer.from("0xdAC17F958D2ee523a2206206994597C13D831ec7"); 
+    const executeGasLimit = new anchor.BN(1);
+    const maxFeePerGas = new anchor.BN(10000);
+    let launchRelayer = ethereumAddressToU8Array(
+      "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+    );
+    let testCrossValue=new anchor.BN(1_000_000_00); //0.1 sol
+
+    let testChainId = new anchor.BN(88);
+    let test_global_base_price=new anchor.BN(1000);
+    let test_default_gas_limit=new anchor.BN(5);
+    let test_amount_in_threshold=new anchor.BN(100000000000);
+    let test_molecular=new anchor.BN(1000);
+    let test_denominator=new anchor.BN(995);
+    //set test chainId
+    await SetThisGasGlobal(
+      testChainId,
+      test_global_base_price,
+      test_default_gas_limit,
+      test_amount_in_threshold,
+      test_molecular,
+      test_denominator
+    );
+    const message = {
+      mode: 1,
+      targetContract: invalidDapp,
+      executeGasLimit: executeGasLimit,
+      maxFeePerGas: maxFeePerGas,
+      signature: Buffer.from("transfer from bob to alice 1000 usdt,wagmi"),
+    };
+    let newNonFeeCollector = new anchor.web3.Keypair();
+    console.log("newNonFeeCollector:", newNonFeeCollector.publicKey.toBase58());
+    const errLaunchParams1 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: launchRelayer,
+      sender: user,
+      value: testCrossValue,
+      destChainid: testChainId,
+      additionParams: Buffer.alloc(0),
+      message: message,
+    };
+    // error non fee_collector
+    {
+      await Launch(errLaunchParams1,vizingPadConfigs,newNonFeeCollector.publicKey,mappingFeeConfigAuthority);
+      console.log("error non fee_collector");
+    }
+
+    //error non vizingPadSettings
+    {
+      let newVizingPadSettings = new anchor.web3.Keypair();
+      console.log("newVizingPadSettings:", newVizingPadSettings.publicKey.toBase58());
+      await Launch(errLaunchParams1,newVizingPadSettings.publicKey,feeCollectorKeyPair.publicKey,mappingFeeConfigAuthority);
+      console.log("error non vizingPadSettings");
+    }
+
+    //error non mappingFeeConfigAuthority
+    {
+      let newMappingFeeConfigAuthority = new anchor.web3.Keypair();
+      console.log("newMappingFeeConfigAuthority:", newMappingFeeConfigAuthority.publicKey.toBase58());
+      await Launch(errLaunchParams1,vizingPadConfigs,feeCollectorKeyPair.publicKey,newMappingFeeConfigAuthority.publicKey);
+      console.log("error non newMappingFeeConfigAuthority");
+    }
+
+    //error over amount_in_threshold
+    {
+      let errValue=new anchor.BN(100000000001);  //
+      const errLaunchParams2 = {
+        erliestArrivalTimestamp: new anchor.BN(1),
+        latestArrivalTimestamp: new anchor.BN(2),
+        relayer: launchRelayer,
+        sender: user,
+        value: errValue,
+        destChainid: testChainId,
+        additionParams: Buffer.alloc(0),
+        message: message,
+      };
+      await Launch(errLaunchParams2,vizingPadConfigs,feeCollectorKeyPair.publicKey,mappingFeeConfigAuthority);
+      console.log("error over amount_in_threshold");
+    }
+
+    //error price < dapp_base_price
+    {
+      let invalidPrice = new anchor.BN(999); //dapp_base_price=1000
+      const errorPriceMessage = {
+        mode: 1,
+        targetContract: dapp,
+        executeGasLimit: executeGasLimit,
+        maxFeePerGas: invalidPrice,
+        signature: Buffer.from("transfer from alice to bob 100000$"),
+      };
+      const errLaunchParams4 = {
+        erliestArrivalTimestamp: new anchor.BN(1),
+        latestArrivalTimestamp: new anchor.BN(2),
+        relayer: launchRelayer,
+        sender: user,
+        value: testCrossValue,
+        destChainid: testChainId,
+        additionParams: Buffer.alloc(0),
+        message: errorPriceMessage,
+      };
+      await Launch(errLaunchParams4,vizingPadConfigs,feeCollectorKeyPair.publicKey,mappingFeeConfigAuthority);
+      console.log("error price < dapp_base_price");
+    }
+
   });
 
 });
