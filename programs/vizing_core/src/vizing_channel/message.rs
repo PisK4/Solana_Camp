@@ -446,10 +446,12 @@ impl EstimatePrice1<'_> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
         let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,target_contract);
+        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
         let current_record_message = &mut ctx.accounts.current_record_message;
         let dapp_config_value=trade_fee_config.value;
 
         let dapp_base_price: u64 = vizing_gas_system::estimate_price1(
+            fee_config.base_price,
             gas_system_global.global_base_price,
             dapp_config_value,
             target_contract,
