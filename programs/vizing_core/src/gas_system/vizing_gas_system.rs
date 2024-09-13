@@ -626,9 +626,13 @@ impl RemoveTradeFeeConfigDapp<'_>{
     ) -> Option<u64> {
         let fee;
         if trade_fee_denominator == 0 {
-            fee = amount_out
+            if gas_system_global_molecular!=0 && gas_system_global_denominator!=0{
+                fee = amount_out
                 .checked_mul(gas_system_global_molecular)?
                 .checked_div(gas_system_global_denominator)?;
+            }else{
+                fee = 0;
+            }
         } else {
             if trade_fee_molecular!=0 && trade_fee_denominator!=0{
                 fee = amount_out
@@ -656,9 +660,13 @@ impl RemoveTradeFeeConfigDapp<'_>{
         let fee;
         let zero_contract: [u8; 32] = [0; 32];
         if trade_fee_config_denominator != 0 && target_contract != zero_contract{
+            if trade_fee_config_molecular!=0 && trade_fee_config_denominator!=0{
                 fee = amount_out
                         .checked_mul(trade_fee_config_molecular)?
                         .checked_div(trade_fee_config_denominator)?;
+            }else{
+                fee = 0;
+            }
         }else{
                 fee = compute_trade_fee1(
                     trade_fee_molecular,
@@ -907,6 +915,8 @@ impl RemoveTradeFeeConfigDapp<'_>{
         amount_out: u64,    
     ) -> Option<u64> {
         let this_amount_out;
+        let amount_in;
+        if fee_config_molecular_decimal!=0 && fee_config_denominator_decimal!=0{
             if fee_config_molecular_decimal != fee_config_denominator_decimal {
                 if fee_config_molecular_decimal > fee_config_denominator_decimal {
                     this_amount_out=amount_out.checked_div(10u64
@@ -916,10 +926,14 @@ impl RemoveTradeFeeConfigDapp<'_>{
                         .pow((fee_config_denominator_decimal.checked_sub(fee_config_molecular_decimal)?) as u32))?;
                 }
             } else {
-                this_amount_out=amount_out
-            };
-        let amount_in = this_amount_out.checked_mul(fee_config_molecular_decimal as u64)?
+                this_amount_out=amount_out;
+            }
+            amount_in = this_amount_out.checked_mul(fee_config_molecular_decimal as u64)?
             .checked_div(fee_config_denominator_decimal as u64)?;
+        }else{
+            amount_in=0;
+        }
+            
         Some(amount_in)
     }
 
@@ -930,6 +944,8 @@ impl RemoveTradeFeeConfigDapp<'_>{
         amount_in: u64,
     ) -> Option<u64> {
         let this_amount_in;
+        let amount_out;
+        if fee_config_molecular_decimal!=0 && fee_config_denominator_decimal!=0{
             if fee_config_molecular_decimal != fee_config_denominator_decimal {
                 if fee_config_molecular_decimal > fee_config_denominator_decimal {
                     this_amount_in=amount_in.checked_mul(10u64
@@ -939,10 +955,14 @@ impl RemoveTradeFeeConfigDapp<'_>{
                         .pow((fee_config_denominator_decimal.checked_sub(fee_config_molecular_decimal)?) as u32))?;
                 }
             } else {
-                this_amount_in=amount_in
-            };
-        let amount_out = this_amount_in.checked_mul(fee_config_molecular_decimal as u64)?
+                this_amount_in=amount_in;
+            }
+            amount_out = this_amount_in.checked_mul(fee_config_molecular_decimal as u64)?
             .checked_div(fee_config_denominator_decimal as u64)?;
+        }else{
+            amount_out=0;
+        }
+            
         Some(amount_out)
     }
 
