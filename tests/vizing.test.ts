@@ -249,50 +249,27 @@ describe("Vizing Test", () => {
       console.log(
         `vizingGasSystem: ${vizingGasSystem.toBase58()}, bump: ${bump}`
       );
-      const id = new anchor.BN(28516);
-      let basePrice = new anchor.BN(anchor.web3.LAMPORTS_PER_SOL);
-      let reserve = new anchor.BN(0);
-      let molecular = new anchor.BN(0);
-      let denominator = new anchor.BN(10);
-      let molecular_decimal = 1;
-      let denominator_decimal = 1;
+
+      const initGasSystemParams = {
+        chainId: new anchor.BN(28516),
+        basePrice: new anchor.BN(anchor.web3.LAMPORTS_PER_SOL),
+        molecular: new anchor.BN(0),
+        denominator: new anchor.BN(10),
+        molecularDecimal: 1,
+        denominatorDecimal: 1,
+        globalBasePrice: new anchor.BN(anchor.web3.LAMPORTS_PER_SOL),
+        defaultGasLimit: new anchor.BN(1),
+        amountInThreshold: new anchor.BN(anchor.web3.LAMPORTS_PER_SOL * 100),
+        globalMolecular: new anchor.BN(0),
+        globalDenominator: new anchor.BN(10),
+      };
 
       await vizingProgram.methods
-        .initFeeConfig(
-          id,
-          basePrice,
-          reserve,
-          molecular,
-          denominator,
-          molecular_decimal,
-          denominator_decimal
-        )
+        .initializeGasSystem(initGasSystemParams)
         .accounts({
           mappingFeeConfig: vizingGasSystem,
-          user: provider.wallet.publicKey,
+          payer: provider.wallet.publicKey,
         })
-        .rpc();
-
-      let new_global_base_price = new anchor.BN(anchor.web3.LAMPORTS_PER_SOL);
-      let new_default_gas_limit = new anchor.BN(1);
-      let new_amount_in_threshold = new anchor.BN(
-        anchor.web3.LAMPORTS_PER_SOL * 100
-      );
-      await vizingProgram.methods
-        .setThisGasGlobal(
-          id,
-          new_global_base_price,
-          new_default_gas_limit,
-          new_amount_in_threshold,
-          molecular,
-          denominator
-        )
-        .accounts({
-          mappingFeeConfig: vizingGasSystem,
-          vizing: vizingPadConfigs,
-          user: gasPoolAdminKeyPair.publicKey,
-        })
-        .signers([gasPoolAdminKeyPair])
         .rpc();
 
       {
@@ -312,8 +289,8 @@ describe("Vizing Test", () => {
               new_global_base_price,
               new_default_gas_limit,
               new_amount_in_threshold,
-              molecular,
-              denominator
+              initGasSystemParams.molecular,
+              initGasSystemParams.denominator
             )
             .accounts({
               mappingFeeConfig: vizingGasSystem,

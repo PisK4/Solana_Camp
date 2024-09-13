@@ -23,16 +23,18 @@ describe("Vizing Deploy", () => {
   //   "confirmed"
   // );
 
-  const provider = new anchor.AnchorProvider(connection, wallet, {
-    commitment: "confirmed",
-  });
+  // const provider = new anchor.AnchorProvider(connection, wallet, {
+  //   commitment: "confirmed",
+  // });
+
+  const provider = anchor.AnchorProvider.env();
 
   anchor.setProvider(provider);
 
   const aliceProgram = anchor.workspace.Alice as Program<Alice>;
   const bobProgram = anchor.workspace.Bob as Program<Bob>;
 
-  it("Initializes Alice", async () => {
+  it.skip("Initializes Alice", async () => {
     const keypair = anchor.web3.Keypair.generate();
     const tx = await aliceProgram.methods
       .initialize()

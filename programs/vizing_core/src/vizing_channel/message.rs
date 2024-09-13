@@ -145,6 +145,8 @@ impl LaunchOp<'_> {
             dest_chainid: params.dest_chainid,
             addition_params: params.addition_params,
             message: params.message,
+            vizing_pad_config: ctx.accounts.vizing_pad_config.key(),
+            vizing_gas_system_config: ctx.accounts.mapping_fee_config.key(),
         });
 
         Ok(())

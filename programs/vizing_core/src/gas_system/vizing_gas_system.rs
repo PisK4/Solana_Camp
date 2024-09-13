@@ -318,28 +318,55 @@ impl MappingFeeConfig {
 }
 
 impl InitFeeConfig<'_>{
-    pub fn initialize_fee_config(
-        ctx: Context<InitFeeConfig>,
-        key: u64,
-        base_price: u64,
-        reserve: u64,
-        molecular: u64,
-        denominator: u64,
-        molecular_decimal: u8,
-        denominator_decimal: u8,
+    pub fn handle(
+        ctx: &mut Context<InitFeeConfig>,
+        params: InitGasSystemParams
     ) -> Result<()> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         mapping_fee_config.set_fee_config(
-            key,
-            base_price,
-            reserve,
-            molecular,
-            denominator,
-            molecular_decimal,
-            denominator_decimal,
+            params.chain_id,
+            params.base_price,
+            0,
+            params.molecular,
+            params.denominator,
+            params.molecular_decimal,
+            params.denominator_decimal,
         );
+
+        mapping_fee_config.set_gas_system_global(
+            params.chain_id,
+            params.global_base_price,
+            params.default_gas_limit,
+            params.amount_in_threshold,
+            params.global_molecular,
+            params.global_denominator,
+        );
+        
         Ok(())
     }
+
+    // pub fn initialize_fee_config(
+    //     ctx: Context<InitFeeConfig>,
+    //     key: u64,
+    //     base_price: u64,
+    //     reserve: u64,
+    //     molecular: u64,
+    //     denominator: u64,
+    //     molecular_decimal: u8,
+    //     denominator_decimal: u8,
+    // ) -> Result<()> {
+    //     let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+    //     mapping_fee_config.set_fee_config(
+    //         key,
+    //         base_price,
+    //         reserve,
+    //         molecular,
+    //         denominator,
+    //         molecular_decimal,
+    //         denominator_decimal,
+    //     );
+    //     Ok(())
+    // }
 }
 
 
@@ -905,15 +932,31 @@ impl RemoveTradeFeeConfigDapp<'_>{
 pub struct InitFeeConfig<'info> {
     #[account(
         init,
-        payer = user, 
+        payer = payer, 
         space = 8 + MappingFeeConfig::INIT_SPACE,
         seeds = [b"init_mapping_fee_config".as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(mut)]
-    pub user: Signer<'info>,
+    pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct InitGasSystemParams {
+    chain_id: u64,
+    base_price: u64,
+    molecular: u64,
+    denominator: u64,
+    molecular_decimal: u8,
+    denominator_decimal: u8,
+    global_base_price: u64,
+    default_gas_limit: u64,
+    amount_in_threshold: u64,
+    global_molecular: u64,
+    global_denominator: u64,
 }
 
 #[derive(Accounts)]
