@@ -327,7 +327,7 @@ impl InitGasGlobal<'_>{
         molecular: u64,
         denominator: u64,
     ) -> Result<()> {
-        require!(molecular>0 && denominator>0,ErrorCode::ZeroNumber);
+        require!(denominator>0,ErrorCode::ZeroNumber);
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         mapping_fee_config.set_gas_system_global(
             key,
@@ -352,7 +352,7 @@ impl SetGasGlobal<'_>{
         molecular: u64,
         denominator: u64,
     ) -> Result<()> {
-        require!(molecular>0 && denominator>0,ErrorCode::ZeroNumber);
+        require!(denominator>0,ErrorCode::ZeroNumber);
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         mapping_fee_config.set_gas_system_global(
             key,
@@ -377,7 +377,7 @@ impl SetFeeConfig<'_>{
         molecular_decimal: u8,
         denominator_decimal: u8,
     ) -> Result<()> {
-        require!(molecular>0 && denominator>0,ErrorCode::ZeroNumber);
+        require!(denominator>0,ErrorCode::ZeroNumber);
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         mapping_fee_config.set_fee_config(
             key,
@@ -400,7 +400,7 @@ impl SetTokenFeeConfig<'_>{
         molecular: u64,
         denominator: u64,
     ) -> Result<()> {
-        require!(molecular>0 && denominator>0,ErrorCode::ZeroNumber);
+        require!(denominator>0,ErrorCode::ZeroNumber);
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let gas_system_global = mapping_fee_config.get_gas_system_global(key);
         mapping_fee_config.set_gas_system_global(
@@ -425,7 +425,7 @@ impl SetDappPriceConfig<'_>{
         denominator: u64,
         base_price: u64,
     ) -> Result<()> {
-        require!(molecular>0 && denominator>0,ErrorCode::ZeroNumber);
+        require!(denominator>0,ErrorCode::ZeroNumber);
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         mapping_fee_config.set_trade_fee_and_dapp_config(chain_id, dapp, molecular, denominator, base_price);
         Ok(())
@@ -441,7 +441,7 @@ impl SetExchangeRate<'_>{
         molecular_decimal: u8,
         denominator_decimal: u8,
     ) -> Result<()> {
-        require!(molecular>0 && denominator>0,ErrorCode::ZeroNumber);
+        require!(denominator>0,ErrorCode::ZeroNumber);
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let mut fee_config = mapping_fee_config.get_fee_config(chain_id);
 
@@ -474,9 +474,6 @@ impl BatchSetTokenFeeConfig<'_>{
             dest_chain_ids.len() == moleculars.len() && dest_chain_ids.len() == denominators.len(),
             errors::ErrorCode::InvalidLength
         );
-        for &molecular in &moleculars {
-            require!(molecular > 0, ErrorCode::ZeroNumber);
-        }
         for &denominator in &denominators {
             require!(denominator > 0, ErrorCode::ZeroNumber);
         }
@@ -505,9 +502,6 @@ impl BatchSetTradeFeeConfigMap<'_>{
                 && dest_chain_ids.len() == dapps.len(),
             errors::ErrorCode::InvalidLength
         );
-        for &molecular in &moleculars {
-            require!(molecular > 0, ErrorCode::ZeroNumber);
-        }
         for &denominator in &denominators {
             require!(denominator > 0, ErrorCode::ZeroNumber);
         }
@@ -576,9 +570,6 @@ impl BatchSetExchangeRate<'_>{
                 && chain_ids.len() == denominator_decimals.len(),
             errors::ErrorCode::InvalidLength
         );
-        for &molecular in &moleculars {
-            require!(molecular > 0, ErrorCode::ZeroNumber);
-        }
         for &denominator in &denominators {
             require!(denominator > 0, ErrorCode::ZeroNumber);
         }
@@ -659,6 +650,12 @@ impl RemoveTradeFeeConfigDapp<'_>{
     ) -> Option<u64> {
         let fee;
         let zero_contract: [u8; 32] = [0; 32];
+        msg!("trade_fee_molecular: {:?}", trade_fee_molecular);
+        msg!("trade_fee_denominator: {:?}", trade_fee_denominator);
+        msg!("trade_fee_config_molecular: {:?}", trade_fee_config_molecular);
+        msg!("trade_fee_config_denominator: {:?}", trade_fee_config_denominator);
+        msg!("gas_system_global_molecular: {:?}", gas_system_global_molecular);
+        msg!("gas_system_global_denominator: {:?}", gas_system_global_denominator);
         if trade_fee_config_denominator != 0 && target_contract != zero_contract{
             if trade_fee_config_molecular!=0 && trade_fee_config_denominator!=0{
                 fee = amount_out
@@ -775,6 +772,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
         chain_base_price: u64,
         _dapp: [u8; 32],
     ) -> Option<u64> {
+        msg!("dapp_config_value: {:?}", dapp_config_value);
         let this_dapp_base_price: u64;
         if dapp_config_value > 0 {
             this_dapp_base_price = dapp_config_value;
@@ -916,6 +914,8 @@ impl RemoveTradeFeeConfigDapp<'_>{
     ) -> Option<u64> {
         let this_amount_out;
         let amount_in;
+        msg!("fee_config_molecular_decimal: {:?}", fee_config_molecular_decimal);
+        msg!("fee_config_denominator_decimal: {:?}", fee_config_denominator_decimal);
         if fee_config_molecular_decimal!=0 && fee_config_denominator_decimal!=0{
             if fee_config_molecular_decimal != fee_config_denominator_decimal {
                 if fee_config_molecular_decimal > fee_config_denominator_decimal {
