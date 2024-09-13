@@ -320,7 +320,7 @@ impl MappingFeeConfig {
 }
 
 impl InitFeeConfig<'_>{
-    pub fn handle(
+    pub fn gas_system_init(
         ctx: &mut Context<InitFeeConfig>,
         params: InitGasSystemParams
     ) -> Result<()> {

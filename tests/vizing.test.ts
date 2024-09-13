@@ -501,7 +501,7 @@ describe("Vizing Test", () => {
         21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
       ]),
       sender: provider.wallet.publicKey,
-      value: new anchor.BN(430),
+      value: new anchor.BN(anchor.web3.LAMPORTS_PER_SOL),
       destChainid: new anchor.BN(28516),
       additionParams: additionParams,
       message: message,
@@ -572,6 +572,10 @@ describe("Vizing Test", () => {
         feeCollectorKeyPair.publicKey
       );
 
+      const feePayerBalanceBefore = await provider.connection.getBalance(
+        provider.wallet.publicKey
+      );
+
       const tx = await vizingProgram.methods
         .launch(launchParams)
         .accounts({
@@ -588,12 +592,18 @@ describe("Vizing Test", () => {
         feeCollectorKeyPair.publicKey
       );
 
+      const feePayerBalanceAfter = await provider.connection.getBalance(
+        provider.wallet.publicKey
+      );
+
+      const feePayerDiff = feePayerBalanceBefore - feePayerBalanceAfter;
+
       console.log(
         `feeReceiverBalanceBefore: ${
           feeReceiverBalanceBefore / anchor.web3.LAMPORTS_PER_SOL
         }, feeReceiverBalanceAfter: ${
           feeReceiverBalanceAfter / anchor.web3.LAMPORTS_PER_SOL
-        }`
+        }, feePayerDiff: ${feePayerDiff / anchor.web3.LAMPORTS_PER_SOL}`
       );
 
       expect(feeReceiverBalanceAfter).to.greaterThan(feeReceiverBalanceBefore);

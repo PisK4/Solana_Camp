@@ -69,7 +69,7 @@ pub mod vizing_core {
         mut ctx: Context<InitFeeConfig>,
         params: InitGasSystemParams,
     ) -> Result<()> {
-        InitFeeConfig::handle(&mut ctx, params)
+        InitFeeConfig::gas_system_init(&mut ctx, params)
     }
 
     pub fn modify_settings(
@@ -102,38 +102,6 @@ pub mod vizing_core {
     }
 
     // ***********  governance end ************
-
-    // /*
-    // /// @notice owner initialize fee config mapping in MappingFeeConfig
-    // /// @param key evm chainId
-    // /// @param basePrice  base price
-    // /// @param reserve  reserve
-    // /// @param molecular  molecular
-    // /// @param denominator  denominator
-    // /// @param molecularDecimal  molecular decimal
-    // /// @param denominatorDecimal  denominator decimal
-    //  */
-    // pub fn init_fee_config(
-    //     ctx: Context<InitFeeConfig>,
-    //     key: u64,
-    //     base_price: u64,
-    //     reserve: u64,
-    //     molecular: u64,
-    //     denominator: u64,
-    //     molecular_decimal: u8,
-    //     denominator_decimal: u8,
-    // ) -> Result<()> {
-    //     InitFeeConfig::initialize_fee_config(
-    //         ctx,
-    //         key,
-    //         base_price,
-    //         reserve,
-    //         molecular,
-    //         denominator,
-    //         molecular_decimal,
-    //         denominator_decimal,
-    //     )
-    // }
 
     /// @notice owner initialize record_message for dev get data
     pub fn init_record_message(ctx: Context<InitCurrentRecordMessage>) -> Result<()> {
