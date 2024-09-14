@@ -5,6 +5,16 @@ import { expect } from "chai";
 import { VizingCore } from "../target/types/vizing_core";
 import { VizingApp } from "../target/types/vizing_app";
 import { VizingAppMock } from "../target/types/vizing_app_mock";
+import * as vizingUtils from "../migrations/vizing.utils";
+import {
+  VizingPadConfigsSeed,
+  vizingAuthoritySeed,
+  vizingAppConfigSeed,
+  vizingAppSolReceiverSeed,
+  vizingFeeRouterSeed,
+  vizingMessageAuthoritySeed,
+  vizingGasSystemSeed,
+} from "../migrations/vizing.utils";
 
 function padStringTo32Bytes(str: string): Buffer {
   const buffer = Buffer.alloc(32);
@@ -47,15 +57,6 @@ describe("Vizing Test", () => {
   const vizingAppProgram = anchor.workspace.VizingApp as Program<VizingApp>;
   const vizingAppMockProgram = anchor.workspace
     .VizingAppMock as Program<VizingAppMock>;
-  const VizingPadConfigsSeed = Buffer.from("Vizing_Pad_Settings_Seed");
-  const vizingAuthoritySeed = Buffer.from("Vizing_Authority_Seed");
-  const vizingAppConfigSeed = Buffer.from("Vizing_App_Config_Seed");
-  const vizingAppSolReceiverSeed = Buffer.from("Vizing_App_Sol_Receiver_Seed");
-  const vizingFeeRouterSeed = Buffer.from("Vizing_Fee_Router_Seed");
-  const vizingMessageAuthoritySeed = Buffer.from(
-    "Vizing_Message_Authority_Seed"
-  );
-  const vizingGasSystemSeed = Buffer.from("init_mapping_fee_config");
 
   let vizingPadConfigs: anchor.web3.PublicKey;
   let vizingAuthority: anchor.web3.PublicKey;
@@ -136,9 +137,7 @@ describe("Vizing Test", () => {
     let vizingPadBump: number;
     let relayerBump: number;
     {
-      const seed = [VizingPadConfigsSeed];
-      const [vizingPad, bump] = anchor.web3.PublicKey.findProgramAddressSync(
-        seed,
+      const [vizingPad, bump] = vizingUtils.generatePdaForVizingPadConfig(
         vizingProgram.programId
       );
 
@@ -165,10 +164,9 @@ describe("Vizing Test", () => {
     };
 
     {
-      const seed = [vizingAuthoritySeed, vizingPadConfigs.toBuffer()];
-      const [authority, bump] = anchor.web3.PublicKey.findProgramAddressSync(
-        seed,
-        vizingProgram.programId
+      const [authority, bump] = vizingUtils.generatePdaForVizingAuthority(
+        vizingProgram.programId,
+        vizingPadConfigs
       );
 
       const authorityU8Array = new Uint8Array(
@@ -182,16 +180,17 @@ describe("Vizing Test", () => {
     }
 
     {
-      const tx = await vizingProgram.methods
-        .initializeVizingPad(initParams)
-        .accounts({
+      const tx = await vizingUtils.initializeVizingPad(
+        vizingProgram,
+        initParams,
+        {
           vizingPadConfig: vizingPadConfigs,
           vizingPadAuthority: vizingAuthority,
           payer: provider.wallet.publicKey,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        })
-        .rpc();
-      console.log(`initialize: ${tx}`);
+        }
+      );
+
+      console.log(`vizingPad initialize: ${tx}`);
 
       const vizingPadAccount =
         await vizingProgram.account.vizingPadConfigs.fetch(vizingPadConfigs);
@@ -221,15 +220,11 @@ describe("Vizing Test", () => {
 
     {
       try {
-        await vizingProgram.methods
-          .initializeVizingPad(initParams)
-          .accounts({
-            vizingPadConfig: vizingPadConfigs,
-            vizingPadAuthority: vizingAuthority,
-            payer: provider.wallet.publicKey,
-            systemProgram: anchor.web3.SystemProgram.programId,
-          })
-          .rpc();
+        await vizingUtils.initializeVizingPad(vizingProgram, initParams, {
+          vizingPadConfig: vizingPadConfigs,
+          vizingPadAuthority: vizingAuthority,
+          payer: provider.wallet.publicKey,
+        });
         throw new Error("should not come here");
       } catch (error) {
         expect(error.transactionMessage).to.be.eql(
@@ -266,14 +261,19 @@ describe("Vizing Test", () => {
         globalDenominator: new anchor.BN(10),
       };
 
-      await vizingProgram.methods
-        .initializeGasSystem(initGasSystemParams)
-        .accounts({
-          vizingPadConfig: vizingPadConfigs,
-          mappingFeeConfig: vizingGasSystem,
-          payer: provider.wallet.publicKey,
-        })
-        .rpc();
+      {
+        const tx = await vizingUtils.initializeVizingGasSystem(
+          vizingProgram,
+          initGasSystemParams,
+          {
+            vizingPadConfig: vizingPadConfigs,
+            vizingGasSystem: vizingGasSystem,
+            payer: provider.wallet.publicKey,
+          }
+        );
+
+        console.log(`gasSystem initialize: ${tx}`);
+      }
 
       {
         // ###test loop
@@ -344,19 +344,15 @@ describe("Vizing Test", () => {
 
     {
       const [recordMessageAuthority, recordMessageBump] =
-        anchor.web3.PublicKey.findProgramAddressSync(
-          [Buffer.from("init_current_record_message")],
-          vizingProgram.programId
+        vizingUtils.generatePdaForRecordMessage(vizingProgram.programId);
+      {
+        const tx = await vizingUtils.initializeRecordMessage(
+          vizingProgram,
+          recordMessageAuthority,
+          provider.wallet.publicKey
         );
-
-      await vizingProgram.methods
-        .initRecordMessage()
-        .accounts({
-          currentRecordMessage: recordMessageAuthority,
-          user: provider.wallet.publicKey,
-        })
-        .signers([])
-        .rpc();
+        console.log(`recordMessage initialize: ${tx}`);
+      }
     }
   });
 
