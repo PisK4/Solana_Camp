@@ -12,15 +12,15 @@ use crate::vizing_omni::VIZING_APP_CONFIG_SEED;
 #[account]
 #[derive(InitSpace)]
 pub struct CurrentRecordMessage {
-    pub compute_trade_fee1: u64,
-    pub compute_trade_fee2: u64,
+    pub compute_trade_fee1: u128,
+    pub compute_trade_fee2: u128,
     pub estimate_price1: u64,
     pub estimate_price2: u64,
-    pub estimate_gas: u64,
-    pub estimate_total_fee: u64,
-    pub exact_output: u64,
-    pub exact_input: u64,
-    pub estimate_vizing_gas_fee: u64,
+    pub estimate_gas: u128,
+    pub estimate_total_fee: u128,
+    pub exact_output: u128,
+    pub exact_input: u128,
+    pub estimate_vizing_gas_fee: u128,
     pub init_state: bool
 }
 
@@ -54,25 +54,9 @@ pub struct LaunchOp<'info> {
 
 impl LaunchOp<'_> {
     pub fn vizing_launch(ctx: &mut Context<LaunchOp>, params: LaunchParams) -> Result<()> {
-        msg!(
-            "erliest_arrival_timestamp: {}",
-            params.erliest_arrival_timestamp
-        );
-        msg!(
-            "latest_arrival_timestamp: {}",
-            params.latest_arrival_timestamp
-        );
         msg!("value: {}", params.value);
 
         msg!("dest_chainid: {}", params.dest_chainid);
-
-        msg!("mode: {}", params.message.mode);
-
-        // msg!("target_contract: {}", params.message.target_contract);
-
-        msg!("execute_gas_limit: {}", params.message.execute_gas_limit);
-
-        msg!("max_fee_per_gas: {}", params.message.max_fee_per_gas);
 
         msg!("signature: {:?}", params.message.signature);
 
@@ -112,7 +96,7 @@ impl LaunchOp<'_> {
             params.value,
             &serialized_data,
         ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
-
+        msg!("launch fee: {:?}",fee);
         transfer(
             CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
@@ -357,13 +341,13 @@ impl ComputeTradeFee1<'_> {
     pub fn get_compute_trade_fee1(
         ctx: Context<ComputeTradeFee1>,
         dest_chain_id: u64,
-        amount_out: u64,
-    ) -> Result<u64> {
+        amount_out: u128,
+    ) -> Result<u128> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let current_record_message = &mut ctx.accounts.current_record_message;
         let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
         let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
-        let fee: u64 = vizing_gas_system::compute_trade_fee1(
+        let fee: u128 = vizing_gas_system::compute_trade_fee1(
             trade_fee.molecular,
             trade_fee.denominator,
             gas_system_global.molecular,
@@ -398,14 +382,14 @@ impl ComputeTradeFee2<'_> {
         ctx: Context<ComputeTradeFee2>,
         target_contract: [u8; 32],
         dest_chain_id: u64,
-        amount_out: u64,
-    ) -> Result<u64> {
+        amount_out: u128,
+    ) -> Result<u128> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
         let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,target_contract);
         let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
         let current_record_message = &mut ctx.accounts.current_record_message;
-        let fee: u64 = vizing_gas_system::compute_trade_fee2(
+        let fee: u128 = vizing_gas_system::compute_trade_fee2(
             trade_fee.molecular,
             trade_fee.denominator,
             trade_fee_config.molecular,
@@ -520,10 +504,10 @@ pub struct EstimateGas<'info> {
 impl EstimateGas<'_> {
     pub fn get_estimate_gas(
         ctx: Context<EstimateGas>,
-        amount_out: u64,
+        amount_out: u128,
         dest_chain_id: u64,
         message: Message,
-    ) -> Result<u64> {
+    ) -> Result<u128> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let current_record_message = &mut ctx.accounts.current_record_message;
         let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
@@ -536,7 +520,7 @@ impl EstimateGas<'_> {
         let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
         let dapp_config_value = trade_fee_config.value;
 
-        let fee: u64 = vizing_gas_system::estimate_gas(
+        let fee: u128 = vizing_gas_system::estimate_gas(
             gas_system_global.global_base_price,
             fee_config.base_price,
             dapp_config_value,
@@ -581,9 +565,9 @@ impl EstimateTotalFee<'_> {
     pub fn get_estimate_total_fee(
         ctx: Context<EstimateTotalFee>,
         dest_chain_id: u64,
-        amount_out: u64,
+        amount_out: u128,
         message: Message,
-    ) -> Result<u64> {
+    ) -> Result<u128> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let current_record_message = &mut ctx.accounts.current_record_message;
 
@@ -596,7 +580,7 @@ impl EstimateTotalFee<'_> {
         let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
         let dapp_config_value = trade_fee_config.value;
 
-        let fee: u64 = vizing_gas_system::estimate_total_fee(
+        let fee: u128 = vizing_gas_system::estimate_total_fee(
             gas_system_global.amount_in_threshold,
             trade_fee.molecular,
             trade_fee.denominator,
@@ -642,13 +626,13 @@ impl ExactOutput<'_> {
     pub fn get_exact_output(
         ctx: Context<ExactOutput>,
         dest_chain_id: u64,
-        amount_out: u64,
-    ) -> Result<u64> {
+        amount_out: u128,
+    ) -> Result<u128> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
         let current_record_message = &mut ctx.accounts.current_record_message;
 
-        let amount_in: u64 = vizing_gas_system::exact_output(
+        let amount_in: u128 = vizing_gas_system::exact_output(
             fee_config.molecular,
             fee_config.denominator,
             fee_config.molecular_decimal,
@@ -682,13 +666,13 @@ impl ExactInput<'_> {
     pub fn get_exact_input(
         ctx: Context<ExactInput>,
         dest_chain_id: u64,
-        amount_in: u64,
-    ) -> Result<u64> {
+        amount_in: u128,
+    ) -> Result<u128> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
         let current_record_message = &mut ctx.accounts.current_record_message;
 
-        let amount_out: u64 = vizing_gas_system::exact_input(
+        let amount_out: u128 = vizing_gas_system::exact_input(
             fee_config.molecular,
             fee_config.denominator,
             fee_config.molecular_decimal,
@@ -721,11 +705,11 @@ pub struct EstimateVizingGasFee1<'info> {
 impl EstimateVizingGasFee1<'_>{
     pub fn get_estimate_vizing_gas_fee (
         ctx: Context<EstimateVizingGasFee1>,
-        value: u64,
+        value: u128,
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message:Vec<u8>
-    ) -> Result<u64> {  
+    ) -> Result<u128> {  
 
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let current_record_message = &mut ctx.accounts.current_record_message;
@@ -738,7 +722,7 @@ impl EstimateVizingGasFee1<'_>{
         let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
         let dapp_config_value = get_trade_fee_config.value;
         
-        let vizing_gas_fee = vizing_gas_system::estimate_gas(
+        let vizing_gas_fee: u128 = vizing_gas_system::estimate_gas(
             get_gas_system_global.global_base_price,
             get_fee_config.base_price,
             dapp_config_value,
@@ -782,7 +766,7 @@ pub struct EstimateVizingGasFee2<'info> {
 impl EstimateVizingGasFee2<'_>{
     pub fn get_estimate_vizing_gas_fee (
         ctx: Context<EstimateVizingGasFee2>,
-        value: u64,
+        value: u128,
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message: Message
@@ -801,7 +785,7 @@ impl EstimateVizingGasFee2<'_>{
         let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
         let dapp_config_value = get_trade_fee_config.value;
         
-        let vizing_gas_fee = vizing_gas_system::estimate_gas(
+        let vizing_gas_fee: u128 = vizing_gas_system::estimate_gas(
             get_gas_system_global.global_base_price,
             get_fee_config.base_price,
             dapp_config_value,

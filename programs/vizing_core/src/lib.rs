@@ -395,8 +395,8 @@ pub mod vizing_core {
     pub fn compute_trade_fee1(
         ctx: Context<ComputeTradeFee1>,
         dest_chain_id: u64,
-        amount_out: u64,
-    ) -> Result<u64> {
+        amount_out: u128,
+    ) -> Result<u128> {
         ComputeTradeFee1::get_compute_trade_fee1(ctx, dest_chain_id, amount_out)
     }
 
@@ -410,8 +410,8 @@ pub mod vizing_core {
         ctx: Context<ComputeTradeFee2>,
         target_contract: [u8; 32],
         dest_chain_id: u64,
-        amount_out: u64,
-    ) -> Result<u64> {
+        amount_out: u128,
+    ) -> Result<u128> {
         ComputeTradeFee2::get_compute_trade_fee2(ctx, target_contract, dest_chain_id, amount_out)
     }
 
@@ -444,10 +444,10 @@ pub mod vizing_core {
      */
     pub fn estimate_gas(
         ctx: Context<EstimateGas>,
-        amount_out: u64,
+        amount_out: u128,
         dest_chain_id: u64,
         message: Message,
-    ) -> Result<u64> {
+    ) -> Result<u128> {
         EstimateGas::get_estimate_gas(ctx, amount_out, dest_chain_id, message)
     }
 
@@ -460,9 +460,9 @@ pub mod vizing_core {
     pub fn estimate_total_fee(
         ctx: Context<EstimateTotalFee>,
         dest_chain_id: u64,
-        amount_out: u64,
+        amount_out: u128,
         message: Message,
-    ) -> Result<u64> {
+    ) -> Result<u128> {
         EstimateTotalFee::get_estimate_total_fee(ctx, dest_chain_id, amount_out, message)
     }
 
@@ -475,8 +475,8 @@ pub mod vizing_core {
     pub fn exact_output(
         ctx: Context<ExactOutput>,
         dest_chain_id: u64,
-        amount_out: u64,
-    ) -> Result<u64> {
+        amount_out: u128,
+    ) -> Result<u128> {
         ExactOutput::get_exact_output(ctx, dest_chain_id, amount_out)
     }
 
@@ -489,8 +489,8 @@ pub mod vizing_core {
     pub fn exact_input(
         ctx: Context<ExactInput>,
         dest_chain_id: u64,
-        amount_in: u64,
-    ) -> Result<u64> {
+        amount_in: u128,
+    ) -> Result<u128> {
         ExactInput::get_exact_input(ctx, dest_chain_id, amount_in)
     }
 
@@ -505,11 +505,11 @@ pub mod vizing_core {
 
     pub fn estimate_vizing_gas_fee1(
         ctx: Context<EstimateVizingGasFee1>,
-        value: u64,
+        value: u128,
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message: Vec<u8>,
-    ) -> Result<u64> {
+    ) -> Result<u128> {
         EstimateVizingGasFee1::get_estimate_vizing_gas_fee(
             ctx,
             value,
@@ -521,11 +521,11 @@ pub mod vizing_core {
 
     pub fn estimate_vizing_gas_fee2(
         ctx: Context<EstimateVizingGasFee2>,
-        value: u64,
+        value: u128,
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message: Message,
-    ) -> Result<u64> {
+    ) -> Result<u128> {
         EstimateVizingGasFee2::get_estimate_vizing_gas_fee(
             ctx,
             value,

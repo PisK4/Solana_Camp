@@ -613,22 +613,18 @@ impl RemoveTradeFeeConfigDapp<'_>{
         gas_system_global_molecular: u64,
         gas_system_global_denominator: u64,
         _dest_chain_id: u64,
-        amount_out: u64,
-    ) -> Option<u64> {
+        amount_out: u128,
+    ) -> Option<u128> {
         let fee;
         if trade_fee_denominator == 0 {
-            if gas_system_global_molecular!=0 && gas_system_global_denominator!=0{
-                fee = amount_out
-                .checked_mul(gas_system_global_molecular)?
-                .checked_div(gas_system_global_denominator)?;
-            }else{
+            if gas_system_global_molecular!=0 {
+                fee = amount_out * gas_system_global_molecular as u128 / gas_system_global_denominator as u128;
+            }else {
                 fee = 0;
             }
         } else {
-            if trade_fee_molecular!=0 && trade_fee_denominator!=0{
-                fee = amount_out
-                .checked_mul(trade_fee_molecular)?
-                .checked_div(trade_fee_denominator)?;
+            if trade_fee_molecular!=0{
+                fee = amount_out * trade_fee_molecular as u128 / trade_fee_denominator as u128;
             }else{
                 fee = 0;
             }
@@ -646,9 +642,9 @@ impl RemoveTradeFeeConfigDapp<'_>{
         gas_system_global_denominator: u64,
         target_contract: [u8; 32],
         dest_chain_id: u64,
-        amount_out: u64,
-    ) -> Option<u64> {
-        let fee;
+        amount_out: u128,
+    ) -> Option<u128> {
+        let fee: u128;
         let zero_contract: [u8; 32] = [0; 32];
         msg!("trade_fee_molecular: {:?}", trade_fee_molecular);
         msg!("trade_fee_denominator: {:?}", trade_fee_denominator);
@@ -657,10 +653,8 @@ impl RemoveTradeFeeConfigDapp<'_>{
         msg!("gas_system_global_molecular: {:?}", gas_system_global_molecular);
         msg!("gas_system_global_denominator: {:?}", gas_system_global_denominator);
         if trade_fee_config_denominator != 0 && target_contract != zero_contract{
-            if trade_fee_config_molecular!=0 && trade_fee_config_denominator!=0{
-                fee = amount_out
-                        .checked_mul(trade_fee_config_molecular)?
-                        .checked_div(trade_fee_config_denominator)?;
+            if trade_fee_config_molecular!=0 {
+                fee = amount_out * trade_fee_config_molecular as u128 / trade_fee_config_denominator as u128;
             }else{
                 fee = 0;
             }
@@ -684,6 +678,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
         fee_config_molecular_decimal: u8,
         fee_config_denominator_decimal: u8,
         fee_config_molecular: u64,
+        fee_config_denominator: u64,
         trade_fee_molecular: u64,
         trade_fee_denominator: u64,
         trade_fee_config_molecular: u64,
@@ -691,10 +686,10 @@ impl RemoveTradeFeeConfigDapp<'_>{
         gas_system_global_molecular: u64,
         gas_system_global_denominator: u64,
         gas_system_global_default_gas_limit: u64,
-        amount_out: u64,
+        amount_out: u128,
         dest_chain_id: u64,
         message: &[u8]
-    ) -> Option<u64> {
+    ) -> Option<u128> {
         let base_price: u64;
         let fee: u64;
         let mut this_dapp: [u8; 32]=[0; 32];
@@ -736,11 +731,13 @@ impl RemoveTradeFeeConfigDapp<'_>{
             fee=base_price.checked_mul(gas_system_global_default_gas_limit)?;
         }
 
-        let mut final_fee: u64= fee;
+        let mut final_fee: u128= fee as u128;
         if amount_out > 0{
-            let mut output_amount_in: u64 = 0;
+            let mut output_amount_in: u128 = 0;
             if fee_config_molecular != 0 {
                 output_amount_in=exact_output(
+                    fee_config_molecular,
+                    fee_config_denominator,
                     fee_config_molecular_decimal,
                     fee_config_denominator_decimal,
                     dest_chain_id,
@@ -748,7 +745,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
                 )?;
             }
 
-            let trade_fee2=compute_trade_fee2(
+            let trade_fee2: u128=compute_trade_fee2(
                 trade_fee_molecular,
                 trade_fee_denominator,
                 trade_fee_config_molecular,
@@ -760,7 +757,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
                 output_amount_in
             )?;
 
-            final_fee = fee.checked_add(trade_fee2)?;
+            final_fee = (fee as u128).checked_add(trade_fee2)?;
 
         }
         Some(final_fee)
@@ -828,13 +825,14 @@ impl RemoveTradeFeeConfigDapp<'_>{
         fee_config_molecular_decimal: u8,
         fee_config_denominator_decimal: u8,
         fee_config_molecular: u64,
+        fee_config_denominator: u64,
         gas_system_global_default_gas_limit: u64,
         gas_system_global_global_base_price: u64,
         fee_config_base_price: u64,
         dest_chain_id: u64,
-        amount_out: u64,
+        amount_out: u128,
         message: &[u8],
-    ) -> Option<u64> {
+    ) -> Option<u128> {
         let base_price: u64;
         if fee_config_base_price > 0 {
             base_price = fee_config_base_price;
@@ -861,6 +859,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
             msg!("dapp_base_price: {:?}",dapp_base_price);
 
             if price < dapp_base_price {
+                msg!("price < dapp_base_price");
                 return None; 
             }
             this_dapp=dapp;
@@ -873,11 +872,13 @@ impl RemoveTradeFeeConfigDapp<'_>{
         }
 
         msg!("fee: {:?}",fee);
-        let mut amount_in: u64=amount_out;
-        let mut final_fee: u64=fee;
+        let mut amount_in: u128 = amount_out;
+        let mut final_fee: u128 = fee as u128;
         if amount_out > 0 {
             if fee_config_molecular != 0 {
                 amount_in = exact_output(
+                    fee_config_molecular,
+                    fee_config_denominator,
                     fee_config_molecular_decimal,
                     fee_config_denominator_decimal,
                     dest_chain_id,
@@ -885,7 +886,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
                 )?;
                 msg!("exact_output: {:?}",amount_in);
             }
-            let trade_fee2 = compute_trade_fee2(
+            let trade_fee2: u128 = compute_trade_fee2(
                 trade_fee_molecular,
                 trade_fee_denominator,
                 trade_fee_config_molecular,
@@ -897,9 +898,10 @@ impl RemoveTradeFeeConfigDapp<'_>{
                 amount_in
             )?;
             msg!("compute_trade_fee2: {:?}",trade_fee2);
-            final_fee = trade_fee2.checked_add(amount_in)?.checked_add(fee)?;
+            final_fee = trade_fee2 + amount_in + fee as u128;
         }
-        if amount_in > token_amount_limit{
+        if amount_in > token_amount_limit as u128{
+            msg!("Exceed quantity limit");
             return None;
         }
 
@@ -907,62 +909,81 @@ impl RemoveTradeFeeConfigDapp<'_>{
     }
 
     pub fn exact_output(
+        fee_config_molecular: u64,
+        fee_config_denominator: u64,
         fee_config_molecular_decimal: u8,
         fee_config_denominator_decimal: u8,
         _dest_chain_id: u64,
-        amount_out: u64,    
-    ) -> Option<u64> {
-        let this_amount_out;
-        let amount_in;
-        msg!("fee_config_molecular_decimal: {:?}", fee_config_molecular_decimal);
-        msg!("fee_config_denominator_decimal: {:?}", fee_config_denominator_decimal);
+        amount_out: u128,    
+    ) -> Option<u128> {
+        let this_amount_out: u128;
+        let amount_in: u128;
+        msg!("molecular_decimal: {:?}", fee_config_molecular_decimal);
+        msg!("denominator_decimal: {:?}", fee_config_denominator_decimal);
+
+        let decimal_diff = (fee_config_molecular_decimal as i32 - fee_config_denominator_decimal as i32).abs();
+        if decimal_diff > 18 {
+            msg!("Decimal difference is too large, exceeding 18");
+            return None;  
+        }
+        
         if fee_config_molecular_decimal!=0 && fee_config_denominator_decimal!=0{
             if fee_config_molecular_decimal != fee_config_denominator_decimal {
                 if fee_config_molecular_decimal > fee_config_denominator_decimal {
-                    this_amount_out=amount_out.checked_div(10u64
-                        .pow((fee_config_molecular_decimal.checked_sub(fee_config_denominator_decimal)?) as u32))?;
+                    this_amount_out=amount_out/(10u128
+                        .pow((fee_config_molecular_decimal-fee_config_denominator_decimal) as u32));
                 } else {
-                    this_amount_out=amount_out.checked_mul(10u64
-                        .pow((fee_config_denominator_decimal.checked_sub(fee_config_molecular_decimal)?) as u32))?;
+                    this_amount_out=amount_out*(10u128
+                        .pow((fee_config_denominator_decimal-fee_config_molecular_decimal) as u32));
                 }
             } else {
                 this_amount_out=amount_out;
             }
-            amount_in = this_amount_out.checked_mul(fee_config_molecular_decimal as u64)?
-            .checked_div(fee_config_denominator_decimal as u64)?;
+            amount_in = this_amount_out.checked_mul(fee_config_molecular as u128)?
+            .checked_div(fee_config_denominator as u128)?;
         }else{
-            amount_in=0;
+            msg!("molecular_decimal or denominator_decimal is 0");
+            return None; 
         }
-            
         Some(amount_in)
     }
 
     pub fn exact_input(
+        fee_config_molecular: u64,
+        fee_config_denominator: u64,
         fee_config_molecular_decimal: u8,
         fee_config_denominator_decimal: u8,
         _dest_chain_id: u64,
-        amount_in: u64,
-    ) -> Option<u64> {
-        let this_amount_in;
-        let amount_out;
+        amount_in: u128,
+    ) -> Option<u128> {
+        let this_amount_in: u128;
+        let amount_out: u128;
+        msg!("molecular_decimal: {:?}", fee_config_molecular_decimal);
+        msg!("denominator_decimal: {:?}", fee_config_denominator_decimal);
+
+        let decimal_diff = (fee_config_molecular_decimal as i32 - fee_config_denominator_decimal as i32).abs();
+        if decimal_diff > 18 {
+            msg!("Decimal difference is too large, exceeding 18");
+            return None;  
+        }
         if fee_config_molecular_decimal!=0 && fee_config_denominator_decimal!=0{
             if fee_config_molecular_decimal != fee_config_denominator_decimal {
                 if fee_config_molecular_decimal > fee_config_denominator_decimal {
-                    this_amount_in=amount_in.checked_mul(10u64
-                        .pow((fee_config_molecular_decimal.checked_sub(fee_config_denominator_decimal)?) as u32))?;
+                    this_amount_in=amount_in*(10u128
+                        .pow((fee_config_molecular_decimal-fee_config_denominator_decimal) as u32));
                 } else {
-                    this_amount_in=amount_in.checked_div(10u64
-                        .pow((fee_config_denominator_decimal.checked_sub(fee_config_molecular_decimal)?) as u32))?;
+                    this_amount_in=amount_in/(10u128
+                        .pow((fee_config_denominator_decimal-fee_config_molecular_decimal) as u32));
                 }
             } else {
                 this_amount_in=amount_in;
             }
-            amount_out = this_amount_in.checked_mul(fee_config_molecular_decimal as u64)?
-            .checked_div(fee_config_denominator_decimal as u64)?;
+            amount_out = this_amount_in.checked_mul(fee_config_denominator as u128)?
+            .checked_div(fee_config_molecular as u128)?;
         }else{
-            amount_out=0;
+            msg!("molecular_decimal or denominator_decimal is 0");
+            return None; 
         }
-            
         Some(amount_out)
     }
 
