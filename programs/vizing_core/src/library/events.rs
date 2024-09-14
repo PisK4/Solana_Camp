@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 use crate::vizing_channel::LandingMessage;
 use crate::vizing_omni::{AdditionalParams, Message};
+use crate::library::Uint256;
 
 #[event]
 pub struct OAppRegisteredEvent {
@@ -15,8 +16,8 @@ pub struct SuccessfulLaunchMessage {
     pub relayer: [u8; 32],
     pub sender: Pubkey,
     pub src_contract: Pubkey,
-    pub value: u128,
-    pub fee: u128,
+    pub value: Uint256,
+    pub fee: Uint256,
     pub dest_chainid: u64,
     pub addition_params: AdditionalParams,
     pub message: Message,

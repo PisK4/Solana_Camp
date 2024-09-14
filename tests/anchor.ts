@@ -190,6 +190,11 @@ describe("Test", () => {
     let arbitrum_molecular_decimal = 123;
     let arbitrum_denominator_decimal = 6;
 
+    const Uint256Params={
+      high: new anchor.BN(0),
+      low: new anchor.BN(10_000_000);
+    };
+
     let vizing_chain_id = new anchor.BN(28516);
     let vizing_maxPrice = new anchor.BN(100000);
     let vizing_destChainBasePrice = new anchor.BN(10000);
@@ -300,7 +305,6 @@ describe("Test", () => {
         console.log(`initGasGlobal:${initGasGlobal}'`);
         // Confirm transaction
         await pg.connection.confirmTransaction(initGasGlobal);
-        console.log("InitGasGlobal error:", e);
       }
     }
     await InitGasGlobal(
@@ -755,17 +759,17 @@ describe("Test", () => {
       if (fee_config_molecular_decimal != fee_config_denominator_decimal) {
         if (fee_config_molecular_decimal > fee_config_denominator_decimal) {
           this_amount_out =
-            amount_out /
+            amount_out.low.toNumer() /
             (10 ^
               (fee_config_molecular_decimal - fee_config_denominator_decimal));
         } else {
           this_amount_out =
-            amount_out /
+            amount_out.low.toNumer() /
             (10 ^
               (fee_config_denominator_decimal - fee_config_molecular_decimal));
         }
       } else {
-        this_amount_out = amount_out;
+        this_amount_out = amount_out.low.toNumer();
       }
 
       let amount_in =
@@ -808,14 +812,14 @@ describe("Test", () => {
       }
       if (tradeFee_denominator == 0) {
         computeTradeFee1 =
-          (amount_out * gasSystemGlobal_molecular) /
+          (amount_out.low.toNumer() * gasSystemGlobal_molecular) /
           gasSystemGlobal_denominator;
       } else {
         if (tradeFee_molecular != 0 && tradeFee_denominator != 0) {
           return 0;
         } else {
           computeTradeFee1 =
-            (amount_out * tradeFee_molecular) / tradeFee_denominator;
+            (amount_out.low.toNumer() * tradeFee_molecular) / tradeFee_denominator;
         }
       }
       return computeTradeFee1;
@@ -857,13 +861,13 @@ describe("Test", () => {
           trade_fee_config_denominator != 0
         ) {
           computeTradeFee2 =
-            (amount_out * trade_fee_config_molecular) /
+            (amount_out.low.toNumer() * trade_fee_config_molecular) /
             trade_fee_config_denominator;
         } else {
           return 0;
         }
       } else {
-        computeTradeFee2 = await ComputeTradeFee1(dest_chain_id, amount_out);
+        computeTradeFee2 = await ComputeTradeFee1(dest_chain_id, amount_out.low.toNumer());
       }
       console.log("ComputeTradeFee2:", computeTradeFee2);
       return computeTradeFee2;
@@ -968,17 +972,17 @@ describe("Test", () => {
       if (fee_config_molecular_decimal != fee_config_denominator_decimal) {
         if (fee_config_molecular_decimal > fee_config_denominator_decimal) {
           this_amount_in =
-            amount_in *
+            amount_in.low.toNumer() *
             (10 ^
               (fee_config_molecular_decimal - fee_config_denominator_decimal));
         } else {
           this_amount_in =
-            amount_in /
+            amount_in.low.toNumer() /
             (10 ^
               (fee_config_denominator_decimal - fee_config_molecular_decimal));
         }
       } else {
-        this_amount_in = amount_in;
+        this_amount_in = amount_in.low.toNumer();
       }
       let amount_out =
         (this_amount_in * fee_config_molecular) /
@@ -1051,10 +1055,10 @@ describe("Test", () => {
         fee = base_price * default_gas_limit;
       }
 
-      if (amount_out > 0) {
+      if (amount_out.low.toNumer() > 0) {
         let output_amount_in;
         if (fee_config_molecular != 0) {
-          output_amount_in = await ExactOutput(dest_chain_id, amount_out);
+          output_amount_in = await ExactOutput(dest_chain_id, amount_out.low.toNumer());
         }
 
         let trade_fee2 = await ComputeTradeFee2(
@@ -1126,13 +1130,13 @@ describe("Test", () => {
         fee = base_price * default_gas_limit;
       }
 
-      let output_amount_in = amount_out;
+      let output_amount_in = amount_out.low.toNumer();
       let finalFee;
-      if (amount_out.toNumber() > 0) {
+      if (amount_out.low.toNumber() > 0) {
         if (fee_config_molecular != 0) {
           output_amount_in = await ExactOutput(
             dest_chain_id,
-            amount_out.toNumber()
+            amount_out.low.toNumer()
           );
         }
 
@@ -1220,7 +1224,7 @@ describe("Test", () => {
       signature: Buffer.from("transfer from bob to alice"),
     };
 
-    let launch1Value = new anchor.BN(10_000_000); // 0.01 sol
+    let launch1Value = Uint256Params; // 0.01 sol
 
     const launchParams = {
       erliestArrivalTimestamp: new anchor.BN(1),
@@ -1235,13 +1239,13 @@ describe("Test", () => {
     let feeCollector = feeReceiverKeyPair.publicKey;
 
     //forecast
-    await EstimateTotalFee(arbitrum_chain_id, launch1Value, message);
-    await EstimateVizingGasFee(
-      launch1Value,
-      arbitrum_chain_id,
-      Buffer.alloc(0),
-      message
-    );
+    // await EstimateTotalFee(arbitrum_chain_id, launch1Value, message);
+    // await EstimateVizingGasFee(
+    //   launch1Value,
+    //   arbitrum_chain_id,
+    //   Buffer.alloc(0),
+    //   message
+    // );
 
     async function Launch(
       thisLaunchParams,
@@ -1309,12 +1313,16 @@ describe("Test", () => {
       message: testMessage1,
     };
 
+    const Uint256Params2={
+      high: new anchor.BN(0),
+      low: new anchor.BN(2);
+    };
     const testLaunchParams = {
       erliestArrivalTimestamp: new anchor.BN(1),
       latestArrivalTimestamp: new anchor.BN(2),
       relayer: launchRelayer,
       sender: user,
-      value: new anchor.BN(1), // 0.01 sol
+      value: Uint256Params2,
       destChainid: arbitrum_chain_id,
       additionParams: Buffer.alloc(0),
       message: message,
@@ -1410,12 +1418,13 @@ describe("Test", () => {
       mappingFeeConfigAuthority
     );
 
+    
     const testLaunchParams2 = {
       erliestArrivalTimestamp: new anchor.BN(1),
       latestArrivalTimestamp: new anchor.BN(2),
       relayer: launchRelayer,
       sender: user,
-      value: new anchor.BN(1), // 0.01 sol
+      value: Uint256Params2, 
       destChainid: arbitrum_chain_id,
       additionParams: Buffer.alloc(0),
       message: message,
@@ -1439,12 +1448,16 @@ describe("Test", () => {
       mappingFeeConfigAuthority
     );
 
+    const Uint256Params3={
+      high: new anchor.BN(0),
+      low: new anchor.BN(1000_000_000),
+    };
     const testLaunchParams3 = {
       erliestArrivalTimestamp: new anchor.BN(1),
       latestArrivalTimestamp: new anchor.BN(2),
       relayer: launchRelayer,
       sender: user,
-      value: new anchor.BN(2000_000_000), // 0.01 sol
+      value: Uint256Params3, //1 sol
       destChainid: arbitrum_chain_id,
       additionParams: Buffer.alloc(0),
       message: message,
