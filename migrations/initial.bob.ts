@@ -8,10 +8,13 @@ describe("Vizing Deploy", () => {
 
   const wallet = anchor.AnchorProvider.local().wallet;
 
-  const connection = new anchor.web3.Connection(
-    "https://rpc.ankr.com/solana_devnet",
-    "confirmed"
-  );
+  const url =
+    "https://devnet.helius-rpc.com/?api-key=fe8caf05-0784-4281-8a76-1ded217d3bf2";
+
+  // const connection = new anchor.web3.Connection(
+  //   "https://rpc.ankr.com/solana_devnet",
+  //   "confirmed"
+  // );
 
   // const connection = new anchor.web3.Connection(
   //   anchor.web3.clusterApiUrl("devnet"),
@@ -23,11 +26,13 @@ describe("Vizing Deploy", () => {
   //   "confirmed"
   // );
 
-  // const provider = new anchor.AnchorProvider(connection, wallet, {
-  //   commitment: "confirmed",
-  // });
+  const connection = new anchor.web3.Connection(url, "confirmed");
 
-  const provider = anchor.AnchorProvider.env();
+  const provider = new anchor.AnchorProvider(connection, wallet, {
+    commitment: "confirmed",
+  });
+
+  // const provider = anchor.AnchorProvider.env();
 
   anchor.setProvider(provider);
 

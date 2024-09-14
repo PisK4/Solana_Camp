@@ -33,7 +33,7 @@ pub struct LaunchOp<'info> {
     #[account(signer)]
     pub vizing_app_message_authority: AccountInfo<'info>,
 
-    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing_pad_config.bump
+    #[account(seeds = [VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
         , constraint = vizing_pad_config.is_paused != true @VizingError::VizingNotActivated)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
 
@@ -42,7 +42,7 @@ pub struct LaunchOp<'info> {
     pub vizing_pad_fee_collector: AccountInfo<'info>,
 
     #[account(
-        seeds = [b"init_mapping_fee_config"],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -164,15 +164,15 @@ pub struct LandingOp<'info> {
     pub relayer: AccountInfo<'info>,
 
     #[account(
-        seeds = [contants::VIZING_PAD_SETTINGS_SEED], 
-        bump = vizing.bump,
-        constraint = vizing.trusted_relayers.contains(&relayer.key()) @VizingError::NotRelayer, 
-        constraint = vizing.is_paused != true @VizingError::VizingNotActivated
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump,
+        constraint = vizing_pad_config.trusted_relayers.contains(&relayer.key()) @VizingError::NotRelayer, 
+        constraint = vizing_pad_config.is_paused != true @VizingError::VizingNotActivated
     )]
-    pub vizing: Account<'info, VizingPadConfigs>,
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
 
     /// CHECK: We need this PDA as a signer
-    #[account(seeds = [VIZING_AUTHORITY_SEED],bump = vizing_authority.bump)]
+    #[account(seeds = [VIZING_AUTHORITY_SEED, vizing_pad_config.key().as_ref()],bump = vizing_authority.bump)]
     pub vizing_authority: Account<'info, VizingAuthorityParams>,
 
     /// CHECK: target contract
@@ -228,7 +228,7 @@ impl LandingOp<'_> {
             invoke_signed(
                 &ix,
                 &[ctx.remaining_accounts].concat(),
-                &[&[VIZING_AUTHORITY_SEED, &[ctx.accounts.vizing_authority.bump]]],
+                &[&[VIZING_AUTHORITY_SEED, ctx.accounts.vizing_pad_config.key().as_ref(), &[ctx.accounts.vizing_authority.bump]]],
             )
             .map_err(|_| VizingError::CallingFailed)?;
 

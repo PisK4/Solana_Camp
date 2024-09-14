@@ -165,7 +165,7 @@ describe("Vizing Test", () => {
     };
 
     {
-      const seed = [vizingAuthoritySeed];
+      const seed = [vizingAuthoritySeed, vizingPadConfigs.toBuffer()];
       const [authority, bump] = anchor.web3.PublicKey.findProgramAddressSync(
         seed,
         vizingProgram.programId
@@ -177,6 +177,8 @@ describe("Vizing Test", () => {
 
       vizingAuthority = authority;
       console.log(`authority: ${authority.toBase58()}, bump: ${bump}`);
+
+      console.log("authorityU8Array:", authorityU8Array);
     }
 
     {
@@ -238,7 +240,7 @@ describe("Vizing Test", () => {
     }
 
     {
-      const seed = [vizingGasSystemSeed];
+      const seed = [vizingGasSystemSeed, vizingPadConfigs.toBuffer()];
       const [gasSys, bump] = anchor.web3.PublicKey.findProgramAddressSync(
         seed,
         vizingProgram.programId
@@ -267,6 +269,7 @@ describe("Vizing Test", () => {
       await vizingProgram.methods
         .initializeGasSystem(initGasSystemParams)
         .accounts({
+          vizingPadConfig: vizingPadConfigs,
           mappingFeeConfig: vizingGasSystem,
           payer: provider.wallet.publicKey,
         })
@@ -294,7 +297,7 @@ describe("Vizing Test", () => {
             )
             .accounts({
               mappingFeeConfig: vizingGasSystem,
-              vizing: vizingPadConfigs,
+              vizingPadConfig: vizingPadConfigs,
               user: gasPoolAdminKeyPair.publicKey,
             })
             .signers([gasPoolAdminKeyPair])
@@ -331,7 +334,7 @@ describe("Vizing Test", () => {
           base_price_group
         )
         .accounts({
-          vizing: vizingPadConfigs,
+          vizingPadConfig: vizingPadConfigs,
           mappingFeeConfig: vizingGasSystem,
           user: gasPoolAdminKeyPair.publicKey,
         })
@@ -843,7 +846,7 @@ describe("Vizing Test", () => {
           .landing(landingParams)
           .accounts({
             relayer: mockRelayer.publicKey,
-            vizing: vizingPadConfigs,
+            vizingPadConfig: vizingPadConfigs,
             vizingAuthority: vizingAuthority,
             targetProgram: targetProgram,
             vizingAppConfigs: vizingAppConfig,
@@ -863,7 +866,7 @@ describe("Vizing Test", () => {
           .landing(landingParams)
           .accounts({
             relayer: trustedRelayerKeyPairs[0].publicKey,
-            vizing: vizingPadConfigs,
+            vizingPadConfig: vizingPadConfigs,
             vizingAuthority: vizingAuthority,
             targetProgram: targetProgram,
             vizingAppConfigs: vizingAppConfig,
@@ -885,7 +888,7 @@ describe("Vizing Test", () => {
           .landing(landingParams)
           .accounts({
             relayer: trustedRelayerKeyPairs[0].publicKey,
-            vizing: vizingPadConfigs,
+            vizingPadConfig: vizingPadConfigs,
             vizingAuthority: vizingAuthority,
             targetProgram: targetProgram,
             vizingAppConfigs: null,
@@ -918,7 +921,7 @@ describe("Vizing Test", () => {
         .landing(landingParams)
         .accounts({
           relayer: relayer.publicKey,
-          vizing: vizingPadConfigs,
+          vizingPadConfig: vizingPadConfigs,
           vizingAuthority: vizingAuthority,
           targetProgram: targetProgram,
           vizingAppConfigs: vizingAppConfig,

@@ -12,7 +12,7 @@ pub struct LaunchOp<'info> {
     #[account(signer)]
     pub vizing_app_message_authority: AccountInfo<'info>,
 
-    #[account(seeds = [VIZING_PAD_SETTINGS_SEED], bump = vizing_pad_config.bump
+    #[account(seeds = [VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
         , constraint = vizing_pad_config.is_paused != true @VizingError::VizingNotActivated)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
 

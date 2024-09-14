@@ -19,7 +19,7 @@ vizing_core = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
 vizing_pad = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
 
 [registry]
-url = "https://rpc.ankr.com/solana_devnet"
+url = "https://api.apr.dev"
 
 [provider]
 cluster = "Localnet"
