@@ -360,7 +360,7 @@ describe("Test", () => {
       registeredValidator: anchor.web3.Keypair.generate().publicKey,
       isPaused: false,
     };
-    async function ModifySettings() {
+    async function OwnerAuthorization() {
       try {
         await pg.program.methods
           .modifySettings(OwnerManagementParams)
@@ -374,7 +374,7 @@ describe("Test", () => {
         console.log("modifySettings error:", e);
       }
     }
-    await ModifySettings();
+    await OwnerAuthorization();
 
     //grantFeeCollector
     async function GrantFeeCollector() {

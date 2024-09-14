@@ -73,18 +73,18 @@ pub mod vizing_core {
     }
 
     pub fn modify_settings(
-        mut ctx: Context<ModifySettings>,
+        mut ctx: Context<OwnerAuthorization>,
         params: OwnerManagementParams,
     ) -> Result<()> {
-        ModifySettings::owner_management(&mut ctx, &params)
+        OwnerAuthorization::owner_management(&mut ctx, &params)
     }
 
-    pub fn pause_engine(mut ctx: Context<PauseEngine>) -> Result<()> {
-        PauseEngine::pause_engine(&mut ctx)
+    pub fn pause_engine(mut ctx: Context<EngineAdminAuthorization>) -> Result<()> {
+        EngineAdminAuthorization::pause_engine(&mut ctx)
     }
 
-    pub fn unpause_engine(mut ctx: Context<PauseEngine>) -> Result<()> {
-        PauseEngine::unpause_engine(&mut ctx)
+    pub fn unpause_engine(mut ctx: Context<EngineAdminAuthorization>) -> Result<()> {
+        EngineAdminAuthorization::unpause_engine(&mut ctx)
     }
 
     pub fn grant_relayer(
@@ -95,10 +95,17 @@ pub mod vizing_core {
     }
 
     pub fn grant_fee_collector(
-        mut ctx: Context<GrantFeeCollector>,
+        mut ctx: Context<GasPoolAdminAuthorization>,
         fee_collector: Pubkey,
     ) -> Result<()> {
-        GrantFeeCollector::grant_fee_collector(&mut ctx, fee_collector)
+        GasPoolAdminAuthorization::grant_fee_collector(&mut ctx, fee_collector)
+    }
+
+    pub fn grant_swap_manager(
+        mut ctx: Context<GasPoolAdminAuthorization>,
+        swap_manager: Pubkey,
+    ) -> Result<()> {
+        GasPoolAdminAuthorization::grant_swap_manager(&mut ctx, swap_manager)
     }
 
     // ***********  governance end ************
