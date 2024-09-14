@@ -850,9 +850,13 @@ describe("Vizing Test", () => {
     const feeConfigMappingResult = feeConfigMapping ? feeConfigMapping : 0;
     let fee_config_molecular_decimal = 0;
     let fee_config_denominator_decimal = 0;
+    let fee_config_molecular = 0;
+    let fee_config_denominator = 0;
     if (feeConfigMappingResult != 0) {
       fee_config_molecular_decimal = feeConfigMapping.molecularDecimal;
       fee_config_denominator_decimal = feeConfigMapping.denominatorDecimal;
+      fee_config_molecular = feeConfigMapping.molecular.toNumber();
+      fee_config_denominator = feeConfigMapping.denominator.toNumber();
     }
 
     let this_amount_out;
@@ -873,8 +877,8 @@ describe("Vizing Test", () => {
     }
 
     let amount_in =
-      (this_amount_out * fee_config_denominator_decimal) /
-      fee_config_denominator_decimal;
+      (this_amount_out * fee_config_denominator) /
+      fee_config_denominator;
     console.log("ExactOutput:", amount_in);
     return amount_in;
   }
@@ -1060,9 +1064,13 @@ describe("Vizing Test", () => {
     const feeConfigMappingResult = feeConfigMapping ? feeConfigMapping : 0;
     let fee_config_molecular_decimal = 0;
     let fee_config_denominator_decimal = 0;
+    let fee_config_molecular = 0;
+    let fee_config_denominator=0;
     if (feeConfigMappingResult != 0) {
       fee_config_molecular_decimal = feeConfigMapping.molecularDecimal;
       fee_config_denominator_decimal = feeConfigMapping.denominatorDecimal;
+      fee_config_molecular = feeConfigMapping.molecular.toNumber();
+      fee_config_denominator = feeConfigMapping.denominator.toNumber();
     }
     let this_amount_in;
     if (fee_config_molecular_decimal != fee_config_denominator_decimal) {
@@ -1081,8 +1089,8 @@ describe("Vizing Test", () => {
       this_amount_in = amount_in;
     }
     let amount_out =
-      (this_amount_in * fee_config_molecular_decimal) /
-      fee_config_denominator_decimal;
+      (this_amount_in * fee_config_molecular) /
+      fee_config_denominator;
     console.log("ExactInput:", amount_out);
     return amount_out;
   }

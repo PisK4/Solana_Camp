@@ -742,9 +742,13 @@ describe("Test", () => {
       const feeConfigMappingResult = feeConfigMapping ? feeConfigMapping : 0;
       let fee_config_molecular_decimal = 0;
       let fee_config_denominator_decimal = 0;
+      let fee_config_molecular = 0;
+      let fee_config_denominator = 0;
       if (feeConfigMappingResult != 0) {
         fee_config_molecular_decimal = feeConfigMapping.molecularDecimal;
         fee_config_denominator_decimal = feeConfigMapping.denominatorDecimal;
+        fee_config_molecular = feeConfigMapping.molecular.toNumber();
+        fee_config_denominator = feeConfigMapping.denominator.toNumber();
       }
 
       let this_amount_out;
@@ -765,8 +769,8 @@ describe("Test", () => {
       }
 
       let amount_in =
-        (this_amount_out * fee_config_denominator_decimal) /
-        fee_config_denominator_decimal;
+        (this_amount_out * fee_config_denominator) /
+        fee_config_molecular;
       console.log("ExactOutput:", amount_in);
       return amount_in;
     }
@@ -952,9 +956,13 @@ describe("Test", () => {
       const feeConfigMappingResult = feeConfigMapping ? feeConfigMapping : 0;
       let fee_config_molecular_decimal = 0;
       let fee_config_denominator_decimal = 0;
+      let fee_config_molecular = 0;
+      let fee_config_denominator=0;
       if (feeConfigMappingResult != 0) {
         fee_config_molecular_decimal = feeConfigMapping.molecularDecimal;
         fee_config_denominator_decimal = feeConfigMapping.denominatorDecimal;
+        fee_config_molecular = feeConfigMapping.molecular.toNumber();
+        fee_config_denominator = feeConfigMapping.denominator.toNumber();
       }
       let this_amount_in;
       if (fee_config_molecular_decimal != fee_config_denominator_decimal) {
@@ -973,8 +981,8 @@ describe("Test", () => {
         this_amount_in = amount_in;
       }
       let amount_out =
-        (this_amount_in * fee_config_molecular_decimal) /
-        fee_config_denominator_decimal;
+        (this_amount_in * fee_config_molecular) /
+        fee_config_denominator;
       console.log("ExactInput:", amount_out);
       return amount_out;
     }
@@ -1301,6 +1309,17 @@ describe("Test", () => {
       message: testMessage1,
     };
 
+    const testLaunchParams = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: launchRelayer,
+      sender: user,
+      value: new anchor.BN(1), // 0.01 sol
+      destChainid: arbitrum_chain_id,
+      additionParams: Buffer.alloc(0),
+      message: message,
+    };
+
     //test molecular_decimal=125,denominator_decimal=8
     console.log("test molecular_decimal=125,denominator_decimal=8:");
     await SetThisFeeConfig(
@@ -1313,14 +1332,14 @@ describe("Test", () => {
       8
     );
     await Launch(
-      launchParams,
+      testLaunchParams,
       vizingPadSettings,
       feeCollector,
       mappingFeeConfigAuthority
     );
 
     //test molecular_decimal=8,denominator_decimal=125
-    console.log("test molecular_decimal=6,denominator_decimal=103:");
+    console.log("test molecular_decimal=8,denominator_decimal=125:");
     await SetThisFeeConfig(
       arbitrum_chain_id,
       base_price,
@@ -1331,7 +1350,7 @@ describe("Test", () => {
       125
     );
     await Launch(
-      launchParams,
+      testLaunchParams,
       vizingPadSettings,
       feeCollector,
       mappingFeeConfigAuthority
@@ -1349,7 +1368,7 @@ describe("Test", () => {
       0
     );
     await Launch(
-      launchParams,
+      testLaunchParams,
       vizingPadSettings,
       feeCollector,
       mappingFeeConfigAuthority
@@ -1367,7 +1386,7 @@ describe("Test", () => {
       9
     );
     await Launch(
-      launchParams,
+      testLaunchParams,
       vizingPadSettings,
       feeCollector,
       mappingFeeConfigAuthority
@@ -1385,11 +1404,22 @@ describe("Test", () => {
       0
     );
     await Launch(
-      launchParams,
+      testLaunchParams,
       vizingPadSettings,
       feeCollector,
       mappingFeeConfigAuthority
     );
+
+    const testLaunchParams2 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: launchRelayer,
+      sender: user,
+      value: new anchor.BN(1), // 0.01 sol
+      destChainid: arbitrum_chain_id,
+      additionParams: Buffer.alloc(0),
+      message: message,
+    };
 
     //test molecular_decimal=9,denominator_decimal=18
     console.log("test molecular_decimal=9,denominator_decimal=18:");
@@ -1403,11 +1433,22 @@ describe("Test", () => {
       18
     );
     await Launch(
-      launchParams,
+      testLaunchParams2,
       vizingPadSettings,
       feeCollector,
       mappingFeeConfigAuthority
     );
+
+    const testLaunchParams3 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: launchRelayer,
+      sender: user,
+      value: new anchor.BN(2000_000_000), // 0.01 sol
+      destChainid: arbitrum_chain_id,
+      additionParams: Buffer.alloc(0),
+      message: message,
+    };
 
     //test molecular_decimal=18,denominator_decimal=9
     console.log("test molecular_decimal=18,denominator_decimal=9:");
@@ -1421,7 +1462,7 @@ describe("Test", () => {
       9
     );
     await Launch(
-      launchParams,
+      testLaunchParams3,
       vizingPadSettings,
       feeCollector,
       mappingFeeConfigAuthority

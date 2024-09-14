@@ -104,6 +104,7 @@ impl LaunchOp<'_> {
             get_fee_config.molecular_decimal,
             get_fee_config.denominator_decimal,
             get_fee_config.molecular,
+            get_fee_config.denominator,
             get_gas_system_global.default_gas_limit,
             get_gas_system_global.global_base_price,
             get_fee_config.base_price,
@@ -542,6 +543,7 @@ impl EstimateGas<'_> {
             fee_config.molecular_decimal,
             fee_config.denominator_decimal,
             fee_config.molecular,
+            fee_config.denominator,
             trade_fee.molecular,
             trade_fee.denominator,
             trade_fee_config.molecular,
@@ -606,6 +608,7 @@ impl EstimateTotalFee<'_> {
             fee_config.molecular_decimal,
             fee_config.denominator_decimal,
             fee_config.molecular,
+            fee_config.denominator,
             gas_system_global.default_gas_limit,
             gas_system_global.global_base_price,
             fee_config.base_price,
@@ -646,6 +649,8 @@ impl ExactOutput<'_> {
         let current_record_message = &mut ctx.accounts.current_record_message;
 
         let amount_in: u64 = vizing_gas_system::exact_output(
+            fee_config.molecular,
+            fee_config.denominator,
             fee_config.molecular_decimal,
             fee_config.denominator_decimal,
             dest_chain_id,
@@ -684,6 +689,8 @@ impl ExactInput<'_> {
         let current_record_message = &mut ctx.accounts.current_record_message;
 
         let amount_out: u64 = vizing_gas_system::exact_input(
+            fee_config.molecular,
+            fee_config.denominator,
             fee_config.molecular_decimal,
             fee_config.denominator_decimal,
             dest_chain_id,
@@ -738,6 +745,7 @@ impl EstimateVizingGasFee1<'_>{
             get_fee_config.molecular_decimal,
             get_fee_config.denominator_decimal,
             get_fee_config.molecular,
+            get_fee_config.denominator,
             trade_fee.molecular,
             trade_fee.denominator,
             get_trade_fee_config.molecular,
@@ -800,6 +808,7 @@ impl EstimateVizingGasFee2<'_>{
             get_fee_config.molecular_decimal,
             get_fee_config.denominator_decimal,
             get_fee_config.molecular,
+            get_fee_config.denominator,
             trade_fee.molecular,
             trade_fee.denominator,
             get_trade_fee_config.molecular,
