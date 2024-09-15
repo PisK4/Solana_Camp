@@ -37,31 +37,41 @@ impl Uint256 {
 
     pub fn check_mul(self, other: Self) -> Option<Self> {
         let (low, carry) = self.low.overflowing_mul(other.low);
-    
+
         let high_mul = self.high.checked_mul(other.high)?;
         let high_add1 = self.high.checked_mul(other.low)?;
         let high_add2 = self.low.checked_mul(other.high)?;
-        
+
         let high = high_mul
             .checked_add(high_add1)?
             .checked_add(high_add2)?
             .checked_add(if carry { 1 } else { 0 })?;
-        
+
         Some(Self { high, low })
     }
 
     pub fn check_div(self, other: Self) -> Option<Self> {
         if other.is_zero() {
-            return None;
+            return None; // 防止除以零
         }
+        let low = self.low.checked_div(other.low)?;
+        let high = if self.high == 0 {
+            0 
+        } else {
+            let total_self = (self.high.checked_shl(128))? + self.low; 
+            let total_other = (other.high.checked_shl(128))? + other.low; 
+            total_self.checked_div(total_other)? 
+        };
 
-        let low = self.low / other.low;
-        let high = self.high / other.high;
         Some(Self { high, low })
     }
 
     pub fn is_zero(self) -> bool {
-        self.high == 0 && self.low == 0
+        if self.high == 0 && self.low == 0 {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     pub fn cmp(self, other: Self) -> u8 {
