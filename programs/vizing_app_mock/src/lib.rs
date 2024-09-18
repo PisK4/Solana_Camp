@@ -31,13 +31,17 @@ pub mod vizing_app_mock {
         VizingEmitterInitialize::handler(ctx)
     }
 
-    pub fn launch_vizing(ctx: Context<LaunchAppOpTemplate>) -> Result<()> {
+    pub fn launch_vizing(
+        ctx: Context<LaunchAppOpTemplate>,
+        target_program: [u8; 32],
+        meta: Vec<u8>,
+    ) -> Result<()> {
         let params = LaunchParams {
             erliest_arrival_timestamp: VIZING_ERLIEST_ARRIVAL_TIMESTAMP_DEFAULT,
             latest_arrival_timestamp: VIZING_LATEST_ARRIVAL_TIMESTAMP_DEFAULT,
             relayer: VIZING_RELAYER_DEFAULT,
             sender: ctx.accounts.user.key(),
-            value: 718,
+            value: 0,
             dest_chainid: 28516,
             addition_params: AdditionalParams {
                 mode: 0,
@@ -45,15 +49,14 @@ pub mod vizing_app_mock {
             },
             message: Message {
                 mode: 1,
-                target_program: [
-                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 13, 40, 221, 187, 217, 141, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0, 0, 0, 0,
-                ],
-                execute_gas_limit: 1,
-                max_fee_per_gas: 1000000000,
-                signature: vec![],
+                target_program,
+                execute_gas_limit: 200000,
+                max_fee_per_gas: 35,
+                signature: meta.clone(),
             },
         };
+
+        msg!("meta: {:?}", meta);
 
         launch_2_vizing(
             params,
@@ -71,7 +74,10 @@ pub mod vizing_app_mock {
     }
 
     #[access_control(assert_vizing_authority(&ctx.accounts.vizing_authority))]
-    pub fn receive_from_vizing(ctx: Context<LandingAppOp>, params: VizingMessage) -> Result<()> {
+    pub fn receive_from_vizing(
+        ctx: Context<LandingAppOpTemplate>,
+        params: VizingMessage,
+    ) -> Result<()> {
         require!(
             TRUSTED_ENDPOINT == params.src_contract,
             ErrorCode::ConstraintAddress
@@ -139,7 +145,7 @@ pub struct LaunchAppOpTemplate<'info> {
 }
 
 #[derive(Accounts)]
-pub struct LandingAppOp<'info> {
+pub struct LandingAppOpTemplate<'info> {
     /// CHECK: 1. Vizing Authority account
     #[account(signer)]
     pub vizing_authority: AccountInfo<'info>,
