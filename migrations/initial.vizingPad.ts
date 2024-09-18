@@ -13,7 +13,7 @@ let vizingGasSystem: anchor.web3.PublicKey;
 
 export async function inititalizeVizingPad(
   vizingProgram: anchor.Program,
-  deployer: anchor.web3.Keypair,
+  deployerPk: anchor.web3.PublicKey,
   feeCollector: anchor.web3.PublicKey,
   engineAdmin: anchor.web3.PublicKey,
   stationAdmin: anchor.web3.PublicKey,
@@ -26,7 +26,7 @@ export async function inititalizeVizingPad(
   console.log("### inititializeVizingPad start");
 
   const vizingPadInitParams: vizingUtils.initializeVizingPadParams = {
-    owner: deployer.publicKey,
+    owner: deployerPk,
     feeCollector: feeCollector,
     engineAdmin: engineAdmin,
     gasPoolAdmin: gasPoolAdmin,
@@ -74,7 +74,7 @@ export async function inititalizeVizingPad(
       {
         vizingPadConfig: vizingPadConfigs,
         vizingPadAuthority: vizingAuthority,
-        payer: deployer.publicKey,
+        payer: deployerPk,
       }
     );
 
@@ -103,7 +103,7 @@ export async function inititalizeVizingPad(
         {
           vizingPadConfig: vizingPadConfigs,
           vizingGasSystem: vizingGasSystem,
-          payer: deployer.publicKey,
+          payer: deployerPk,
         }
       );
 
@@ -118,7 +118,7 @@ export async function inititalizeVizingPad(
       const tx = await vizingUtils.initializeRecordMessage(
         vizingProgram,
         recordMessageAuthority,
-        deployer.publicKey
+        deployerPk
       );
       console.log(`recordMessage initialize: ${tx}`);
     }

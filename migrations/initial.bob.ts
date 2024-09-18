@@ -9,7 +9,8 @@ describe("Vizing Deploy", () => {
   const wallet = anchor.AnchorProvider.local().wallet;
 
   const url =
-    "https://devnet.helius-rpc.com/?api-key=fe8caf05-0784-4281-8a76-1ded217d3bf2";
+    // "https://devnet.helius-rpc.com/?api-key=fe8caf05-0784-4281-8a76-1ded217d3bf2";
+    "https://solana-devnet.g.alchemy.com/v2/-m2gJ2Fiv4w403IMR27nGoHUyonc0azl";
 
   // const connection = new anchor.web3.Connection(
   //   "https://rpc.ankr.com/solana_devnet",

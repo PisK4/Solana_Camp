@@ -123,7 +123,7 @@ describe("Vizing Test", () => {
     {
       const initRet = await vizingInit.inititalizeVizingPad(
         vizingProgram,
-        provider.wallet as any,
+        provider.wallet.publicKey,
         feeCollectorKeyPair.publicKey,
         engineAdminKeyPairs.map((keypair) => keypair.publicKey)[0],
         stationAdminKeyPair.publicKey,
