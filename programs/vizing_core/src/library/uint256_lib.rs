@@ -52,7 +52,7 @@ impl Uint256 {
 
     pub fn check_div(self, other: Self) -> Option<Self> {
         if other.is_zero() {
-            return None; // 防止除以零
+            return None; 
         }
         let low = self.low.checked_div(other.low)?;
         let high = if self.high == 0 {
