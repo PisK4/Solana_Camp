@@ -1,6 +1,4 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@project-serum/anchor";
-import { VizingCore } from "../target/types/vizing_core";
 import * as vizingUtils from "./vizing.utils";
 import fs from "fs";
 
@@ -20,6 +18,7 @@ export async function inititalizeVizingPad(
   engineAdmin: anchor.web3.PublicKey,
   stationAdmin: anchor.web3.PublicKey,
   gasPoolAdmin: anchor.web3.PublicKey,
+  swapManager: anchor.web3.PublicKey,
   trustedRelayers: anchor.web3.PublicKey[],
   registeredValidator: anchor.web3.PublicKey,
   gasSystemParams: vizingUtils.initializeVizingGasSystemParams
@@ -31,6 +30,7 @@ export async function inititalizeVizingPad(
     feeCollector: feeCollector,
     engineAdmin: engineAdmin,
     gasPoolAdmin: gasPoolAdmin,
+    swapManager: swapManager,
     stationAdmin: stationAdmin,
     trustedRelayers: trustedRelayers,
     registeredValidator: registeredValidator,
@@ -130,6 +130,91 @@ export async function inititalizeVizingPad(
     vizingPadInitParams,
     vizingAuthority,
     vizingGasSystem,
+  };
+}
+
+export async function inititalizeRegisterVizingApp(
+  vizingPadProgram: anchor.Program,
+  deployerPk: anchor.web3.PublicKey,
+  vizingAppProgramId: anchor.web3.PublicKey,
+  vizingAppAccounts: anchor.web3.PublicKey[]
+) {
+  console.log("### inititalizeRegisterVizingApp start");
+
+  {
+    const [solReceiver, bump1] =
+      vizingUtils.generatePdaForVizingAppSolReceiver(vizingAppProgramId);
+    vizingFeeRouter = solReceiver;
+
+    console.log(`solPdaReceiver: ${solReceiver.toBase58()}`);
+  }
+
+  {
+    // #### register vizing app start
+    const [vizingAppContract, vizingAppBump] =
+      vizingUtils.generatePdaForVizingAppConfig(
+        vizingPadProgram.programId,
+        vizingAppProgramId
+      );
+
+    console.log(
+      `vizingAppConfig: ${vizingAppContract.toBase58()}, bump: ${vizingAppBump}`
+    );
+
+    vizingAppConfig = vizingAppContract;
+
+    const registerParams = {
+      solPdaReceiver: vizingFeeRouter,
+      vizingAppAccounts: vizingAppAccounts,
+      vizingAppProgramId: vizingAppProgramId,
+    };
+
+    const tx = await vizingUtils.vizingAppRegister(
+      vizingPadProgram,
+      registerParams,
+      deployerPk,
+      vizingAppConfig
+    );
+
+    console.log(`register vizing app: ${tx}`);
+  }
+
+  return {
+    vizingFeeRouter,
+    vizingAppConfig,
+  };
+}
+
+export async function initializeVizingApp(
+  vizingAppProgram: anchor.Program,
+  deployerPk: anchor.web3.PublicKey
+) {
+  const vizingAppProgramId = vizingAppProgram.programId;
+  console.log(`### initializeVizingApp start ${vizingAppProgramId}`);
+  {
+    const [messageAuthority, bump3] =
+      anchor.web3.PublicKey.findProgramAddressSync(
+        [vizingUtils.vizingMessageAuthoritySeed],
+        vizingAppProgramId
+      );
+
+    vizingMessageAuthority = messageAuthority;
+
+    console.log(
+      `messageAuthority: ${messageAuthority.toBase58()}, bump: ${bump3}`
+    );
+
+    await vizingAppProgram.methods
+      .initializeVizingEmitter()
+      .accounts({
+        messagePdaAuthority: vizingMessageAuthority,
+        payer: deployerPk,
+      })
+      .rpc();
+  }
+
+  return {
+    vizingMessageAuthority,
   };
 }
 

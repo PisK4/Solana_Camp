@@ -18,6 +18,7 @@ export interface initializeVizingPadParams {
   feeCollector: anchor.web3.PublicKey;
   engineAdmin: anchor.web3.PublicKey;
   gasPoolAdmin: anchor.web3.PublicKey;
+  swapManager: anchor.web3.PublicKey;
   stationAdmin: anchor.web3.PublicKey;
   trustedRelayers: anchor.web3.PublicKey[];
   registeredValidator: anchor.web3.PublicKey;
