@@ -418,7 +418,7 @@ impl SetTokenFeeConfig<'_>{
             molecular,
             denominator
         );
-        mapping_fee_config.set_native_token_trade_fee_config(key, molecular, denominator);
+        mapping_fee_config.set_trade_fee(key, molecular, denominator);
         Ok(())
     }
 }
@@ -663,15 +663,12 @@ impl RemoveTradeFeeConfigDapp<'_>{
         msg!("trade_fee_config_denominator: {:?}", trade_fee_config_denominator);
         msg!("gas_system_global_molecular: {:?}", gas_system_global_molecular);
         msg!("gas_system_global_denominator: {:?}", gas_system_global_denominator);
-        if trade_fee_config_denominator != 0 && target_contract != zero_contract{
-            if trade_fee_config_molecular!=0 {
+        if target_contract != zero_contract{
+            if trade_fee_config_denominator != 0 {
                 let new_trade_fee_config_molecular = Uint256::new(0,trade_fee_config_molecular as u128);
                 let new_trade_fee_config_denominator = Uint256::new(0,trade_fee_config_denominator as u128);
                 fee = amount_out.check_mul(new_trade_fee_config_molecular)?.check_div(new_trade_fee_config_denominator)?;
             }else{
-                fee=Uint256::new(0,0);
-            }
-        }else{
                 fee = compute_trade_fee1(
                     trade_fee_molecular,
                     trade_fee_denominator,
@@ -680,6 +677,16 @@ impl RemoveTradeFeeConfigDapp<'_>{
                     dest_chain_id,
                     amount_out
                 )?.clone();
+            }
+        }else{
+            fee = compute_trade_fee1(
+                trade_fee_molecular,
+                trade_fee_denominator,
+                gas_system_global_molecular,
+                gas_system_global_denominator,
+                dest_chain_id,
+                amount_out
+            )?.clone();
         }
         Some(fee)
     }
