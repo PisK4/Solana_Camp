@@ -231,6 +231,21 @@ describe("Vizing Test", () => {
     }
   });
 
+
+  const initGasSystemParams = {
+    chainId: id,
+    basePrice: global_base_price,
+    molecular: molecular,
+    denominator: denominator,
+    molecularDecimal: molecular_decimal,
+    denominatorDecimal: denominator_decimal,
+    globalBasePrice: global_base_price,
+    defaultGasLimit: default_gas_limit,
+    amountInThreshold: amount_in_threshold,
+    globalMolecular: molecular,
+    globalDenominator: denominator
+  }
+
   it("Initializes gas global", async() => {
       //init_mapping_fee_config
       [mappingFeeConfigAuthority, mappingFeeConfigBump] =
@@ -248,31 +263,22 @@ describe("Vizing Test", () => {
           await vizingProgram.account.mappingFeeConfig.fetch(
             mappingFeeConfigAuthority
           );
-        const gasSystemGlobalMappings =
-          mappingFeeConfig.gasSystemGlobalMappings;
-        console.log("gasSystemGlobalMappings:", gasSystemGlobalMappings);
       } catch (e) {
-        const initGasGlobal = await vizingProgram.methods
-          .initGasGlobal(
-            id,
-            global_base_price,
-            default_gas_limit,
-            amount_in_threshold,
-            molecular,
-            denominator
+        const initializeGasSystem = await vizingProgram.methods
+          .initializeGasSystem(
+            initGasSystemParams
           )
           .accounts({
             mappingFeeConfig: mappingFeeConfigAuthority,
-            vizing: vizingPadConfigs,
+            vizingPadConfig: vizingPadConfigs,
             user: user,
             systemProgram: PROGRAM_ID,
           })
           .signers([])
           .rpc();
-        console.log(`initGasGlobal:${initGasGlobal}'`);
+        console.log(`initializeGasSystem:${initializeGasSystem}'`);
         // Confirm transaction
-        await provider.connection.confirmTransaction(initGasGlobal);
-        console.log("InitGasGlobal error:", e);
+        await provider.connection.confirmTransaction(initializeGasSystem);
       }
   })
 
@@ -2046,7 +2052,6 @@ describe("Vizing Test", () => {
       }
   });
 
-
   //remove dapp
   it("Remove dapp", async () => {
     try {
@@ -2099,10 +2104,16 @@ describe("Vizing Test", () => {
 
   //launch success multi mode
   it("Launch test success multi mode", async () => {
-    /** 
     //big number value launch
+    let nullChainId=new anchor.BN(6);
+    const executeGasLimit = new anchor.BN(6);
+    const maxFeePerGas = new anchor.BN(2000);
+    const feeCollector=feeCollectorKeyPair.publicKey;
     //mode1
-    let thisTestValue2 = new anchor.BN(1000000);
+    let thisTestValue2 = {
+      high: new anchor.BN(0),
+      low: new anchor.BN(1000_000_000),
+    };
     const testMessage1 = {
       mode: 1,
       targetContract: dapp,
@@ -2116,10 +2127,11 @@ describe("Vizing Test", () => {
       testMessage1
     );
     console.log("this_fee_mode1:",this_fee_mode1);
+    const launchRelayer=new anchor.web3.Keypair();
     const newLaunchParams1 = {
       erliestArrivalTimestamp: new anchor.BN(1),
       latestArrivalTimestamp: new anchor.BN(2),
-      relayer: launchRelayer,
+      relayer: launchRelayer.publicKey,
       sender: user,
       value: thisTestValue2,
       destChainid: nullChainId,
@@ -2205,7 +2217,6 @@ describe("Vizing Test", () => {
       testMessage4
     );
     console.log("this_fee_mode4:",this_fee_mode4);
-    */
   });
 
   //launch different molecular_decimal and denominator_decimal
@@ -2213,6 +2224,11 @@ describe("Vizing Test", () => {
     let launchRelayer = ethereumAddressToU8Array(
       "0xdAC17F958D2ee523a2206206994597C13D831ec7"
     );
+
+    let testCrossValue = {
+      high: new anchor.BN(0),
+      low: new anchor.BN(10_000_000),
+    };
     //test molecular_decimal=8,denominator_decimal=125
     console.log("test molecular_decimal=6,denominator_decimal=103:");
     await SetThisFeeConfig(
@@ -2238,7 +2254,7 @@ describe("Vizing Test", () => {
       latestArrivalTimestamp: new anchor.BN(2),
       relayer: launchRelayer,
       sender: user,
-      value: 1_000_000, // 0.01 sol
+      value: testCrossValue, 
       destChainid: id,
       additionParams: Buffer.alloc(0),
       message: testMessage,
@@ -2349,7 +2365,10 @@ describe("Vizing Test", () => {
     let launchRelayer = ethereumAddressToU8Array(
       "0xdAC17F958D2ee523a2206206994597C13D831ec7"
     );
-    let testCrossValue=new anchor.BN(1_000_000_00); //0.1 sol
+    let testCrossValue = {
+      high: new anchor.BN(0),
+      low: new anchor.BN(10_000_000),
+    };
 
     let testChainId = new anchor.BN(88);
     let test_global_base_price=new anchor.BN(1000);

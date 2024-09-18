@@ -187,12 +187,12 @@ describe("Test", () => {
       denominator: new anchor.BN(2),
     };
     let arbitrum_DAppBasePrice = new anchor.BN(10000);
-    let arbitrum_molecular_decimal = 123;
+    let arbitrum_molecular_decimal = 6;
     let arbitrum_denominator_decimal = 6;
 
-    const Uint256Params={
+    const Uint256Params = {
       high: new anchor.BN(0),
-      low: new anchor.BN(10_000_000);
+      low: new anchor.BN(10_000_000),
     };
 
     let vizing_chain_id = new anchor.BN(28516);
@@ -269,52 +269,93 @@ describe("Test", () => {
     let default_gas_limit = new anchor.BN(10000);
     let amount_in_threshold = arbitrum_tradeLimit;
     //init_gas_global
-    async function InitGasGlobal(
-      thisChainId,
-      thisGlobalBasePrice,
-      thisDefaultGasLimit,
-      thisAmountInThreshold,
-      thisMolecular,
-      thisDenominator
-    ) {
+    // async function InitGasGlobal(
+    //   thisChainId,
+    //   thisGlobalBasePrice,
+    //   thisDefaultGasLimit,
+    //   thisAmountInThreshold,
+    //   thisMolecular,
+    //   thisDenominator
+    // ) {
+    //   try {
+    //     const mappingFeeConfig =
+    //       await pg.program.account.mappingFeeConfig.fetch(
+    //         mappingFeeConfigAuthority
+    //       );
+    //     const gasSystemGlobalMappings =
+    //       mappingFeeConfig.gasSystemGlobalMappings;
+    //   } catch (e) {
+    //     const initGasGlobal = await pg.program.methods
+    //       .initGasGlobal(
+    //         thisChainId,
+    //         thisGlobalBasePrice,
+    //         thisDefaultGasLimit,
+    //         thisAmountInThreshold,
+    //         thisMolecular,
+    //         thisDenominator
+    //       )
+    //       .accounts({
+    //         mappingFeeConfig: mappingFeeConfigAuthority,
+    //         vizingPadConfig: vizingPadSettings,
+    //         user: user,
+    //         systemProgram: systemId,
+    //       })
+    //       .signers([signer])
+    //       .rpc();
+    //     console.log(`initGasGlobal:${initGasGlobal}'`);
+    //     // Confirm transaction
+    //     await pg.connection.confirmTransaction(initGasGlobal);
+    //   }
+    // }
+    // await InitGasGlobal(
+    //   arbitrum_chain_id,
+    //   global_base_price,
+    //   default_gas_limit,
+    //   amount_in_threshold,
+    //   molecular,
+    //   denominator
+    // );
+
+    const initGasSystemParams = {
+      chainId: arbitrum_chain_id,
+      basePrice: arbitrum_DAppBasePrice,
+      molecular: molecular,
+      denominator: denominator,
+      molecularDecimal: arbitrum_molecular_decimal,
+      denominatorDecimal: arbitrum_denominator_decimal,
+      globalBasePrice: global_base_price,
+      defaultGasLimit: default_gas_limit,
+      amountInThreshold: amount_in_threshold,
+      globalMolecular: molecular,
+      globalDenominator: denominator
+    }
+
+    //initialize_gas_system
+    async function InitializeGasSystem(thisGasSystemParams) {
       try {
         const mappingFeeConfig =
           await pg.program.account.mappingFeeConfig.fetch(
             mappingFeeConfigAuthority
           );
-        const gasSystemGlobalMappings =
-          mappingFeeConfig.gasSystemGlobalMappings;
       } catch (e) {
-        const initGasGlobal = await pg.program.methods
-          .initGasGlobal(
-            thisChainId,
-            thisGlobalBasePrice,
-            thisDefaultGasLimit,
-            thisAmountInThreshold,
-            thisMolecular,
-            thisDenominator
+        const initializeGasSystem = await pg.program.methods
+          .initializeGasSystem(
+            thisGasSystemParams
           )
           .accounts({
             mappingFeeConfig: mappingFeeConfigAuthority,
-            vizing: vizingPadSettings,
+            vizingPadConfig: vizingPadSettings,
             user: user,
             systemProgram: systemId,
           })
           .signers([signer])
           .rpc();
-        console.log(`initGasGlobal:${initGasGlobal}'`);
+        console.log(`initializeGasSystem:${initializeGasSystem}'`);
         // Confirm transaction
-        await pg.connection.confirmTransaction(initGasGlobal);
+        await pg.connection.confirmTransaction(initializeGasSystem);
       }
     }
-    await InitGasGlobal(
-      arbitrum_chain_id,
-      global_base_price,
-      default_gas_limit,
-      amount_in_threshold,
-      molecular,
-      denominator
-    );
+    await InitializeGasSystem(initGasSystemParams);
 
     //init_native_token_trade_fee_config
     let native_molecular = new anchor.BN(5);
@@ -338,7 +379,7 @@ describe("Test", () => {
           .initRecordMessage()
           .accounts({
             currentRecordMessage: recordMessageAuthority,
-            vizing: vizingPadSettings,
+            vizingPadConfig: vizingPadSettings,
             user: user,
             systemProgram: systemId,
           })
@@ -370,7 +411,7 @@ describe("Test", () => {
           .modifySettings(OwnerManagementParams)
           .accounts({
             owner: user,
-            vizing: vizingPadSettings,
+            vizingPadConfig: vizingPadSettings,
           })
           .signers([signer])
           .rpc();
@@ -395,7 +436,7 @@ describe("Test", () => {
           .grantFeeCollector(feeReceiverKeyPair.publicKey)
           .accounts({
             gasPoolAdmin: gasPoolAdminKeyPair.publicKey,
-            vizing: vizingPadSettings,
+            vizingPadConfig: vizingPadSettings,
           })
           .signers([gasPoolAdminKeyPair])
           .rpc();
@@ -428,7 +469,7 @@ describe("Test", () => {
           )
           .accounts({
             mappingFeeConfig: mappingFeeConfigAuthority,
-            vizing: vizingPadSettings,
+            vizingPadConfig: vizingPadSettings,
             user: user,
             systemProgram: systemId,
           })
@@ -473,7 +514,7 @@ describe("Test", () => {
             thisDenominatorDecimal
           )
           .accounts({
-            vizing: vizingPadSettings,
+            vizingPadConfig: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
@@ -487,15 +528,15 @@ describe("Test", () => {
         console.log("SetThisFeeConfig error:", e);
       }
     }
-    // await SetThisFeeConfig(
-    //   arbitrum_chain_id,
-    //   base_price,
-    //   reserve,
-    //   molecular,
-    //   denominator,
-    //   molecular_decimal,
-    //   denominator_decimal
-    // );
+    await SetThisFeeConfig(
+      arbitrum_chain_id,
+      base_price,
+      reserve,
+      molecular,
+      denominator,
+      molecular_decimal,
+      denominator_decimal
+    );
 
     //set_token_fee_config
     async function SetThisTokenFeeConfig() {
@@ -503,7 +544,7 @@ describe("Test", () => {
         const setThisTokenFeeConfig = await pg.program.methods
           .setThisTokenFeeConfig(arbitrum_chain_id, molecular, denominator)
           .accounts({
-            vizing: vizingPadSettings,
+            vizingPadConfig: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
@@ -530,7 +571,7 @@ describe("Test", () => {
             base_price
           )
           .accounts({
-            vizing: vizingPadSettings,
+            vizingPadConfig: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
@@ -558,7 +599,7 @@ describe("Test", () => {
             denominator_decimal
           )
           .accounts({
-            vizing: vizingPadSettings,
+            vizingPadConfig: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
@@ -583,7 +624,7 @@ describe("Test", () => {
         const batchSetThisTokenFeeConfig = await pg.program.methods
           .batchSetThisTokenFeeConfig(destChainIds, moleculars, denominators)
           .accounts({
-            vizing: vizingPadSettings,
+            vizingPadConfig: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
@@ -618,7 +659,7 @@ describe("Test", () => {
             base_price_group
           )
           .accounts({
-            vizing: vizingPadSettings,
+            vizingPadConfig: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
@@ -634,7 +675,7 @@ describe("Test", () => {
         console.log("BatchSetThisTradeFeeConfigMap error:", e);
       }
     }
-    // await BatchSetThisTradeFeeConfigMap();
+    await BatchSetThisTradeFeeConfigMap();
 
     //batch_set_this_dapp_price_config_in_diff_chain
     let base_prices = [arbitrum_destChainBasePrice];
@@ -650,7 +691,7 @@ describe("Test", () => {
             diff_base_prices
           )
           .accounts({
-            vizing: vizingPadSettings,
+            vizingPadConfig: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
@@ -682,7 +723,7 @@ describe("Test", () => {
             DappPriceConfig_base_prices
           )
           .accounts({
-            vizing: vizingPadSettings,
+            vizingPadConfig: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
@@ -773,8 +814,7 @@ describe("Test", () => {
       }
 
       let amount_in =
-        (this_amount_out * fee_config_denominator) /
-        fee_config_molecular;
+        (this_amount_out * fee_config_denominator) / fee_config_molecular;
       console.log("ExactOutput:", amount_in);
       return amount_in;
     }
@@ -819,7 +859,8 @@ describe("Test", () => {
           return 0;
         } else {
           computeTradeFee1 =
-            (amount_out.low.toNumer() * tradeFee_molecular) / tradeFee_denominator;
+            (amount_out.low.toNumer() * tradeFee_molecular) /
+            tradeFee_denominator;
         }
       }
       return computeTradeFee1;
@@ -867,7 +908,10 @@ describe("Test", () => {
           return 0;
         }
       } else {
-        computeTradeFee2 = await ComputeTradeFee1(dest_chain_id, amount_out.low.toNumer());
+        computeTradeFee2 = await ComputeTradeFee1(
+          dest_chain_id,
+          amount_out.low.toNumer()
+        );
       }
       console.log("ComputeTradeFee2:", computeTradeFee2);
       return computeTradeFee2;
@@ -961,7 +1005,7 @@ describe("Test", () => {
       let fee_config_molecular_decimal = 0;
       let fee_config_denominator_decimal = 0;
       let fee_config_molecular = 0;
-      let fee_config_denominator=0;
+      let fee_config_denominator = 0;
       if (feeConfigMappingResult != 0) {
         fee_config_molecular_decimal = feeConfigMapping.molecularDecimal;
         fee_config_denominator_decimal = feeConfigMapping.denominatorDecimal;
@@ -985,8 +1029,7 @@ describe("Test", () => {
         this_amount_in = amount_in.low.toNumer();
       }
       let amount_out =
-        (this_amount_in * fee_config_molecular) /
-        fee_config_denominator;
+        (this_amount_in * fee_config_molecular) / fee_config_denominator;
       console.log("ExactInput:", amount_out);
       return amount_out;
     }
@@ -1058,7 +1101,10 @@ describe("Test", () => {
       if (amount_out.low.toNumer() > 0) {
         let output_amount_in;
         if (fee_config_molecular != 0) {
-          output_amount_in = await ExactOutput(dest_chain_id, amount_out.low.toNumer());
+          output_amount_in = await ExactOutput(
+            dest_chain_id,
+            amount_out.low.toNumer()
+          );
         }
 
         let trade_fee2 = await ComputeTradeFee2(
@@ -1191,7 +1237,7 @@ describe("Test", () => {
             denominator_decimals
           )
           .accounts({
-            vizing: vizingPadSettings,
+            vizingPadConfig: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
@@ -1259,7 +1305,7 @@ describe("Test", () => {
           .accounts({
             vizingAppFeePayer: user,
             messageAuthority: user,
-            vizing: thisVizingPadSettings,
+            vizingPadConfig: thisVizingPadSettings,
             feeCollector: thisFeeCollector,
             mappingFeeConfig: thisMappingFeeConfig,
             systemProgram: systemId,
@@ -1313,9 +1359,9 @@ describe("Test", () => {
       message: testMessage1,
     };
 
-    const Uint256Params2={
+    const Uint256Params2 = {
       high: new anchor.BN(0),
-      low: new anchor.BN(2);
+      low: new anchor.BN(2),
     };
     const testLaunchParams = {
       erliestArrivalTimestamp: new anchor.BN(1),
@@ -1338,24 +1384,6 @@ describe("Test", () => {
       denominator,
       125,
       8
-    );
-    await Launch(
-      testLaunchParams,
-      vizingPadSettings,
-      feeCollector,
-      mappingFeeConfigAuthority
-    );
-
-    //test molecular_decimal=8,denominator_decimal=125
-    console.log("test molecular_decimal=8,denominator_decimal=125:");
-    await SetThisFeeConfig(
-      arbitrum_chain_id,
-      base_price,
-      reserve,
-      molecular,
-      denominator,
-      8,
-      125
     );
     await Launch(
       testLaunchParams,
@@ -1418,53 +1446,55 @@ describe("Test", () => {
       mappingFeeConfigAuthority
     );
 
-    
-    const testLaunchParams2 = {
-      erliestArrivalTimestamp: new anchor.BN(1),
-      latestArrivalTimestamp: new anchor.BN(2),
-      relayer: launchRelayer,
-      sender: user,
-      value: Uint256Params2, 
-      destChainid: arbitrum_chain_id,
-      additionParams: Buffer.alloc(0),
-      message: message,
-    };
-
-    //test molecular_decimal=9,denominator_decimal=18
-    console.log("test molecular_decimal=9,denominator_decimal=18:");
-    await SetThisFeeConfig(
-      arbitrum_chain_id,
-      base_price,
-      reserve,
-      molecular,
-      denominator,
-      9,
-      18
-    );
-    await Launch(
-      testLaunchParams2,
-      vizingPadSettings,
-      feeCollector,
-      mappingFeeConfigAuthority
-    );
-
-    const Uint256Params3={
+    const Uint256Params3 = {
       high: new anchor.BN(0),
-      low: new anchor.BN(1000_000_000),
+      low: new anchor.BN(10_000_000_000), //100 usdc
     };
     const testLaunchParams3 = {
       erliestArrivalTimestamp: new anchor.BN(1),
       latestArrivalTimestamp: new anchor.BN(2),
       relayer: launchRelayer,
       sender: user,
-      value: Uint256Params3, //1 sol
+      value: Uint256Params3,
       destChainid: arbitrum_chain_id,
       additionParams: Buffer.alloc(0),
       message: message,
     };
 
+    //test molecular_decimal=8,denominator_decimal=6
+    console.log("test molecular_decimal=8,denominator_decimal=6:");
+    await SetThisFeeConfig(
+      arbitrum_chain_id,
+      base_price,
+      reserve,
+      molecular,
+      denominator,
+      8,
+      6
+    );
+    await Launch(
+      testLaunchParams3,
+      vizingPadSettings,
+      feeCollector,
+      mappingFeeConfigAuthority
+    );
+
     //test molecular_decimal=18,denominator_decimal=9
-    console.log("test molecular_decimal=18,denominator_decimal=9:");
+    const Uint256Params4 = {
+      high: new anchor.BN(0),
+      low: new anchor.BN("1000000000000000000"), //1 eth
+    };
+    const testLaunchParams4 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: launchRelayer,
+      sender: user,
+      value: Uint256Params4,
+      destChainid: arbitrum_chain_id,
+      additionParams: Buffer.alloc(0),
+      message: message,
+    };
+    console.log("test molecular_decimal=9,denominator_decimal=18:");
     await SetThisFeeConfig(
       arbitrum_chain_id,
       base_price,
@@ -1475,7 +1505,29 @@ describe("Test", () => {
       9
     );
     await Launch(
-      testLaunchParams3,
+      testLaunchParams4,
+      vizingPadSettings,
+      feeCollector,
+      mappingFeeConfigAuthority
+    );
+
+    //value=0
+    const Uint256Params5 = {
+      high: new anchor.BN(0),
+      low: new anchor.BN(0), //0
+    };
+    const testLaunchParams5 = {
+      erliestArrivalTimestamp: new anchor.BN(1),
+      latestArrivalTimestamp: new anchor.BN(2),
+      relayer: launchRelayer,
+      sender: user,
+      value: Uint256Params5,
+      destChainid: arbitrum_chain_id,
+      additionParams: Buffer.alloc(0),
+      message: message,
+    };
+    await Launch(
+      testLaunchParams5,
       vizingPadSettings,
       feeCollector,
       mappingFeeConfigAuthority
@@ -1826,7 +1878,7 @@ describe("Test", () => {
         const removeTradeFeeDapp = await pg.program.methods
           .removeTradeFeeDapp(this_chain_id, thisDapp)
           .accounts({
-            vizing: vizingPadSettings,
+            vizingPadConfig: vizingPadSettings,
             mappingFeeConfig: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,

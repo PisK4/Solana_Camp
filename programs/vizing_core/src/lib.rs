@@ -1,16 +1,22 @@
+pub mod gas_system;
 pub mod governance;
 pub mod library;
 pub mod vizing_channel;
 pub mod vizing_omni;
-pub mod gas_system;
+
 use anchor_lang::prelude::*;
+use gas_system::*;
 use governance::*;
 use vizing_channel::*;
+// use vizing_channel::{
+//     ComputeTradeFee1, ComputeTradeFee2, CurrentRecordMessage, EstimateGas, EstimatePrice1,
+//     EstimatePrice2, EstimateTotalFee, EstimateVizingGasFee1, EstimateVizingGasFee2, ExactInput,
+//     ExactOutput, InitCurrentRecordMessage, LandingOp, LaunchOp, LandingParams, LandingMessage
+// };
+use library::Uint256;
 use vizing_omni::*;
-use gas_system::*;
-use crate::library::Uint256;
 
-declare_id!("vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE");
+declare_id!("AMNjo2xJPqN1E4QvQ95Md66xDYgiZEyPckFmziVwL7Y4");
 
 #[program]
 pub mod vizing_core {
@@ -19,15 +25,12 @@ pub mod vizing_core {
 
     // **********  channel start ************
 
-    pub fn launch(mut ctx: Context<LaunchOp>, params: LaunchParams) -> Result<()> {
-        LaunchOp::vizing_launch(&mut ctx, params)
+    pub fn launch(ctx: Context<LaunchOp>, params: LaunchParams) -> Result<()> {
+        LaunchOp::vizing_launch(ctx, params)
     }
 
-    pub fn landing<'info>(
-        mut ctx: Context<'_, '_, '_, 'info, LandingOp<'info>>,
-        params: LandingParams,
-    ) -> Result<()> {
-        LandingOp::vizing_landing(&mut ctx, params)
+    pub fn landing(ctx: Context<LandingOp>, params: LandingParams) -> Result<()> {
+        LandingOp::vizing_landing(ctx, params)
     }
 
     // **********  channel end ************
@@ -35,24 +38,24 @@ pub mod vizing_core {
     // **********  vizing app config start ************
 
     pub fn register_vizing_app(
-        mut ctx: Context<VizingAppRegister>,
+        ctx: Context<VizingAppRegister>,
         params: VizingAppRegisterParams,
     ) -> Result<()> {
-        VizingAppRegister::register_vizing_app(&mut ctx, params)
+        VizingAppRegister::register_vizing_app(ctx, params)
     }
 
     pub fn update_vizing_app(
-        mut ctx: Context<VizingAppManagement>,
+        ctx: Context<VizingAppManagement>,
         vizing_app_accounts: Vec<Pubkey>,
     ) -> Result<()> {
-        VizingAppManagement::update_vizing_app_accounts(&mut ctx, vizing_app_accounts)
+        VizingAppManagement::update_vizing_app_accounts(ctx, vizing_app_accounts)
     }
 
     pub fn transfer_vizing_app_admin(
-        mut ctx: Context<VizingAppManagement>,
+        ctx: Context<VizingAppManagement>,
         new_admin: Pubkey,
     ) -> Result<()> {
-        VizingAppManagement::transfer_ownership(&mut ctx, new_admin)
+        VizingAppManagement::transfer_ownership(ctx, new_admin)
     }
 
     // **********  vizing app config end ************
@@ -60,69 +63,60 @@ pub mod vizing_core {
     // **********  governance start ************
 
     pub fn initialize_vizing_pad(
-        mut ctx: Context<InitVizingPad>,
+        ctx: Context<InitVizingPad>,
         params: InitVizingPadParams,
     ) -> Result<()> {
-        InitVizingPad::initialize_vizing_pad(&mut ctx, params)
+        InitVizingPad::initialize_vizing_pad(ctx, params)
     }
 
     pub fn modify_settings(
-        mut ctx: Context<ModifySettings>,
+        ctx: Context<ModifySettings>,
         params: OwnerManagementParams,
     ) -> Result<()> {
-        ModifySettings::owner_management(&mut ctx, &params)
+        ModifySettings::owner_management(ctx, &params)
     }
 
-    pub fn pause_engine(mut ctx: Context<PauseEngine>) -> Result<()> {
-        PauseEngine::pause_engine(&mut ctx)
+    pub fn pause_engine(ctx: Context<PauseEngine>) -> Result<()> {
+        PauseEngine::pause_engine(ctx)
     }
 
-    pub fn unpause_engine(mut ctx: Context<PauseEngine>) -> Result<()> {
-        PauseEngine::unpause_engine(&mut ctx)
+    pub fn unpause_engine(ctx: Context<PauseEngine>) -> Result<()> {
+        PauseEngine::unpause_engine(ctx)
     }
 
     pub fn grant_relayer(
-        mut ctx: Context<GrantRelayer>,
+        ctx: Context<GrantRelayer>,
         new_trusted_relayers: Vec<Pubkey>,
     ) -> Result<()> {
-        GrantRelayer::grant_relayer(&mut ctx, new_trusted_relayers)
+        GrantRelayer::grant_relayer(ctx, new_trusted_relayers)
     }
 
     pub fn grant_fee_collector(
-        mut ctx: Context<GrantFeeCollector>,
+        ctx: Context<GrantFeeCollector>,
         fee_collector: Pubkey,
     ) -> Result<()> {
-        GrantFeeCollector::grant_fee_collector(&mut ctx, fee_collector)
+        GrantFeeCollector::grant_fee_collector(ctx, fee_collector)
     }
 
     // ***********  governance end ************
 
-    /*
-    /// @notice gas pool admin initialize global params in MappingFeeConfig
+    /// @notice initialize fee_config and gas_system_global 
+    /// @param chain_id evm chainId
+    /// @param base_price  base price
+    /// @param molecular  molecular
+    /// @param denominator  denominator
+    /// @param molecular_decimal  molecular decimal
+    /// @param denominator_decimal  denominator decimal
     /// @param global_base_price global base price
     /// @param default_gas_limit  global default gas limit
     /// @param amount_in_threshold  global amountIn threshold
-    /// @param molecular  global molecular
-    /// @param denominator  global denominator
-     */
-    pub fn init_gas_global(
-        ctx: Context<InitGasGlobal>,
-        key: u64,
-        global_base_price: u64,
-        default_gas_limit: u64,
-        amount_in_threshold: u64,
-        molecular: u64,
-        denominator: u64,
+    /// @param global_molecular  global molecular
+    /// @param global_denominator  global denominator
+    pub fn initialize_gas_system(
+        mut ctx: Context<InitFeeConfig>,
+        params: InitGasSystemParams,
     ) -> Result<()> {
-        InitGasGlobal::initialize_gas_global(
-            ctx,
-            key,
-            global_base_price,
-            default_gas_limit,
-            amount_in_threshold,
-            molecular,
-            denominator,
-        )
+        InitFeeConfig::gas_system_init(&mut ctx, params)
     }
 
     /// @notice owner initialize record_message for dev get data
@@ -195,7 +189,7 @@ pub mod vizing_core {
 
     //set_token_fee_config
     /*
-    /// @notice gas pool admin set fee for native token exchange mapping in MappingNativeTokenTradeFeeConfig
+    /// @notice gas pool admin set fee for native token exchange mapping in MappingFeeConfig
     /// @param key evm chainId
     /// @param molecular  evm dapp address
     /// @param denominator  base price
@@ -263,7 +257,7 @@ pub mod vizing_core {
 
     //batch_set_token_fee_config
     /*
-    /// @notice gas pool admin set trade fee config mapping in MappingFeeConfig and MappingNativeTokenTradeFeeConfig
+    /// @notice gas pool admin set trade fee config mapping in MappingFeeConfig
     /// @param dapps multi dapp address
     /// @param destChainIds  multi evm dest chainId
     /// @param moleculars  molecular group
@@ -285,7 +279,7 @@ pub mod vizing_core {
 
     //batch_set_trade_fee_config_map
     /*
-    /// @notice gas pool admin set trade fee config mapping in MappingFeeConfig and MappingNativeTokenTradeFeeConfig
+    /// @notice gas pool admin set trade fee config mapping in MappingFeeConfig
     /// @param dapps multi dapp address
     /// @param destChainIds  multi evm dest chainId
     /// @param moleculars  molecular group
@@ -535,5 +529,5 @@ pub mod vizing_core {
             message,
         )
     }
-    
+
 }
