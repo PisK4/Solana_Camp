@@ -30,39 +30,86 @@ impl Uint256 {
     }
 
     pub fn check_mul(self, other: Self) -> Option<Self> {
-        let low1_low = (self.low & 0xFFFFFFFFFFFFFFFF) as u64;
-        let low1_high = (self.low >> 64) as u64;
-        let low2_low = (other.low & 0xFFFFFFFFFFFFFFFF) as u64;
-        let low2_high = (other.low >> 64) as u64;
+        let high: u128;
+        let (mut low, low_over_mul) = self.low.overflowing_mul(other.low);
+        let (mut low_over_high, mut low_over_low): (u128, u128) = (0, 0);
+        if low_over_mul {
+            let low1_low = (self.low & 0xFFFFFFFFFFFFFFFF) as u64;
+            let low1_high = (self.low >> 64) as u64;
+            let low2_low = (other.low & 0xFFFFFFFFFFFFFFFF) as u64;
+            let low2_high = (other.low >> 64) as u64;
 
-        let low_low = low1_low as u128 * low2_low as u128;
-        let low_high = low1_high as u128 * low2_low as u128;
-        let high_low = low1_low as u128 * low2_high as u128;
-        let high_high = low1_high as u128 * low2_high as u128;
+            let low_low = low1_low as u128 * low2_low as u128;
+            let low_high = low1_high as u128 * low2_low as u128;
+            let high_low = low1_low as u128 * low2_high as u128;
+            let high_high = low1_high as u128 * low2_high as u128;
 
-        let mut low = low_low
-            + ((low_high & 0xFFFFFFFFFFFFFFFF) << 64)
-            + ((high_low & 0xFFFFFFFFFFFFFFFF) << 64);
-        let mut high = (low_high >> 64) + (high_low >> 64) + high_high;
+            low_over_low = low_low
+                + ((low_high & 0xFFFFFFFFFFFFFFFF) << 64)
+                + ((high_low & 0xFFFFFFFFFFFFFFFF) << 64);
+            let get_low_over_high = (low_high >> 64) + (high_low >> 64) + high_high;
 
-        if low < low_low {
-            high += 1;
+            if low_over_low < low_low {
+                low_over_high = get_low_over_high + 1;
+            } else {
+                low_over_high = get_low_over_high;
+            }
         }
 
         if self.high == 1 && self.low == 0 && other.high == 1 && other.low == 0 {
             high = u128::MAX;
             low = u128::MAX;
-        } else if self.high == 1 && other.high == 0 {
-            high = if high == 0 {
-                other.low
+        } else if self.high >= 1 && other.high == 0 {
+            if low_over_mul {
+                let (a, a_state) = other.low.overflowing_mul(self.high);
+                if a_state {
+                    msg!("Overflow!");
+                    return None;
+                } else {
+                    let (b, b_state) = a.overflowing_add(low_over_high.clone());
+                    if b_state {
+                        msg!("Overflow!");
+                        return None;
+                    } else {
+                        high = b;
+                    }
+                }
             } else {
-                high + other.low
-            };
-        } else if self.high == 0 && other.high == 1 {
-            high = if high == 0 { self.low } else { high + self.low };
+                let (a, a_state) = other.low.overflowing_mul(self.high);
+                if a_state {
+                    msg!("Overflow!");
+                    return None;
+                } else {
+                    high = a;
+                }
+            }
+        } else if self.high == 0 && other.high >= 1 {
+            if low_over_mul {
+                let (a, a_state) = self.low.overflowing_mul(other.high);
+                if a_state {
+                    msg!("Overflow!");
+                    return None;
+                } else {
+                    let (b, b_state) = a.overflowing_add(low_over_high.clone());
+                    if b_state {
+                        msg!("Overflow!");
+                        return None;
+                    } else {
+                        high = b;
+                    }
+                }
+            } else {
+                let (a, a_state) = self.low.overflowing_mul(other.high);
+                if a_state {
+                    msg!("Overflow!");
+                    return None;
+                } else {
+                    high = a;
+                }
+            }
         } else if self.high == 0 && other.high == 0 {
-            if high > 0 {
-                msg!("High result with overflow: {}", high);
+            if low_over_mul {
+                high = low_over_high.clone();
             } else {
                 high = 0;
             }
