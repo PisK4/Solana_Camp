@@ -30,16 +30,46 @@ impl Uint256 {
     }
 
     pub fn check_mul(self, other: Self) -> Option<Self> {
-        let (low, carry) = self.low.overflowing_mul(other.low);
+        let low1_low = (self.low & 0xFFFFFFFFFFFFFFFF) as u64;
+        let low1_high = (self.low >> 64) as u64;
+        let low2_low = (other.low & 0xFFFFFFFFFFFFFFFF) as u64;
+        let low2_high = (other.low >> 64) as u64;
 
-        let high_mul = self.high.checked_mul(other.high)?;
-        let high_add1 = self.high.checked_mul(other.low)?;
-        let high_add2 = self.low.checked_mul(other.high)?;
+        let low_low = low1_low as u128 * low2_low as u128;
+        let low_high = low1_high as u128 * low2_low as u128;
+        let high_low = low1_low as u128 * low2_high as u128;
+        let high_high = low1_high as u128 * low2_high as u128;
 
-        let high = high_mul
-            .checked_add(high_add1)?
-            .checked_add(high_add2)?
-            .checked_add(if carry { 1 } else { 0 })?;
+        let mut low = low_low
+            + ((low_high & 0xFFFFFFFFFFFFFFFF) << 64)
+            + ((high_low & 0xFFFFFFFFFFFFFFFF) << 64);
+        let mut high = (low_high >> 64) + (high_low >> 64) + high_high;
+
+        if low < low_low {
+            high += 1;
+        }
+
+        if self.high == 1 && self.low == 0 && other.high == 1 && other.low == 0 {
+            high = u128::MAX;
+            low = u128::MAX;
+        } else if self.high == 1 && other.high == 0 {
+            high = if high == 0 {
+                other.low
+            } else {
+                high + other.low
+            };
+        } else if self.high == 0 && other.high == 1 {
+            high = if high == 0 { self.low } else { high + self.low };
+        } else if self.high == 0 && other.high == 0 {
+            if high > 0 {
+                msg!("High result with overflow: {}", high);
+            } else {
+                high = 0;
+            }
+        } else {
+            msg!("Overflow!");
+            return None;
+        }
 
         Some(Self { high, low })
     }

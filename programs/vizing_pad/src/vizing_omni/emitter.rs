@@ -73,7 +73,7 @@ pub struct AdditionalParams {
 }
 
 //get 
-
+//48 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone ,InitSpace)]
 pub struct GasSystemGlobal {
     pub key: u64,
@@ -84,6 +84,7 @@ pub struct GasSystemGlobal {
     pub denominator: u64,
 }
 
+//24 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone ,InitSpace)]
 pub struct NativeTokenTradeFeeConfig {
     pub key: u64,

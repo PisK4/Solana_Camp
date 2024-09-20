@@ -1,5 +1,6 @@
 use crate::vizing_omni::*;
 use anchor_lang::prelude::*;
+use crate::library::Uint256;
 
 #[event]
 pub struct OAppRegisteredEvent {

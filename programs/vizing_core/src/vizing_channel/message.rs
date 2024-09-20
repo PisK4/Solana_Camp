@@ -134,12 +134,12 @@ pub struct LandingOp<'info> {
     pub relayer: AccountInfo<'info>,
 
     #[account(
-        seeds = [contants::VIZING_PAD_SETTINGS_SEED], 
-        bump = vizing.bump,
-        constraint = vizing.trusted_relayers.contains(&relayer.key()) @VizingError::NotRelayer, 
-        constraint = vizing.is_paused != true @VizingError::VizingNotActivated
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump,
+        constraint = vizing_pad_config.trusted_relayers.contains(&relayer.key()) @VizingError::NotRelayer, 
+        constraint = vizing_pad_config.is_paused != true @VizingError::VizingNotActivated
     )]
-    pub vizing: Account<'info, VizingPadConfigs>,
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
 
     /// CHECK: We need this PDA as a signer
     #[account(seeds = [VIZING_AUTHORITY_SEED],bump = vizing_authority.bump)]
@@ -305,7 +305,7 @@ pub struct InitCurrentRecordMessage<'info> {
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
-    #[account(seeds = [contants::VIZING_PAD_CONFIG_SEED.as_ref()], bump = vizing_pad_config.bump
+    #[account(seeds = [contants::VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
         , constraint = vizing_pad_config.owner == user.key() @VizingError::NotOwner)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(mut)]
