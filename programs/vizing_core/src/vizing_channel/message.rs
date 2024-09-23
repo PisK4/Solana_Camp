@@ -467,11 +467,8 @@ impl EstimatePrice1<'_> {
         ).ok_or(errors::ErrorCode::EstimatePrice2NotFound)?;
         current_record_message.estimate_price1=dapp_base_price;
         //set return dapp_base_price
-        let mut return_data = Vec::new();
-        return_data.extend_from_slice(&dapp_base_price.high.to_le_bytes()); 
-        return_data.extend_from_slice(&dapp_base_price.low.to_le_bytes()); 
 
-        set_return_data(&return_data);
+        set_return_data(&dapp_base_price.to_le_bytes());
         Ok(dapp_base_price)
     }
 }
@@ -513,11 +510,8 @@ impl EstimatePrice2<'_> {
         ).ok_or(errors::ErrorCode::EstimatePrice2NotFound)?;
         current_record_message.estimate_price2=base_price;
         //set return base_price
-        let mut return_data = Vec::new();
-        return_data.extend_from_slice(&base_price.high.to_le_bytes()); 
-        return_data.extend_from_slice(&base_price.low.to_le_bytes()); 
 
-        set_return_data(&return_data);
+        set_return_data(&base_price.to_le_bytes());
         Ok(base_price)
     }
 }
