@@ -223,18 +223,22 @@ export async function initializeVizingApp(
   console.log(`### initializeVizingApp start ${vizingAppProgramId}`);
   let messageAuthorityBump: number;
   let solPdaReceiverBump: number;
-
-  [vizingMessageAuthority, messageAuthorityBump] =
+  let vizingAppAuthority: anchor.web3.PublicKey;
+  [vizingAppAuthority, messageAuthorityBump] =
     anchor.web3.PublicKey.findProgramAddressSync(
       [vizingUtils.vizingMessageAuthoritySeed],
       vizingAppProgramId
     );
 
+  const vizingAppAuthorityHex = Buffer.from(
+    vizingAppAuthority.toBytes()
+  ).toString("hex");
+
   try {
     await vizingAppProgram.methods
       .initializeVizingEmitter()
       .accounts({
-        messagePdaAuthority: vizingMessageAuthority,
+        messagePdaAuthority: vizingAppAuthority,
         payer: deployerPk,
       })
       .rpc();
@@ -259,9 +263,15 @@ export async function initializeVizingApp(
     console.error(error);
   }
 
+  const vizingAppProgramHex = Buffer.from(
+    vizingAppProgram.programId.toBytes()
+  ).toString("hex");
+
   const ret = {
     vizingAppProgramId,
-    vizingMessageAuthority,
+    vizingAppProgramHex,
+    vizingAppAuthority,
+    vizingAppAuthorityHex,
     messageAuthorityBump,
     solPdaReceiver,
     solPdaReceiverBump,
