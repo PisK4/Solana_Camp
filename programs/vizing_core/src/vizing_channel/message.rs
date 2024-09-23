@@ -6,6 +6,7 @@ use crate::gas_system::*;
 use crate::governance::*;
 use crate::library::*;
 use crate::vizing_omni::*;
+use crate::library::Uint256;
 
 
 #[account]

@@ -44,14 +44,14 @@ pub mod vizing_pad {
         mut _ctx: Context<EstimatePrice1>, 
         target_contract: [u8; 32],
         dest_chain_id: u64,
-    )-> Result<()> {
+    )-> Result<(u64)> {
         Ok(())
     }
 
     pub fn estimate_price2(
         mut _ctx: Context<EstimatePrice2>, 
         dest_chain_id: u64,
-    )-> Result<()> {
+    )-> Result<(u64)> {
         Ok(())
     }
 
