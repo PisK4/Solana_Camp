@@ -15,10 +15,9 @@ describe("Vizing Test", () => {
 
   // Configure the client to use the local cluster.
   anchor.setProvider(provider);
-  const vizingProgram = anchor.workspace.VizingCore as Program<VizingCore>;
-  const vizingAppProgram = anchor.workspace.VizingApp as Program<VizingApp>;
-  const vizingAppMockProgram = anchor.workspace
-    .VizingAppMock as Program<VizingAppMock>;
+  const vizingProgram = anchor.workspace.VizingCore;
+  const vizingAppProgram = anchor.workspace.VizingApp;
+  const vizingAppMockProgram = anchor.workspace.VizingAppMock;
 
   let vizingPadConfigs: anchor.web3.PublicKey;
   let vizingAuthority: anchor.web3.PublicKey;
@@ -79,6 +78,12 @@ describe("Vizing Test", () => {
   const EVM_src_address = "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD";
   const EVM_address_buffer =
     vizingUtils.padEthereumAddressToBuffer(EVM_src_address);
+
+  const EVM_src_address2 =
+    "0x000000000000000000000000c3C7A782dda00a8E61Cb9Ba0ea8680bb3f3B9d10";
+  const EVM_address_buffer2 =
+    vizingUtils.padEthereumAddressToBuffer(EVM_src_address2);
+  console.log("EVM_address_buffer2: ", EVM_address_buffer2);
 
   it("account setup", async () => {
     console.log("feeCollector: ", feeCollectorKeyPair.publicKey.toBase58());
@@ -162,7 +167,7 @@ describe("Vizing Test", () => {
         vizingAppMockProgram.programId,
         [resultDataAccount]
       );
-      solPdaReceiver = initRegAppRet.vizingFeeRouter;
+      solPdaReceiver = initRegAppRet.solPdaReceiver;
       vizingAppConfig = initRegAppRet.vizingAppConfig;
     }
 
@@ -549,7 +554,7 @@ describe("Vizing Test", () => {
       );
 
       const targetProgram = vizingUtils.addressToNumberArray(
-        "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7F11"
+        "0x4d20A067461fD60379DA001EdEC6E8CFb9862cE4"
       );
 
       // 8 bytes u64

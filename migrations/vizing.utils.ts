@@ -1,4 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
+import { VizingCore } from "../target/types/vizing_core";
+import vizingCoreIDL from "../target/idl/vizing_core.json";
 
 // **** Vizing Pad Configs ***
 export const VizingPadConfigsSeed = Buffer.from("Vizing_Pad_Settings_Seed");
@@ -246,4 +248,49 @@ export async function launchFromVizingApp(
       mappingFeeConfig: accounts.vizingGasSystem,
     })
     .rpc();
+}
+
+export function generateVizingPadProgram(
+  network: string = "devnet"
+): anchor.Program {
+  let programId: string;
+  switch (network) {
+    case "devnet":
+      programId = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE";
+      break;
+    default:
+      throw new Error(`Network not supported: ${network}`);
+  }
+
+  const provider = getProvider(network);
+  return new anchor.Program(vizingCoreIDL as anchor.Idl, provider);
+}
+
+export function getProvider(network: string = "devnet"): anchor.Provider {
+  let url: string;
+  switch (network) {
+    case "devnet":
+      url =
+        "https://solana-devnet.g.alchemy.com/v2/-m2gJ2Fiv4w403IMR27nGoHUyonc0azl";
+      break;
+    default:
+      throw new Error(`Network not supported: ${network}`);
+  }
+
+  const connection = new anchor.web3.Connection(url, "confirmed");
+  const provider = new anchor.AnchorProvider(
+    connection,
+    anchor.AnchorProvider.local().wallet,
+    {
+      commitment: "confirmed",
+    }
+  );
+
+  return provider;
+}
+
+export function generatePublicKeyFromString(
+  address: string
+): anchor.web3.PublicKey {
+  return new anchor.web3.PublicKey(address);
 }

@@ -53,47 +53,11 @@ pub struct LaunchOp<'info> {
 
 impl LaunchOp<'_> {
     pub fn vizing_launch(ctx: &mut Context<LaunchOp>, params: LaunchParams) -> Result<()> {
-        msg!("####Launch in vizing core");
-
-        msg!("vizing_app_fee_payer is signer: {}", ctx.accounts.vizing_app_fee_payer.is_signer);
-
-        msg!("vizing_app_message_authority is signer: {}", ctx.accounts.vizing_app_message_authority.is_signer);
-        
-        msg!(
-            "vizing_app_message_authority: {}",
-            ctx.accounts.vizing_app_message_authority.key()
-        );
-
-        msg!(
-            "erliest_arrival_timestamp: {}",
-            params.erliest_arrival_timestamp
-        );
-        msg!(
-            "latest_arrival_timestamp: {}",
-            params.latest_arrival_timestamp
-        );
-        msg!("value: {}", params.value);
-
-        msg!("dest_chainid: {}", params.dest_chainid);
-
-        msg!("addition_params mode: {}", params.addition_params.mode);
-
-        msg!("addition_params signature: {:?}", params.addition_params.signature);
-
-        msg!("mode: {}", params.message.mode);
-
-        msg!("target_program: {:?}", params.message.target_program);
-
-        msg!("execute_gas_limit: {}", params.message.execute_gas_limit);
-
-        msg!("max_fee_per_gas: {}", params.message.max_fee_per_gas);
-
-        msg!("signature: {:?}", params.message.signature);
-
+        msg!("### VizingLauchOp::launch ###");
+        msg!("sender: {} authority: {}", ctx.accounts.vizing_app_fee_payer.key(), ctx.accounts.vizing_app_message_authority.key());
+        msg!("destChainId:{}, destProgram: {:?}", params.dest_chainid, params.message.target_program);
         let message = &params.message;
         let serialized_data: Vec<u8> = message.try_to_vec()?;
-
-        msg!("serialized_data: {:?}", serialized_data);
 
         let dest_chain_id = params.dest_chainid;
 
@@ -136,6 +100,8 @@ impl LaunchOp<'_> {
             ),
             fee,
         )?;
+        
+        msg!("fee:{} to fee_collector", fee);
 
         emit!(SuccessfulLaunchMessage {
             erliest_arrival_timestamp: params.erliest_arrival_timestamp,

@@ -7,7 +7,7 @@ const deployerKeyPairPath = "governance/.config/wallet/deployer_keypair.json";
 let vizingPadConfigs: anchor.web3.PublicKey;
 let vizingAuthority: anchor.web3.PublicKey;
 let vizingAppConfig: anchor.web3.PublicKey;
-let vizingFeeRouter: anchor.web3.PublicKey;
+let solPdaReceiver: anchor.web3.PublicKey;
 let vizingMessageAuthority: anchor.web3.PublicKey;
 let vizingGasSystem: anchor.web3.PublicKey;
 
@@ -144,7 +144,7 @@ export async function inititalizeRegisterVizingApp(
   {
     const [solReceiver, bump1] =
       vizingUtils.generatePdaForVizingAppSolReceiver(vizingAppProgramId);
-    vizingFeeRouter = solReceiver;
+    solPdaReceiver = solReceiver;
 
     console.log(`solPdaReceiver: ${solReceiver.toBase58()}`);
   }
@@ -164,7 +164,7 @@ export async function inititalizeRegisterVizingApp(
     vizingAppConfig = vizingAppContract;
 
     const registerParams = {
-      solPdaReceiver: vizingFeeRouter,
+      solPdaReceiver: solPdaReceiver,
       vizingAppAccounts: vizingAppAccounts,
       vizingAppProgramId: vizingAppProgramId,
     };
@@ -180,7 +180,7 @@ export async function inititalizeRegisterVizingApp(
   }
 
   return {
-    vizingFeeRouter,
+    solPdaReceiver,
     vizingAppConfig,
   };
 }
