@@ -377,7 +377,6 @@ describe("Test", () => {
           .initRecordMessage()
           .accounts({
             currentRecordMessage: recordMessageAuthority,
-            vizingPadConfig: vizingPadSettings,
             user: user,
             systemProgram: systemId,
           })
