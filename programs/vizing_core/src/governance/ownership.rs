@@ -1,5 +1,5 @@
-use crate::library::*;
 use anchor_lang::prelude::*;
+use crate::library::*;
 
 #[derive(Accounts)]
 pub struct InitVizingPad<'info> {
@@ -29,7 +29,10 @@ pub struct InitVizingPad<'info> {
 }
 
 impl InitVizingPad<'_> {
-    pub fn initialize_vizing_pad(ctx: &mut Context<InitVizingPad>, params: InitVizingPadParams) -> Result<()> {
+    pub fn initialize_vizing_pad(
+        ctx: Context<InitVizingPad>,
+        params: InitVizingPadParams,
+    ) -> Result<()> {
         // init vizing settings
         let (_, vizing_config_bump) = Pubkey::find_program_address(
             &[VIZING_PAD_CONFIG_SEED],
@@ -37,7 +40,6 @@ impl InitVizingPad<'_> {
         );
         
         ctx.accounts.vizing_pad_config.bump = vizing_config_bump;
-        ctx.accounts.vizing_pad_config.bump = ctx.accounts.vizing_pad_config.bump;
         ctx.accounts.vizing_pad_config.owner = params.owner;
         ctx.accounts.vizing_pad_config.fee_collector = params.fee_collector;
         ctx.accounts.vizing_pad_config.engine_admin = params.engine_admin;
@@ -69,7 +71,7 @@ pub struct InitVizingPadParams {
     pub swap_manager: Pubkey,
     #[max_len(96)]
     pub trusted_relayers: Vec<Pubkey>,
-    pub registered_validator: Pubkey,   
+    pub registered_validator: Pubkey,
     pub is_paused: bool,
 }
 
@@ -134,7 +136,6 @@ pub struct OwnerManagementParams {
     pub is_paused: bool,
 }
 
-
 #[derive(Accounts)]
 pub struct EngineAdminAuthorization<'info> {
     pub engine_admin: Signer<'info>,
@@ -155,7 +156,6 @@ impl EngineAdminAuthorization<'_> {
         Ok(())
     }
 }
-
 
 #[derive(Accounts)]
 #[instruction(relayer: Pubkey)]
@@ -202,8 +202,11 @@ pub struct RelayerSettings {
 }
 
 impl GrantRelayer<'_> {
-    pub fn grant_relayer(ctx: &mut Context<GrantRelayer>, _new_trusted_relayers: Vec<Pubkey>) -> Result<()> {
-        ctx.accounts.vizing.trusted_relayers = _new_trusted_relayers;
+    pub fn grant_relayer(
+        ctx: Context<GrantRelayer>,
+        new_trusted_relayers: Vec<Pubkey>,
+    ) -> Result<()> {
+        ctx.accounts.vizing.trusted_relayers = new_trusted_relayers;
         Ok(())
     }
 }

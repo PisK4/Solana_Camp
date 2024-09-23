@@ -1,3 +1,4 @@
+use crate::library::*;
 use anchor_lang::prelude::*;
 
 pub const VIZING_MESSAGE_AUTHORITY_SEED: &[u8] = b"Vizing_Message_Authority_Seed";
@@ -48,7 +49,7 @@ pub struct LaunchParams {
     pub latest_arrival_timestamp: u64,
     pub relayer: [u8; 32],
     pub sender: Pubkey,
-    pub value: u64,
+    pub value: Uint256,
     pub dest_chainid: u64,
     pub addition_params: AdditionalParams,
     pub message: Message,
@@ -72,7 +73,7 @@ pub struct AdditionalParams {
 }
 
 //get
-
+//48 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct GasSystemGlobal {
     pub key: u64,
@@ -83,6 +84,7 @@ pub struct GasSystemGlobal {
     pub denominator: u64,
 }
 
+//24 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct NativeTokenTradeFeeConfig {
     pub key: u64,
@@ -138,15 +140,15 @@ pub struct MappingFeeConfig {
 #[account]
 #[derive(InitSpace)]
 pub struct CurrentRecordMessage {
-    pub compute_trade_fee1: u64,
-    pub compute_trade_fee2: u64,
+    pub compute_trade_fee1: Uint256,
+    pub compute_trade_fee2: Uint256,
     pub estimate_price1: u64,
     pub estimate_price2: u64,
-    pub estimate_gas: u64,
-    pub estimate_total_fee: u64,
-    pub exact_output: u64,
-    pub exact_input: u64,
-    pub estimate_vizing_gas_fee: u64,
+    pub estimate_gas: Uint256,
+    pub estimate_total_fee: Uint256,
+    pub exact_output: Uint256,
+    pub exact_input: Uint256,
+    pub estimate_vizing_gas_fee: Uint256,
     pub init_state: bool,
 }
 
@@ -154,13 +156,13 @@ pub struct CurrentRecordMessage {
 pub struct ComputeTradeFee1<'info> {
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref()],
+        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref()],
+        seeds = [contants::VIZING_RECORD_SEED.as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -170,13 +172,13 @@ pub struct ComputeTradeFee1<'info> {
 pub struct ComputeTradeFee2<'info> {
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref()],
+        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref()],
+        seeds = [contants::VIZING_RECORD_SEED.as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -186,13 +188,13 @@ pub struct ComputeTradeFee2<'info> {
 pub struct EstimatePrice1<'info> {
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref()],
+        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref()],
+        seeds = [contants::VIZING_RECORD_SEED.as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -202,13 +204,13 @@ pub struct EstimatePrice1<'info> {
 pub struct EstimatePrice2<'info> {
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref()],
+        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref()],
+        seeds = [contants::VIZING_RECORD_SEED.as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -218,13 +220,13 @@ pub struct EstimatePrice2<'info> {
 pub struct EstimateGas<'info> {
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref()],
+        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref()],
+        seeds = [contants::VIZING_RECORD_SEED.as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -234,13 +236,13 @@ pub struct EstimateGas<'info> {
 pub struct EstimateTotalFee<'info> {
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref()],
+        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref()],
+        seeds = [contants::VIZING_RECORD_SEED.as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -250,13 +252,13 @@ pub struct EstimateTotalFee<'info> {
 pub struct ExactOutput<'info> {
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref()],
+        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref()],
+        seeds = [contants::VIZING_RECORD_SEED.as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -266,13 +268,13 @@ pub struct ExactOutput<'info> {
 pub struct ExactInput<'info> {
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref()],
+        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref()],
+        seeds = [contants::VIZING_RECORD_SEED.as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -282,13 +284,13 @@ pub struct ExactInput<'info> {
 pub struct EstimateVizingGasFee1<'info> {
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref()],
+        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref()],
+        seeds = [contants::VIZING_RECORD_SEED.as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
@@ -298,13 +300,13 @@ pub struct EstimateVizingGasFee1<'info> {
 pub struct EstimateVizingGasFee2<'info> {
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref()],
+        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
     #[account(
         mut,
-        seeds = [b"init_current_record_message".as_ref()],
+        seeds = [contants::VIZING_RECORD_SEED.as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
