@@ -1043,8 +1043,9 @@ pub struct InitGasSystemParams {
 
 #[derive(Accounts)]
 pub struct InitFeeConfig<'info> {
-    #[account(seeds = [contants::VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump)]
-    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(seeds = [contants::VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump,
+        constraint = vizing_pad_config.owner == user.key() @VizingError::NotOwner)]
+        pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         init,
         payer = user, 
