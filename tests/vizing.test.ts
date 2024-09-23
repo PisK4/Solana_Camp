@@ -75,7 +75,7 @@ describe("Vizing Test", () => {
     ),
   ];
 
-  const EVM_src_address = "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD";
+  const EVM_src_address = "0x4d20A067461fD60379DA001EdEC6E8CFb9862cE4";
   const EVM_address_buffer =
     vizingUtils.padEthereumAddressToBuffer(EVM_src_address);
 
@@ -145,20 +145,18 @@ describe("Vizing Test", () => {
       vizingAuthority = initRet.vizingAuthority;
       vizingGasSystem = initRet.vizingGasSystem;
 
-      const [_resultDataAccount, resultDataBump] =
-        vizingUtils.generatePdaForResultData(vizingAppMockProgram.programId);
-
-      resultDataAccount = _resultDataAccount;
-
-      console.log(
-        `resultDataAccount: ${resultDataAccount.toBase58()}, bump: ${resultDataBump}`
+      const vizingAppMockRet = await vizingInit.initializeVizingAppMock(
+        vizingAppMockProgram,
+        provider.wallet.publicKey
       );
+
+      resultDataAccount = vizingAppMockRet.resultDataAccount;
 
       const initVizingApp = await vizingInit.initializeVizingApp(
         vizingAppMockProgram,
         provider.wallet.publicKey
       );
-
+      solPdaReceiver = initVizingApp.solPdaReceiver;
       vizingMessageAuthority = initVizingApp.vizingMessageAuthority;
 
       const initRegAppRet = await vizingInit.inititalizeRegisterVizingApp(
@@ -167,7 +165,7 @@ describe("Vizing Test", () => {
         vizingAppMockProgram.programId,
         [resultDataAccount]
       );
-      solPdaReceiver = initRegAppRet.solPdaReceiver;
+
       vizingAppConfig = initRegAppRet.vizingAppConfig;
     }
 
@@ -250,7 +248,7 @@ describe("Vizing Test", () => {
       );
 
       let dapp2 = vizingUtils.padEthereumAddressToBuffer(
-        "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD"
+        "0x4d20A067461fD60379DA001EdEC6E8CFb9862cE4"
       );
 
       let tradeFeeConfig_dapps = [dapp, dapp2];
@@ -623,22 +621,6 @@ describe("Vizing Test", () => {
 
       // expect(fetchedVizingAppConfig.bump).to.equal(vizingAppBump);
     }
-
-    await vizingAppMockProgram.methods
-      .initialize()
-      .accounts({
-        resultAccount: resultDataAccount,
-        payer: provider.wallet.publicKey,
-      })
-      .rpc();
-
-    await vizingAppMockProgram.methods
-      .initializeVizingReceiver()
-      .accounts({
-        solPdaReceiver: solPdaReceiver,
-        payer: provider.wallet.publicKey,
-      })
-      .rpc();
 
     const message = {
       mode: 1,

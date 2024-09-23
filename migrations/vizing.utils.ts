@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
-import { VizingCore } from "../target/types/vizing_core";
 import vizingCoreIDL from "../target/idl/vizing_core.json";
+import vizingAppMockIDL from "../target/idl/vizing_app_mock.json";
 
 // **** Vizing Pad Configs ***
 export const VizingPadConfigsSeed = Buffer.from("Vizing_Pad_Settings_Seed");
@@ -266,12 +266,31 @@ export function generateVizingPadProgram(
   return new anchor.Program(vizingCoreIDL as anchor.Idl, provider);
 }
 
+export function generateVizingAppMockProgram(
+  network: string = "devnet"
+): anchor.Program {
+  let programId: string;
+  switch (network) {
+    case "devnet":
+      programId = "mokB6FzEZx6vPVmasd19CyDDuqZ98auke1Bk59hmzVE";
+      break;
+    default:
+      throw new Error(`Network not supported: ${network}`);
+  }
+
+  const provider = getProvider(network);
+  return new anchor.Program(vizingAppMockIDL as anchor.Idl, provider);
+}
+
 export function getProvider(network: string = "devnet"): anchor.Provider {
   let url: string;
   switch (network) {
     case "devnet":
       url =
         "https://solana-devnet.g.alchemy.com/v2/-m2gJ2Fiv4w403IMR27nGoHUyonc0azl";
+      break;
+    case "local":
+      url = "http://127.0.0.1:8899";
       break;
     default:
       throw new Error(`Network not supported: ${network}`);
@@ -294,3 +313,14 @@ export function generatePublicKeyFromString(
 ): anchor.web3.PublicKey {
   return new anchor.web3.PublicKey(address);
 }
+
+export const formatReturnInfo = (ret: any) => {
+  return Object.fromEntries(
+    Object.entries(ret).map(([key, value]) => {
+      if (value instanceof anchor.web3.PublicKey) {
+        return [key, value.toBase58()];
+      }
+      return [key, value];
+    })
+  );
+};

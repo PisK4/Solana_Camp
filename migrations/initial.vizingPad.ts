@@ -39,97 +39,132 @@ export async function inititalizeVizingPad(
   };
 
   let vizingPadConfigBump: number;
+  let vizingAuthorityBump: number;
+  let vizingGasSystemBump: number;
+  let recordMessageAuthority: anchor.web3.PublicKey;
+  let recordMessagesBump: number;
 
   {
     console.log("initializing vizingPadConfigs pda");
-    const [vizingPad, bump] = vizingUtils.generatePdaForVizingPadConfig(
-      vizingProgram.programId
-    );
+    [vizingPadConfigs, vizingPadConfigBump] =
+      vizingUtils.generatePdaForVizingPadConfig(vizingProgram.programId);
 
-    vizingPadConfigs = vizingPad;
-    vizingPadConfigBump = bump;
+    // vizingPadConfigs = vizingPad;
+    // vizingPadConfigBump = bump;
 
-    console.log(`vizingPad: ${vizingPad.toBase58()}, bump: ${bump}`);
+    // console.log(`vizingPad: ${vizingPad.toBase58()}, bump: ${bump}`);
   }
 
   {
     console.log("initializing vizingAuthority pda");
-    const [authority, bump] = vizingUtils.generatePdaForVizingAuthority(
-      vizingProgram.programId,
-      vizingPadConfigs
+    [vizingAuthority, vizingAuthorityBump] =
+      vizingUtils.generatePdaForVizingAuthority(
+        vizingProgram.programId,
+        vizingPadConfigs
+      );
+
+    const authorityU8Array = new Uint8Array(
+      vizingAuthority.toBuffer().slice(0, 32)
     );
 
-    const authorityU8Array = new Uint8Array(authority.toBuffer().slice(0, 32));
-
-    vizingAuthority = authority;
-    console.log(`authority: ${authority.toBase58()}, bump: ${bump}`);
+    // vizingAuthority = authority;
+    // console.log(`authority: ${authority.toBase58()}, bump: ${bump}`);
 
     // console.log("authorityU8Array:", authorityU8Array);
   }
 
   {
-    const tx = await vizingUtils.initializeVizingPad(
-      vizingProgram,
-      vizingPadInitParams,
-      {
-        vizingPadConfig: vizingPadConfigs,
-        vizingPadAuthority: vizingAuthority,
-        payer: deployerPk,
-      }
-    );
-
-    console.log(`vizingPad initialize: ${tx}`);
-  }
-
-  {
-    console.log("initializing vizingGasSystem pda");
-    const [gasSys, bump] = vizingUtils.generatePdaForVizingGasSystem(
-      vizingProgram.programId,
-      vizingPadConfigs
-    );
-
-    vizingGasSystem = gasSys;
-
-    console.log(
-      `vizingGasSystem: ${vizingGasSystem.toBase58()}, bump: ${bump}`
-    );
-
-    const initGasSystemParams = gasSystemParams;
-
-    {
-      const tx = await vizingUtils.initializeVizingGasSystem(
+    try {
+      const tx = await vizingUtils.initializeVizingPad(
         vizingProgram,
-        initGasSystemParams,
+        vizingPadInitParams,
         {
           vizingPadConfig: vizingPadConfigs,
-          vizingGasSystem: vizingGasSystem,
+          vizingPadAuthority: vizingAuthority,
           payer: deployerPk,
         }
       );
 
-      console.log(`gasSystem initialize: ${tx}`);
+      console.log(`vizingPad initialize: ${tx}`);
+    } catch (error) {
+      if (error.signature) {
+        console.log(`signature: ${error.signature}`);
+      } else {
+        console.error(error);
+      }
     }
   }
 
   {
-    const [recordMessageAuthority, recordMessageBump] =
-      vizingUtils.generatePdaForRecordMessage(vizingProgram.programId);
-    {
-      const tx = await vizingUtils.initializeRecordMessage(
-        vizingProgram,
-        recordMessageAuthority,
-        deployerPk
+    console.log("initializing vizingGasSystem pda");
+    [vizingGasSystem, vizingGasSystemBump] =
+      vizingUtils.generatePdaForVizingGasSystem(
+        vizingProgram.programId,
+        vizingPadConfigs
       );
-      console.log(`recordMessage initialize: ${tx}`);
+
+    const initGasSystemParams = gasSystemParams;
+
+    {
+      try {
+        const tx = await vizingUtils.initializeVizingGasSystem(
+          vizingProgram,
+          initGasSystemParams,
+          {
+            vizingPadConfig: vizingPadConfigs,
+            vizingGasSystem: vizingGasSystem,
+            payer: deployerPk,
+          }
+        );
+
+        console.log(`gasSystem initialize: ${tx}`);
+      } catch (error) {
+        if (error.signature) {
+          console.log(`signature: ${error.signature}`);
+        } else {
+          console.error(error);
+        }
+      }
     }
   }
 
-  return {
+  {
+    [recordMessageAuthority, recordMessagesBump] =
+      vizingUtils.generatePdaForRecordMessage(vizingProgram.programId);
+    {
+      try {
+        const tx = await vizingUtils.initializeRecordMessage(
+          vizingProgram,
+          recordMessageAuthority,
+          deployerPk
+        );
+        console.log(`recordMessage initialize: ${tx}`);
+      } catch (error) {
+        if (error.signature) {
+          console.log(`signature: ${error.signature}`);
+        } else {
+          console.error(error);
+        }
+      }
+    }
+  }
+
+  const ret = {
     vizingPadConfigs,
     vizingPadConfigBump,
-    vizingPadInitParams,
     vizingAuthority,
+    vizingAuthorityBump,
     vizingGasSystem,
+    vizingGasSystemBump,
+    recordMessageAuthority,
+    recordMessagesBump,
+  };
+
+  console.table(vizingUtils.formatReturnInfo(ret));
+
+  return {
+    ...ret,
+    vizingPadInitParams,
   };
 }
 
@@ -140,35 +175,27 @@ export async function inititalizeRegisterVizingApp(
   vizingAppAccounts: anchor.web3.PublicKey[]
 ) {
   console.log("### inititalizeRegisterVizingApp start");
+  let vizingAppBump: number;
 
-  {
-    const [solReceiver, bump1] =
-      vizingUtils.generatePdaForVizingAppSolReceiver(vizingAppProgramId);
-    solPdaReceiver = solReceiver;
+  // #### register vizing app start
+  [vizingAppConfig, vizingAppBump] = vizingUtils.generatePdaForVizingAppConfig(
+    vizingPadProgram.programId,
+    vizingAppProgramId
+  );
 
-    console.log(`solPdaReceiver: ${solReceiver.toBase58()}`);
-  }
+  const registerParams = {
+    solPdaReceiver: solPdaReceiver,
+    vizingAppAccounts: vizingAppAccounts,
+    vizingAppProgramId: vizingAppProgramId,
+  };
 
-  {
-    // #### register vizing app start
-    const [vizingAppContract, vizingAppBump] =
-      vizingUtils.generatePdaForVizingAppConfig(
-        vizingPadProgram.programId,
-        vizingAppProgramId
-      );
+  const ret = {
+    vizingAppConfig,
+  };
 
-    console.log(
-      `vizingAppConfig: ${vizingAppContract.toBase58()}, bump: ${vizingAppBump}`
-    );
+  console.table(vizingUtils.formatReturnInfo(ret));
 
-    vizingAppConfig = vizingAppContract;
-
-    const registerParams = {
-      solPdaReceiver: solPdaReceiver,
-      vizingAppAccounts: vizingAppAccounts,
-      vizingAppProgramId: vizingAppProgramId,
-    };
-
+  try {
     const tx = await vizingUtils.vizingAppRegister(
       vizingPadProgram,
       registerParams,
@@ -177,12 +204,15 @@ export async function inititalizeRegisterVizingApp(
     );
 
     console.log(`register vizing app: ${tx}`);
+  } catch (error) {
+    if (error.signature) {
+      console.log(`signature: ${error.signature}`);
+    } else {
+      console.error(error);
+    }
   }
 
-  return {
-    solPdaReceiver,
-    vizingAppConfig,
-  };
+  return ret;
 }
 
 export async function initializeVizingApp(
@@ -191,19 +221,16 @@ export async function initializeVizingApp(
 ) {
   const vizingAppProgramId = vizingAppProgram.programId;
   console.log(`### initializeVizingApp start ${vizingAppProgramId}`);
-  {
-    const [messageAuthority, bump3] =
-      anchor.web3.PublicKey.findProgramAddressSync(
-        [vizingUtils.vizingMessageAuthoritySeed],
-        vizingAppProgramId
-      );
+  let messageAuthorityBump: number;
+  let solPdaReceiverBump: number;
 
-    vizingMessageAuthority = messageAuthority;
-
-    console.log(
-      `messageAuthority: ${messageAuthority.toBase58()}, bump: ${bump3}`
+  [vizingMessageAuthority, messageAuthorityBump] =
+    anchor.web3.PublicKey.findProgramAddressSync(
+      [vizingUtils.vizingMessageAuthoritySeed],
+      vizingAppProgramId
     );
 
+  try {
     await vizingAppProgram.methods
       .initializeVizingEmitter()
       .accounts({
@@ -211,11 +238,66 @@ export async function initializeVizingApp(
         payer: deployerPk,
       })
       .rpc();
+  } catch (error) {
+    console.error(error);
   }
 
-  return {
+  {
+    [solPdaReceiver, solPdaReceiverBump] =
+      vizingUtils.generatePdaForVizingAppSolReceiver(vizingAppProgramId);
+  }
+
+  try {
+    await vizingAppProgram.methods
+      .initializeVizingReceiver()
+      .accounts({
+        solPdaReceiver: solPdaReceiver,
+        payer: deployerPk,
+      })
+      .rpc();
+  } catch (error) {
+    console.error(error);
+  }
+
+  const ret = {
+    vizingAppProgramId,
     vizingMessageAuthority,
+    messageAuthorityBump,
+    solPdaReceiver,
+    solPdaReceiverBump,
   };
+
+  console.table(vizingUtils.formatReturnInfo(ret));
+
+  return ret;
+}
+
+export async function initializeVizingAppMock(
+  vizingAppProgram: anchor.Program,
+  deployerPk: anchor.web3.PublicKey
+) {
+  let resultDataAccount: anchor.web3.PublicKey;
+  let resultDataBump: number;
+  [resultDataAccount, resultDataBump] = vizingUtils.generatePdaForResultData(
+    vizingAppProgram.programId
+  );
+
+  const ret = {
+    resultDataAccount,
+    resultDataBump,
+  };
+
+  console.table(vizingUtils.formatReturnInfo(ret));
+
+  await vizingAppProgram.methods
+    .initialize()
+    .accounts({
+      resultAccount: resultDataAccount,
+      payer: deployerPk,
+    })
+    .rpc();
+
+  return ret;
 }
 
 export function loadKeypairFromFile(filename: string): anchor.web3.Keypair {

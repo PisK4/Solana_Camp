@@ -13,15 +13,16 @@ export async function main() {
   // console.log("vizingPad balance: ", balance);
 
   const tpg = vizingUtils.addressToNumberArray(
-    "0x000000000000000000000000c3C7A782dda00a8E61Cb9Ba0ea8680bb3f3B9d10"
+    // "0x000000000000000000000000c3C7A782dda00a8E61Cb9Ba0ea8680bb3f3B9d10"
+    "0x227d76AB1cEa2eDFc9A62833aF1743259c1f055f"
   );
 
   const message = {
     mode: 4,
     targetProgram: tpg,
-    executeGasLimit: new anchor.BN(20000),
+    executeGasLimit: new anchor.BN(23000),
     maxFeePerGas: new anchor.BN(35),
-    signature: Buffer.from("1234"),
+    signature: Buffer.from("TEST_CODE"),
   };
 
   const additionParams = {
@@ -44,6 +45,8 @@ export async function main() {
   };
 
   console.log(devnetConfig);
+
+  console.log("launchParams: ", launchParams);
 
   console.log("run");
 
