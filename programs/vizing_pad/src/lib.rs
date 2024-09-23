@@ -60,7 +60,7 @@ pub mod vizing_pad {
         amount_out: Uint256,
         dest_chain_id: u64,
         message: Message,
-    )-> Result<(Uint256)> {
+    )-> Result<(u64)> {
         Ok(())
     }
 
@@ -69,7 +69,7 @@ pub mod vizing_pad {
         dest_chain_id: u64,
         amount_out: Uint256,
         message: Message,
-    )-> Result<(Uint256)> {
+    )-> Result<(u64)> {
         Ok(())
     }
 
@@ -95,7 +95,7 @@ pub mod vizing_pad {
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message: Vec<u8>
-    )-> Result<(Uint256)> {
+    )-> Result<(u64)> {
         Ok(())
     }
 
@@ -105,7 +105,7 @@ pub mod vizing_pad {
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message: Message
-    )-> Result<(Uint256)> {
+    )-> Result<(u64)> {
         Ok(())
     }
 

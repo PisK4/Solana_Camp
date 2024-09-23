@@ -256,7 +256,7 @@ pub fn fetch_estimate_gas<'c: 'info, 'info>(
     amount_out: Uint256,
     dest_chain_id: u64,
     message: Message,
-) -> Result<(Uint256)> {
+) -> Result<(u64)> {
 
     let cpi_message = vizing_pad::vizing_omni::Message {
         mode: message.mode,
@@ -292,7 +292,7 @@ pub fn fetch_estimate_total_fee<'c: 'info, 'info>(
     amount_out: Uint256,
     dest_chain_id: u64,
     message: Message,
-) -> Result<(Uint256)> {
+) -> Result<(u64)> {
     let cpi_message = vizing_pad::vizing_omni::Message {
         mode: message.mode,
         target_contract: message.target_contract,
@@ -380,7 +380,7 @@ pub fn fetch_estimate_vizing_gas_fee1<'c: 'info, 'info>(
     dest_chain_id: u64,
     _addition_params: Vec<u8>,
     message: Vec<u8>,
-) -> Result<(Uint256)> {
+) -> Result<(u64)> {
     let cpi_ctx = CpiContext::new(
         vizing_pad_program.clone(),
         EstimateVizingGasFee1 {
@@ -408,7 +408,7 @@ pub fn fetch_estimate_vizing_gas_fee2<'c: 'info, 'info>(
     dest_chain_id: u64,
     _addition_params: Vec<u8>,
     message: Message,
-) -> Result<(Uint256)> {
+) -> Result<(u64)> {
     let cpi_message = vizing_pad::vizing_omni::Message {
         mode: message.mode,
         target_contract: message.target_contract,

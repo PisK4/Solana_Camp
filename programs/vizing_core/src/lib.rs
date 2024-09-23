@@ -442,7 +442,7 @@ pub mod vizing_core {
         amount_out: Uint256,
         dest_chain_id: u64,
         message: Message,
-    ) -> Result<Uint256> {
+    ) -> Result<u64> {
         EstimateGas::get_estimate_gas(ctx, amount_out, dest_chain_id, message)
     }
 
@@ -457,7 +457,7 @@ pub mod vizing_core {
         dest_chain_id: u64,
         amount_out: Uint256,
         message: Message,
-    ) -> Result<Uint256> {
+    ) -> Result<u64> {
         EstimateTotalFee::get_estimate_total_fee(ctx, dest_chain_id, amount_out, message)
     }
 
@@ -504,7 +504,7 @@ pub mod vizing_core {
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message: Vec<u8>,
-    ) -> Result<Uint256> {
+    ) -> Result<u64> {
         EstimateVizingGasFee1::get_estimate_vizing_gas_fee(
             ctx,
             value,
@@ -520,7 +520,7 @@ pub mod vizing_core {
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message: Message,
-    ) -> Result<Uint256> {
+    ) -> Result<u64> {
         EstimateVizingGasFee2::get_estimate_vizing_gas_fee(
             ctx,
             value,

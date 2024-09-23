@@ -709,7 +709,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
         amount_out: Uint256,
         dest_chain_id: u64,
         message: &[u8]
-    ) -> Option<Uint256> {
+    ) -> Option<u64> {
         let base_price: u64;
         let fee: u64;
         let mut this_dapp: [u8; 32]=[0; 32];
@@ -781,7 +781,8 @@ impl RemoveTradeFeeConfigDapp<'_>{
             final_fee = new_fee.check_add(trade_fee2)?;
 
         }
-        Some(final_fee)
+        let estimate_fee=final_fee.low.try_into().unwrap();
+        Some(estimate_fee)
     }
 
     fn get_dapp_base_price(
@@ -853,7 +854,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
         dest_chain_id: u64,
         amount_out: Uint256,
         message: &[u8],
-    ) -> Option<Uint256> {
+    ) -> Option<u64> {
         let base_price: u64;
         if fee_config_base_price > 0 {
             base_price = fee_config_base_price;
@@ -929,8 +930,9 @@ impl RemoveTradeFeeConfigDapp<'_>{
             msg!("Exceed quantity limit");
             return None;
         }
+        let estimate_total_fee=final_fee.low.try_into().unwrap();
 
-        Some(final_fee)
+        Some(estimate_total_fee)
     }
 
     pub fn exact_output(
@@ -1047,7 +1049,7 @@ pub struct InitFeeConfig<'info> {
         init,
         payer = user, 
         space = 8 + MappingFeeConfig::INIT_SPACE,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -1063,7 +1065,7 @@ pub struct SetGasGlobal<'info> {
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -1079,7 +1081,7 @@ pub struct SetFeeConfig<'info> {
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -1095,7 +1097,7 @@ pub struct SetTokenFeeConfig<'info> {
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -1111,7 +1113,7 @@ pub struct BatchSetTokenFeeConfig<'info> {
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -1127,7 +1129,7 @@ pub struct BatchSetTradeFeeConfigMap<'info> {
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -1143,7 +1145,7 @@ pub struct SetDappPriceConfig<'info> {
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -1159,7 +1161,7 @@ pub struct BatchSetDappPriceConfigInDiffChain<'info> {
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -1175,7 +1177,7 @@ pub struct BatchSetDappPriceConfigInSameChain<'info> {
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -1191,7 +1193,7 @@ pub struct SetExchangeRate<'info> {
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -1207,7 +1209,7 @@ pub struct BatchSetExchangeRate<'info> {
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -1224,7 +1226,7 @@ pub struct RemoveTradeFeeConfigDapp<'info> {
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,

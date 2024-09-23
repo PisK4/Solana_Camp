@@ -22,7 +22,7 @@ pub struct LaunchOp<'info> {
 
     #[account(
         mut,
-        seeds = [b"init_mapping_fee_config".as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,

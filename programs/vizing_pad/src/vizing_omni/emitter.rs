@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use crate::library::*;
+use crate::library::Uint256;
 
 pub const VIZING_MESSAGE_AUTHORITY_SEED: &[u8] = b"Vizing_Message_Authority_Seed";
 pub const VIZING_ERLIEST_ARRIVAL_TIMESTAMP_DEFAULT: u64 = 0;
@@ -144,19 +145,24 @@ pub struct CurrentRecordMessage {
     pub compute_trade_fee2: Uint256,
     pub estimate_price1: u64,
     pub estimate_price2: u64,
-    pub estimate_gas: Uint256,
-    pub estimate_total_fee: Uint256,
+    pub estimate_gas: u64,
+    pub estimate_total_fee: u64,
     pub exact_output: Uint256,
     pub exact_input: Uint256,
-    pub estimate_vizing_gas_fee: Uint256,
+    pub estimate_vizing_gas_fee: u64,
     pub init_state: bool
 }
 
 #[derive(Accounts)]
 pub struct ComputeTradeFee1<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -171,8 +177,13 @@ pub struct ComputeTradeFee1<'info> {
 #[derive(Accounts)]
 pub struct ComputeTradeFee2<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -187,8 +198,13 @@ pub struct ComputeTradeFee2<'info> {
 #[derive(Accounts)]
 pub struct EstimatePrice1<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -203,8 +219,13 @@ pub struct EstimatePrice1<'info> {
 #[derive(Accounts)]
 pub struct EstimatePrice2<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -219,8 +240,13 @@ pub struct EstimatePrice2<'info> {
 #[derive(Accounts)]
 pub struct EstimateGas<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -235,8 +261,13 @@ pub struct EstimateGas<'info> {
 #[derive(Accounts)]
 pub struct EstimateTotalFee<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -251,8 +282,13 @@ pub struct EstimateTotalFee<'info> {
 #[derive(Accounts)]
 pub struct ExactOutput<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -267,8 +303,13 @@ pub struct ExactOutput<'info> {
 #[derive(Accounts)]
 pub struct ExactInput<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -283,8 +324,13 @@ pub struct ExactInput<'info> {
 #[derive(Accounts)]
 pub struct EstimateVizingGasFee1<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -299,8 +345,13 @@ pub struct EstimateVizingGasFee1<'info> {
 #[derive(Accounts)]
 pub struct EstimateVizingGasFee2<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
