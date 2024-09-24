@@ -45,14 +45,8 @@ export async function inititalizeVizingPad(
   let recordMessagesBump: number;
 
   {
-    console.log("initializing vizingPadConfigs pda");
     [vizingPadConfigs, vizingPadConfigBump] =
       vizingUtils.generatePdaForVizingPadConfig(vizingProgram.programId);
-
-    // vizingPadConfigs = vizingPad;
-    // vizingPadConfigBump = bump;
-
-    // console.log(`vizingPad: ${vizingPad.toBase58()}, bump: ${bump}`);
   }
 
   {
@@ -62,15 +56,6 @@ export async function inititalizeVizingPad(
         vizingProgram.programId,
         vizingPadConfigs
       );
-
-    const authorityU8Array = new Uint8Array(
-      vizingAuthority.toBuffer().slice(0, 32)
-    );
-
-    // vizingAuthority = authority;
-    // console.log(`authority: ${authority.toBase58()}, bump: ${bump}`);
-
-    // console.log("authorityU8Array:", authorityU8Array);
   }
 
   {
@@ -88,7 +73,7 @@ export async function inititalizeVizingPad(
       console.log(`vizingPad initialize: ${tx}`);
     } catch (error) {
       if (error.signature) {
-        console.log(`signature: ${error.signature}`);
+        console.log(`vizingPad initialize signature: ${error.signature}`);
       } else {
         console.error(error);
       }
@@ -120,7 +105,7 @@ export async function inititalizeVizingPad(
         console.log(`gasSystem initialize: ${tx}`);
       } catch (error) {
         if (error.signature) {
-          console.log(`signature: ${error.signature}`);
+          console.log(`gasSystem initialize signature: ${error.signature}`);
         } else {
           console.error(error);
         }
@@ -141,13 +126,17 @@ export async function inititalizeVizingPad(
         console.log(`recordMessage initialize: ${tx}`);
       } catch (error) {
         if (error.signature) {
-          console.log(`signature: ${error.signature}`);
+          console.log(`recordMessage initialize signature: ${error.signature}`);
         } else {
           console.error(error);
         }
       }
     }
   }
+
+  const vizingAuthorityU8Array = new Uint8Array(
+    vizingAuthority.toBuffer().slice(0, 32)
+  );
 
   const ret = {
     vizingPadConfigs,
@@ -206,7 +195,7 @@ export async function inititalizeRegisterVizingApp(
     console.log(`register vizing app: ${tx}`);
   } catch (error) {
     if (error.signature) {
-      console.log(`signature: ${error.signature}`);
+      console.log(`register vizing app signature: ${error.signature}`);
     } else {
       console.error(error);
     }
@@ -235,15 +224,20 @@ export async function initializeVizingApp(
   ).toString("hex");
 
   try {
-    await vizingAppProgram.methods
+    const tx = await vizingAppProgram.methods
       .initializeVizingEmitter()
       .accounts({
         messagePdaAuthority: vizingAppAuthority,
         payer: deployerPk,
       })
       .rpc();
+    console.log(`initializeVizingEmitter tx: ${tx}`);
   } catch (error) {
-    console.error(error);
+    if (error.signature) {
+      console.log(`initializeVizingEmitter signature: ${error.signature}`);
+    } else {
+      console.error(error);
+    }
   }
 
   {
@@ -252,15 +246,20 @@ export async function initializeVizingApp(
   }
 
   try {
-    await vizingAppProgram.methods
+    const tx = await vizingAppProgram.methods
       .initializeVizingReceiver()
       .accounts({
         solPdaReceiver: solPdaReceiver,
         payer: deployerPk,
       })
       .rpc();
+    console.log(`initializeVizingReceiver tx: ${tx}`);
   } catch (error) {
-    console.error(error);
+    if (error.signature) {
+      console.log(`initializeVizingReceiver signature: ${error.signature}`);
+    } else {
+      console.error(error);
+    }
   }
 
   const vizingAppProgramHex = Buffer.from(

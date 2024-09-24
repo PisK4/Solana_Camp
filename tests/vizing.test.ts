@@ -1,22 +1,13 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
 import { expect } from "chai";
-
-import { VizingCore } from "../target/types/vizing_core";
-import { VizingApp } from "../target/types/vizing_app";
-import { VizingAppMock } from "../target/types/vizing_app_mock";
 import * as vizingUtils from "../migrations/vizing.utils";
 import * as vizingInit from "../migrations/initial.vizingPad";
 
 describe("Vizing Test", () => {
   const provider = anchor.AnchorProvider.env();
-
   console.log("provider:", provider.publicKey.toBase58());
-
-  // Configure the client to use the local cluster.
   anchor.setProvider(provider);
   const vizingProgram = anchor.workspace.VizingCore;
-  const vizingAppProgram = anchor.workspace.VizingApp;
   const vizingAppMockProgram = anchor.workspace.VizingAppMock;
 
   let vizingPadConfigs: anchor.web3.PublicKey;
@@ -83,7 +74,6 @@ describe("Vizing Test", () => {
     "0x000000000000000000000000c3C7A782dda00a8E61Cb9Ba0ea8680bb3f3B9d10";
   const EVM_address_buffer2 =
     vizingUtils.padEthereumAddressToBuffer(EVM_src_address2);
-  console.log("EVM_address_buffer2: ", EVM_address_buffer2);
 
   it("account setup", async () => {
     console.log("feeCollector: ", feeCollectorKeyPair.publicKey.toBase58());
