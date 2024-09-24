@@ -151,7 +151,7 @@ pub fn fetch_compute_trade_fee1<'c: 'info, 'info>(
     current_record_message: &AccountInfo<'info>,
     dest_chain_id: u64,
     amount_out: Uint256,
-) -> Result<(Uint256)> {
+) -> Result<Uint256> {
     let cpi_ctx = CpiContext::new(
         vizing_pad_program.clone(),
         ComputeTradeFee1 {
@@ -178,7 +178,7 @@ pub fn fetch_compute_trade_fee2<'c: 'info, 'info>(
     target_contract: [u8; 32],
     dest_chain_id: u64,
     amount_out: Uint256,
-) -> Result<(Uint256)> {
+) -> Result<Uint256> {
     let cpi_ctx = CpiContext::new(
         vizing_pad_program.clone(),
         ComputeTradeFee2 {
@@ -204,7 +204,7 @@ pub fn fetch_estimate_price1<'c: 'info, 'info>(
     current_record_message: &AccountInfo<'info>,
     target_contract: [u8; 32],
     dest_chain_id: u64,
-) -> Result<(u64)> {
+) -> Result<u64> {
     let cpi_ctx = CpiContext::new(
         vizing_pad_program.clone(),
         EstimatePrice1 {
@@ -229,7 +229,7 @@ pub fn fetch_estimate_price2<'c: 'info, 'info>(
     mapping_fee_config: &AccountInfo<'info>,
     current_record_message: &AccountInfo<'info>,
     dest_chain_id: u64,
-) -> Result<(u64)> {
+) -> Result<u64> {
     let cpi_ctx = CpiContext::new(
         vizing_pad_program.clone(),
         EstimatePrice2 {
@@ -256,7 +256,7 @@ pub fn fetch_estimate_gas<'c: 'info, 'info>(
     amount_out: Uint256,
     dest_chain_id: u64,
     message: Message,
-) -> Result<(u64)> {
+) -> Result<u64> {
 
     let cpi_message = vizing_pad::vizing_omni::Message {
         mode: message.mode,
@@ -292,7 +292,7 @@ pub fn fetch_estimate_total_fee<'c: 'info, 'info>(
     amount_out: Uint256,
     dest_chain_id: u64,
     message: Message,
-) -> Result<(u64)> {
+) -> Result<u64> {
     let cpi_message = vizing_pad::vizing_omni::Message {
         mode: message.mode,
         target_contract: message.target_contract,
@@ -326,7 +326,7 @@ pub fn fetch_exact_output<'c: 'info, 'info>(
     current_record_message: &AccountInfo<'info>,
     dest_chain_id: u64,
     amount_out: Uint256,
-) -> Result<(Uint256)> {
+) -> Result<Uint256> {
     let cpi_ctx = CpiContext::new(
         vizing_pad_program.clone(),
         ExactOutput {
@@ -352,7 +352,7 @@ pub fn fetch_exact_input<'c: 'info, 'info>(
     current_record_message: &AccountInfo<'info>,
     dest_chain_id: u64,
     amount_in: u64,
-) -> Result<(Uint256)> {
+) -> Result<Uint256> {
     let cpi_ctx = CpiContext::new(
         vizing_pad_program.clone(),
         ExactInput {
@@ -380,7 +380,7 @@ pub fn fetch_estimate_vizing_gas_fee1<'c: 'info, 'info>(
     dest_chain_id: u64,
     _addition_params: Vec<u8>,
     message: Vec<u8>,
-) -> Result<(u64)> {
+) -> Result<u64> {
     let cpi_ctx = CpiContext::new(
         vizing_pad_program.clone(),
         EstimateVizingGasFee1 {
@@ -408,7 +408,7 @@ pub fn fetch_estimate_vizing_gas_fee2<'c: 'info, 'info>(
     dest_chain_id: u64,
     _addition_params: Vec<u8>,
     message: Message,
-) -> Result<(u64)> {
+) -> Result<u64> {
     let cpi_message = vizing_pad::vizing_omni::Message {
         mode: message.mode,
         target_contract: message.target_contract,
