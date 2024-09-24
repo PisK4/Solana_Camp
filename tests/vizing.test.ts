@@ -157,7 +157,7 @@ describe("Vizing Test", () => {
         provider.wallet.publicKey
       );
       solPdaReceiver = initVizingApp.solPdaReceiver;
-      vizingMessageAuthority = initVizingApp.vizingMessageAuthority;
+      vizingMessageAuthority = initVizingApp.vizingAppAuthority;
 
       const initRegAppRet = await vizingInit.inititalizeRegisterVizingApp(
         vizingProgram,

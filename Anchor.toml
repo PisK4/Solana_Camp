@@ -5,16 +5,12 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-alice = "EM1xuughPx6KVN7H4DSC7xe7KuTzmMH52X4FnHF22wzF"
-bob = "bobQhTJQZZk4p98GrskDGxWZpfd5gnap1Hp5JiXpNek"
 vizing_app = "C17xMdoPdgPSYd7oGEjYf5LQ1mg6k6P3eavCBdMfaF1X"
 vizing_app_mock = "mokB6FzEZx6vPVmasd19CyDDuqZ98auke1Bk59hmzVE"
 vizing_core = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
 vizing_pad = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
 
 [programs.localnet]
-alice = "EM1xuughPx6KVN7H4DSC7xe7KuTzmMH52X4FnHF22wzF"
-bob = "bobQhTJQZZk4p98GrskDGxWZpfd5gnap1Hp5JiXpNek"
 vizing_app = "C17xMdoPdgPSYd7oGEjYf5LQ1mg6k6P3eavCBdMfaF1X"
 vizing_app_mock = "mokB6FzEZx6vPVmasd19CyDDuqZ98auke1Bk59hmzVE"
 vizing_core = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"

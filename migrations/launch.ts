@@ -20,7 +20,7 @@ export async function main() {
   const message = {
     mode: 4,
     targetProgram: tpg,
-    executeGasLimit: new anchor.BN(23000),
+    executeGasLimit: new anchor.BN(200000),
     maxFeePerGas: new anchor.BN(35),
     signature: Buffer.from("TEST_CODE"),
   };

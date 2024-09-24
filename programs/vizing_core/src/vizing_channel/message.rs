@@ -70,6 +70,8 @@ impl LaunchOp<'_> {
         let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id, *dapp);
         let dapp_config_value=get_trade_fee_config.value;
 
+        msg!("gaslimit: {}, price: {}", params.message.execute_gas_limit, params.message.max_fee_per_gas);
+
         let fee = vizing_gas_system::estimate_total_fee(
             get_gas_system_global.amount_in_threshold,
             trade_fee.molecular,
