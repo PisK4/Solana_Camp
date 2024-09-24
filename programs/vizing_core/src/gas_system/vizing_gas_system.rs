@@ -657,12 +657,6 @@ impl RemoveTradeFeeConfigDapp<'_>{
     ) -> Option<Uint256> {
         let fee;
         let zero_contract: [u8; 32] = [0; 32];
-        msg!("trade_fee_molecular: {:?}", trade_fee_molecular);
-        msg!("trade_fee_denominator: {:?}", trade_fee_denominator);
-        msg!("trade_fee_config_molecular: {:?}", trade_fee_config_molecular);
-        msg!("trade_fee_config_denominator: {:?}", trade_fee_config_denominator);
-        msg!("gas_system_global_molecular: {:?}", gas_system_global_molecular);
-        msg!("gas_system_global_denominator: {:?}", gas_system_global_denominator);
         if target_contract != zero_contract{
             if trade_fee_config_denominator != 0 {
                 let new_trade_fee_config_molecular = Uint256::new(0,trade_fee_config_molecular as u128);
@@ -676,7 +670,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
                     gas_system_global_denominator,
                     dest_chain_id,
                     amount_out
-                )?.clone();
+                )?;
             }
         }else{
             fee = compute_trade_fee1(
@@ -686,7 +680,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
                 gas_system_global_denominator,
                 dest_chain_id,
                 amount_out
-            )?.clone();
+            )?;
         }
         Some(fee)
     }
@@ -751,6 +745,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
             fee=base_price.checked_mul(gas_system_global_default_gas_limit)?;
         }
         
+        msg!("fee: {:?}",fee);
         let new_fee=Uint256::new(0,fee as u128);
         let mut final_fee=new_fee.clone();
         if amount_out.is_zero()==false {
@@ -764,6 +759,8 @@ impl RemoveTradeFeeConfigDapp<'_>{
                     dest_chain_id,
                     amount_out
                 )?;
+                msg!("exact_output high: {:?}",output_amount_in.high);
+                msg!("exact_output low: {:?}",output_amount_in.low);
             }
 
             let trade_fee2=compute_trade_fee2(
@@ -777,6 +774,8 @@ impl RemoveTradeFeeConfigDapp<'_>{
                 dest_chain_id,
                 output_amount_in
             )?;
+            msg!("compute_trade_fee2 high: {:?}",trade_fee2.high);
+            msg!("compute_trade_fee2 low: {:?}",trade_fee2.low);
 
             final_fee = new_fee.check_add(trade_fee2)?;
 
@@ -791,7 +790,6 @@ impl RemoveTradeFeeConfigDapp<'_>{
         chain_base_price: u64,
         _dapp: [u8; 32],
     ) -> Option<u64> {
-        msg!("dapp_config_value: {:?}", dapp_config_value);
         let this_dapp_base_price: u64;
         if dapp_config_value > 0 {
             this_dapp_base_price = dapp_config_value;
@@ -1015,8 +1013,8 @@ impl RemoveTradeFeeConfigDapp<'_>{
             } else {
                 this_amount_in=new_amount_in;
             }
-            let mul_amount_in = this_amount_in.check_mul(new_fee_config_denominator)?;
-            amount_out = new_amount_in.check_div(new_fee_config_molecular)?;
+            let this_mul_amount_in = this_amount_in.check_mul(new_fee_config_denominator)?;
+            amount_out = this_mul_amount_in.check_div(new_fee_config_molecular)?;
         }else{
             msg!("molecular_decimal or denominator_decimal is 0");
             return None; 
@@ -1045,7 +1043,7 @@ pub struct InitGasSystemParams {
 #[derive(Accounts)]
 pub struct InitFeeConfig<'info> {
     #[account(seeds = [contants::VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump,
-        constraint = vizing_pad_config.owner == user.key() @VizingError::NotOwner)]
+    constraint = vizing_pad_config.owner == user.key() @VizingError::NotOwner)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         init,

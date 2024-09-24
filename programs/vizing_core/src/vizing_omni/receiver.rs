@@ -1,8 +1,8 @@
 use anchor_lang::prelude::*;
 
 pub const VIZING_AUTHORITY: Pubkey = Pubkey::new_from_array([
-    137, 71, 54, 167, 199, 236, 39, 80, 113, 216, 76, 7, 85, 39, 112, 180, 125, 214, 156, 170, 202,
-    74, 57, 119, 4, 40, 1, 88, 236, 158, 120, 105,
+    217, 72, 146, 56, 194, 10, 128, 182, 124, 7, 203, 21, 187, 13, 122, 157, 108, 189, 113, 111,
+    236, 228, 172, 203, 215, 130, 70, 180, 107, 14, 165, 34,
 ]);
 pub const VIZING_APP_SOL_RECEIVER_SEED: &[u8] = b"Vizing_App_Sol_Receiver_Seed";
 
@@ -49,7 +49,7 @@ pub struct VizingSolReceiverInitialize<'info> {
 impl VizingSolReceiverInitialize<'_> {
     pub fn handler(ctx: Context<Self>) -> Result<()> {
         let (_, sol_pda_receiver_bump) =
-            Pubkey::find_program_address(&[b"sol_pda_receiver".as_ref()], ctx.program_id);
+            Pubkey::find_program_address(&[VIZING_APP_SOL_RECEIVER_SEED], ctx.program_id);
         ctx.accounts.sol_pda_receiver.bump = sol_pda_receiver_bump;
         Ok(())
     }

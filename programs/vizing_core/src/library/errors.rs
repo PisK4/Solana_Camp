@@ -38,8 +38,6 @@ pub enum ErrorCode {
     InvalidLength,
     #[msg("Input zero number.")]
     ZeroNumber,
-    #[msg("Invalid molecular or denominator decimal.")]
-    InvalidDecimal,
     #[msg("Serialization message error.")]
     SerializationError,
     #[msg("ComputeTradeFee1 not found.")]

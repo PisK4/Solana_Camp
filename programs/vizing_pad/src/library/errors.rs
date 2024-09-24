@@ -31,3 +31,27 @@ pub enum VizingError {
     #[msg("Vizing App Not In Remaining Accounts")]
     VizingAppNotInRemainingAccounts,
 }
+
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Invalid length.")]
+    InvalidLength,
+    #[msg("Input zero number.")]
+    ZeroNumber,
+    #[msg("Serialization message error.")]
+    SerializationError,
+    #[msg("ComputeTradeFee1 not found.")]
+    ComputeTradeFee1NotFound,
+    #[msg("ComputeTradeFee2 not found.")]
+    ComputeTradeFee2NotFound,
+    #[msg("EstimatePrice2 not found.")]
+    EstimatePrice2NotFound,
+    #[msg("EstimateGas not found.")]
+    EstimateGasNotFound,
+    #[msg("EstimateTotalFee not found.")]
+    EstimateTotalFeeNotFound,
+    #[msg("ExactOutput not found.")]
+    ExactOutputNotFound,
+    #[msg("ExactInputput not found.")]
+    ExactInputputNotFound,
+}

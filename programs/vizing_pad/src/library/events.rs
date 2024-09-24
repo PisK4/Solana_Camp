@@ -20,4 +20,6 @@ pub struct SuccessfulLaunchMessage {
     pub dest_chainid: u64,
     pub addition_params: Vec<u8>,
     pub message: Message,
+    pub vizing_pad_config: Pubkey,
+    pub vizing_gas_system_config: Pubkey,
 }

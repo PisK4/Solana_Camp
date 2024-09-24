@@ -47,13 +47,11 @@ pub struct LaunchOp<'info> {
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
-
     pub system_program: Program<'info, System>,
 }
 
-
 impl LaunchOp<'_> {
-    pub fn vizing_launch(ctx: &mut Context<LaunchOp>, params: LaunchParams) -> Result<()> {
+    pub fn vizing_launch(ctx: Context<LaunchOp>, params: LaunchParams) -> Result<()> {
         msg!("value high: {}", params.value.high);
         msg!("value low: {}", params.value.low);
 
@@ -105,7 +103,7 @@ impl LaunchOp<'_> {
                 ctx.accounts.system_program.to_account_info(),
                 Transfer {
                     from: ctx.accounts.vizing_app_fee_payer.to_account_info(),
-                    to: ctx.accounts.fee_collector.to_account_info(),
+                    to: ctx.accounts.vizing_pad_fee_collector.to_account_info(),
                 },
             ),
             fee,
@@ -116,12 +114,14 @@ impl LaunchOp<'_> {
             latest_arrival_timestamp: params.latest_arrival_timestamp,
             relayer: params.relayer,
             sender: params.sender,
-            src_contract: ctx.accounts.message_authority.key(),
+            src_contract: ctx.accounts.vizing_app_message_authority.key(),
             value: params.value,
             fee: fee,
             dest_chainid: params.dest_chainid,
             addition_params: params.addition_params,
-            message: params.message.clone(),
+            message: params.message,
+            vizing_pad_config: ctx.accounts.vizing_pad_config.key(),
+            vizing_gas_system_config: ctx.accounts.mapping_fee_config.key(),
         });
 
         Ok(())
@@ -144,7 +144,7 @@ pub struct LandingOp<'info> {
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
 
     /// CHECK: We need this PDA as a signer
-    #[account(seeds = [VIZING_AUTHORITY_SEED],bump = vizing_authority.bump)]
+    #[account(seeds = [VIZING_AUTHORITY_SEED, vizing_pad_config.key().as_ref()],bump = vizing_authority.bump)]
     pub vizing_authority: Account<'info, VizingAuthorityParams>,
 
     /// CHECK: target contract
@@ -200,7 +200,7 @@ impl LandingOp<'_> {
             invoke_signed(
                 &ix,
                 &[ctx.remaining_accounts].concat(),
-                &[&[VIZING_AUTHORITY_SEED, &[ctx.accounts.vizing_authority.bump]]],
+                &[&[VIZING_AUTHORITY_SEED, ctx.accounts.vizing_pad_config.key().as_ref(), &[ctx.accounts.vizing_authority.bump]]],
             )
             .map_err(|_| VizingError::CallingFailed)?;
 
@@ -269,6 +269,7 @@ fn build_landing_ix_data(params: &LandingParams) -> Result<Vec<u8>> {
 }
 
 
+
 #[account]
 #[derive(InitSpace)]
 pub struct LandingParams {
@@ -289,7 +290,7 @@ pub struct LandingParams {
 pub struct LandingMessage {
     pub mode: u8,
     pub target_program: Pubkey,
-    pub execute_gas_limit: u64,
+    pub execute_gas_limit: u32,
     pub max_fee_per_gas: u64,
     #[max_len(1024)]
     pub signature: Vec<u8>,

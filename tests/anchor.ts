@@ -138,19 +138,15 @@ describe("Test", () => {
 
     console.log(`vizingPad: ${vizingPad.toBase58()}, bump: ${bump}`);
 
-    const initParams = {
+    const InitVizingPadParams = {
       owner: user,
       feeCollector: feeReceiverKeyPair.publicKey,
-      engineAdmin: engineAdminKeyPairs.map((keypair) => keypair.publicKey)[0],
-      gasPoolAdmin: user,
+      engineAdmin: user,
       stationAdmin: stationAdminKeyPair.publicKey,
-      trustedRelayers: trustedRelayerKeyPairs.map(
-        (keypair) => keypair.publicKey
-      ),
-      registeredValidator: registeredValidatorKeyPairs.map(
-        (keypair) => keypair.publicKey
-      )[0],
-      relayers: trustedRelayerKeyPairs.map((keypair) => keypair.publicKey),
+      gasPoolAdmin: user,
+      swapManager: user,
+      trustedRelayers: [user],
+      registeredValidator: user,
       isPaused: false,
     };
 
@@ -161,7 +157,9 @@ describe("Test", () => {
         pg.PROGRAM_ID
       );
 
-      console.log(`authority: ${authority.toBase58()}, bump: ${bump}`);
+      console.log(
+        `vizingAuthority: ${authority.toBase58()}, vizingAuthorityBump: ${bump}`
+      );
       vizingAuthority = authority;
     }
 
@@ -209,7 +207,7 @@ describe("Test", () => {
     //init_mapping_fee_config
     let [mappingFeeConfigAuthority, mappingFeeConfigBump] =
       await PublicKey.findProgramAddress(
-        [Buffer.from("init_mapping_fee_config"),vizingPadSettings.toBuffer()],
+        [Buffer.from("init_mapping_fee_config"), vizingPadSettings.toBuffer()],
         pg.PROGRAM_ID
       );
     console.log(
@@ -237,6 +235,7 @@ describe("Test", () => {
       "0xd1A48613D41E7BB2C68aD90D5fE5e7041ebA5111"
     );
 
+    console.log("do initializeVizingPad...");
     //initializeVizingPad
     async function InitializeVizingPad() {
       try {
@@ -245,7 +244,7 @@ describe("Test", () => {
         console.log("vizingPadAccount:", vizingPadAccount.owner.toBase58());
       } catch (e) {
         const tx = await pg.program.methods
-          .initializeVizingPad(initParams)
+          .initializeVizingPad(InitVizingPadParams)
           .accounts({
             vizingPadConfig: vizingPadSettings,
             vizingPadAuthority: vizingAuthority,
@@ -395,6 +394,7 @@ describe("Test", () => {
       feeCollector: feeReceiverKeyPair.publicKey,
       engineAdmin: engineAdminKeyPairs.map((keypair) => keypair.publicKey)[0],
       gasPoolAdmin: user,
+      swapManager: user,
       stationAdmin: stationAdminKeyPair.publicKey,
       trustedRelayers: trustedRelayerKeyPairs.map(
         (keypair) => keypair.publicKey
@@ -879,7 +879,11 @@ describe("Test", () => {
       return computeTradeFee1;
     }
 
-    async function ComputeTradeFee2(target_contract,dest_chain_id,amount_out) {
+    async function ComputeTradeFee2(
+      target_contract,
+      dest_chain_id,
+      amount_out
+    ) {
       const isNonZero = target_contract.some((byte) => byte !== 0);
       let computeTradeFee2;
       const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
@@ -1210,7 +1214,12 @@ describe("Test", () => {
     }
     // await EstimateTotalFee(arbitrum_chain_id, testAmountOut, newMessage);
 
-    async function EstimateVizingGasFee(value,dest_chain_id,_addition_params,thisMessage) {
+    async function EstimateVizingGasFee(
+      value,
+      dest_chain_id,
+      _addition_params,
+      thisMessage
+    ) {
       await EstimateGas(value, dest_chain_id, thisMessage);
     }
 
@@ -1256,6 +1265,32 @@ describe("Test", () => {
       }
     }
     // await BatchSetThisExchangeRate();
+
+    async function GetEstimateGas(amount_out, dest_chain_id, this_message) {
+      try {
+        const estimateGas = await pg.program.methods
+          .estimateGas(amount_out, dest_chain_id, this_message)
+          .accounts({
+            vizingPadConfig: vizingPadSettings,
+            mappingFeeConfig: mappingFeeConfigAuthority,
+            currentRecordMessage: recordMessageAuthority,
+          })
+          .signers([signer])
+          .rpc();
+        console.log(`estimateGas tx:${estimateGas}'`);
+        // Confirm transaction
+        await pg.connection.confirmTransaction(estimateGas);
+        const currentRecordMessage =
+          await pg.program.account.currentRecordMessage.fetch(
+            recordMessageAuthority
+          );
+        const estimateGasNumber =
+          await currentRecordMessage.estimateGas.toNumber();
+        console.log("estimateGasNumber:", estimateGasNumber);
+      } catch (e) {
+        console.log("estimateGas error:", e);
+      }
+    }
 
     // launch
     const executeGasLimit = new anchor.BN(10);
@@ -1308,9 +1343,9 @@ describe("Test", () => {
           .launch(thisLaunchParams)
           .accounts({
             vizingAppFeePayer: user,
-            messageAuthority: user,
+            vizingAppMessageAuthority: user,
             vizingPadConfig: thisVizingPadSettings,
-            feeCollector: thisFeeCollector,
+            vizingPadFeeCollector: thisFeeCollector,
             mappingFeeConfig: thisMappingFeeConfig,
             systemProgram: systemId,
           })
@@ -1375,7 +1410,7 @@ describe("Test", () => {
 
     const Uint256Params6 = {
       high: new anchor.BN("0"),
-      low: new anchor.BN("100000000000000000000"), //10 eth
+      low: new anchor.BN("10000000000000000000"), //10 eth
     };
     const ADDRESS_ZERO = [
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1405,6 +1440,12 @@ describe("Test", () => {
       vizingPadSettings,
       feeCollector,
       mappingFeeConfigAuthority
+    );
+
+    await GetEstimateGas(
+      Uint256Params6,
+      newGasGlobalParams.chainId,
+      newTestMessage
     );
 
     /**

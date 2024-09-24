@@ -11,6 +11,7 @@ pub struct VizingPadConfigs {
     pub engine_admin: Pubkey,
     pub station_admin: Pubkey,
     pub gas_pool_admin: Pubkey,
+    pub swap_manager: Pubkey,
     #[max_len(96)]
     pub trusted_relayers: Vec<Pubkey>,
     pub registered_validator: Pubkey,

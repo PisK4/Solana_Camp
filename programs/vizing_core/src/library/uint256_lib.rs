@@ -32,8 +32,9 @@ impl Uint256 {
     pub fn check_mul(self, other: Self) -> Option<Self> {
         let high: u128;
         let (mut low, low_over_mul) = self.low.overflowing_mul(other.low);
-        let (mut low_over_high, mut low_over_low): (u128, u128) = (0, 0);
+        let mut low_over_high:u128 = 0;
         if low_over_mul {
+            let low_over_low;
             let low1_low = (self.low & 0xFFFFFFFFFFFFFFFF) as u64;
             let low1_high = (self.low >> 64) as u64;
             let low2_low = (other.low & 0xFFFFFFFFFFFFFFFF) as u64;

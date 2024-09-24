@@ -19,7 +19,7 @@ pub const VIZING_MESSAGE_AUTHORITY_SEED: &[u8] = b"Vizing_Message_Authority_Seed
 pub const VIZING_ERLIEST_ARRIVAL_TIMESTAMP_DEFAULT: u64 = 0;
 pub const VIZING_LATEST_ARRIVAL_TIMESTAMP_DEFAULT: u64 = 0;
 pub const VIZING_RELAYER_DEFAULT: [u8; 32] = [0; 32];
-pub const VIZING_GASLIMIT_DEFAULT: u64 = 0;
+pub const VIZING_GASLIMIT_DEFAULT: u64 = 10000000;
 
 #[derive(Accounts)]
 pub struct VizingEmitterInitialize<'info> {
@@ -46,9 +46,9 @@ pub struct VizingMessageAuthority {
 
 impl VizingEmitterInitialize<'_> {
     pub fn handler(ctx: Context<Self>) -> Result<()> {
-        let (_, message_pda_authority_bump) =
-            Pubkey::find_program_address(&[b"message_pda_authority"], ctx.program_id);
-        ctx.accounts.message_pda_authority.bump = message_pda_authority_bump;
+        let (_, bump) =
+            Pubkey::find_program_address(&[VIZING_MESSAGE_AUTHORITY_SEED], &ctx.program_id);
+        ctx.accounts.message_pda_authority.bump = bump;
         Ok(())
     }
 }
@@ -107,7 +107,7 @@ pub fn launch_2_vizing<'c: 'info, 'info>(
         },
         message: vizing_pad::vizing_omni::Message {
             mode: launch_params.message.mode,
-            target_contract: launch_params.message.target_contract,
+            target_program: launch_params.message.target_program,
             execute_gas_limit: launch_params.message.execute_gas_limit,
             max_fee_per_gas: launch_params.message.max_fee_per_gas,
             signature: launch_params.message.signature,

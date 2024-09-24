@@ -38,24 +38,24 @@ pub mod vizing_core {
     // **********  vizing app config start ************
 
     pub fn register_vizing_app(
-        ctx: Context<VizingAppRegister>,
+        mut ctx: Context<VizingAppRegister>,
         params: VizingAppRegisterParams,
     ) -> Result<()> {
-        VizingAppRegister::register_vizing_app(ctx, params)
+        VizingAppRegister::register_vizing_app(&mut ctx, params)
     }
 
     pub fn update_vizing_app(
-        ctx: Context<VizingAppManagement>,
+        mut ctx: Context<VizingAppManagement>,
         vizing_app_accounts: Vec<Pubkey>,
     ) -> Result<()> {
-        VizingAppManagement::update_vizing_app_accounts(ctx, vizing_app_accounts)
+        VizingAppManagement::update_vizing_app_accounts(&mut ctx, vizing_app_accounts)
     }
 
     pub fn transfer_vizing_app_admin(
-        ctx: Context<VizingAppManagement>,
+        mut ctx: Context<VizingAppManagement>,
         new_admin: Pubkey,
     ) -> Result<()> {
-        VizingAppManagement::transfer_ownership(ctx, new_admin)
+        VizingAppManagement::transfer_ownership(&mut ctx, new_admin)
     }
 
     // **********  vizing app config end ************
@@ -63,39 +63,46 @@ pub mod vizing_core {
     // **********  governance start ************
 
     pub fn initialize_vizing_pad(
-        ctx: Context<InitVizingPad>,
+        mut ctx: Context<InitVizingPad>,
         params: InitVizingPadParams,
     ) -> Result<()> {
-        InitVizingPad::initialize_vizing_pad(ctx, params)
+        InitVizingPad::initialize_vizing_pad(&mut ctx, params)
     }
 
     pub fn modify_settings(
-        ctx: Context<ModifySettings>,
+        mut ctx: Context<OwnerAuthorization>,
         params: OwnerManagementParams,
     ) -> Result<()> {
-        ModifySettings::owner_management(ctx, &params)
+        OwnerAuthorization::owner_management(&mut ctx, &params)
     }
 
-    pub fn pause_engine(ctx: Context<PauseEngine>) -> Result<()> {
-        PauseEngine::pause_engine(ctx)
+    pub fn pause_engine(mut ctx: Context<EngineAdminAuthorization>) -> Result<()> {
+        EngineAdminAuthorization::pause_engine(&mut ctx)
     }
 
-    pub fn unpause_engine(ctx: Context<PauseEngine>) -> Result<()> {
-        PauseEngine::unpause_engine(ctx)
+    pub fn unpause_engine(mut ctx: Context<EngineAdminAuthorization>) -> Result<()> {
+        EngineAdminAuthorization::unpause_engine(&mut ctx)
     }
 
     pub fn grant_relayer(
-        ctx: Context<GrantRelayer>,
+        mut ctx: Context<GrantRelayer>,
         new_trusted_relayers: Vec<Pubkey>,
     ) -> Result<()> {
-        GrantRelayer::grant_relayer(ctx, new_trusted_relayers)
+        GrantRelayer::grant_relayer(&mut ctx, new_trusted_relayers)
     }
 
     pub fn grant_fee_collector(
-        ctx: Context<GrantFeeCollector>,
+        mut ctx: Context<GasPoolAdminAuthorization>,
         fee_collector: Pubkey,
     ) -> Result<()> {
-        GrantFeeCollector::grant_fee_collector(ctx, fee_collector)
+        GasPoolAdminAuthorization::grant_fee_collector(&mut ctx, fee_collector)
+    }
+
+    pub fn grant_swap_manager(
+        mut ctx: Context<GasPoolAdminAuthorization>,
+        swap_manager: Pubkey,
+    ) -> Result<()> {
+        GasPoolAdminAuthorization::grant_swap_manager(&mut ctx, swap_manager)
     }
 
     // ***********  governance end ************
