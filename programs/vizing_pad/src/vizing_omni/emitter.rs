@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use crate::library::*;
-use crate::library::Uint256;
+use crate::library::{Uint256, VizingPadConfigs};
 
 pub const VIZING_MESSAGE_AUTHORITY_SEED: &[u8] = b"Vizing_Message_Authority_Seed";
 pub const VIZING_ERLIEST_ARRIVAL_TIMESTAMP_DEFAULT: u64 = 0;
