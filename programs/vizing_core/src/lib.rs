@@ -110,7 +110,6 @@ pub mod vizing_core {
     }
 
     // ***********  governance end ************
-
     /// @notice owner initialize record_message for dev get data
     pub fn init_record_message(ctx: Context<InitCurrentRecordMessage>) -> Result<()> {
         InitCurrentRecordMessage::init_current_record_message(ctx)
@@ -434,7 +433,7 @@ pub mod vizing_core {
         amount_out: Uint256,
         dest_chain_id: u64,
         message: Message,
-    ) -> Result<Uint256> {
+    ) -> Result<u64> {
         EstimateGas::get_estimate_gas(ctx, amount_out, dest_chain_id, message)
     }
 
@@ -449,7 +448,7 @@ pub mod vizing_core {
         dest_chain_id: u64,
         amount_out: Uint256,
         message: Message,
-    ) -> Result<Uint256> {
+    ) -> Result<u64> {
         EstimateTotalFee::get_estimate_total_fee(ctx, dest_chain_id, amount_out, message)
     }
 
@@ -476,7 +475,7 @@ pub mod vizing_core {
     pub fn exact_input(
         ctx: Context<ExactInput>,
         dest_chain_id: u64,
-        amount_in: Uint256,
+        amount_in: u64,
     ) -> Result<Uint256> {
         ExactInput::get_exact_input(ctx, dest_chain_id, amount_in)
     }
@@ -496,7 +495,7 @@ pub mod vizing_core {
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message: Vec<u8>,
-    ) -> Result<Uint256> {
+    ) -> Result<u64> {
         EstimateVizingGasFee1::get_estimate_vizing_gas_fee(
             ctx,
             value,
@@ -512,7 +511,7 @@ pub mod vizing_core {
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message: Message,
-    ) -> Result<Uint256> {
+    ) -> Result<u64> {
         EstimateVizingGasFee2::get_estimate_vizing_gas_fee(
             ctx,
             value,

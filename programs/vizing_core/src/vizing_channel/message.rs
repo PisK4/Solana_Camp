@@ -91,8 +91,8 @@ impl LaunchOp<'_> {
             dest_value,
             &serialized_data,
         ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
-        msg!("launch fee high: {:?}",fee.high);
-        msg!("launch fee low: {:?}",fee.low);
+        
+
         transfer(
             CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
@@ -101,10 +101,10 @@ impl LaunchOp<'_> {
                     to: ctx.accounts.vizing_pad_fee_collector.to_account_info(),
                 },
             ),
-            fee.low.try_into().unwrap(),
+            fee,
         )?;
         
-        // msg!("fee:{} to fee_collector", fee);
+        msg!("fee:{} to fee_collector", fee);
 
         emit!(SuccessfulLaunchMessage {
             erliest_arrival_timestamp: params.erliest_arrival_timestamp,
@@ -293,7 +293,6 @@ pub struct LandingMessage {
 }
 
 //get
-
 #[derive(Accounts)]
 pub struct InitCurrentRecordMessage<'info> {
     #[account(
@@ -304,9 +303,6 @@ pub struct InitCurrentRecordMessage<'info> {
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
-    // #[account(seeds = [contants::VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
-    //     , constraint = vizing_pad_config.owner == user.key() @VizingError::NotOwner)]
-    // pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -542,7 +538,7 @@ impl EstimateGas<'_> {
         amount_out: Uint256,
         dest_chain_id: u64,
         message: Message,
-    ) -> Result<Uint256> {
+    ) -> Result<u64> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let current_record_message = &mut ctx.accounts.current_record_message;
         let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
@@ -576,7 +572,7 @@ impl EstimateGas<'_> {
         ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
         current_record_message.estimate_gas=fee;
         //set return fee
-        set_return_data(&fee.low.to_le_bytes());
+        set_return_data(&fee.to_le_bytes());
         Ok(fee)
     }
 }
@@ -607,7 +603,7 @@ impl EstimateTotalFee<'_> {
         dest_chain_id: u64,
         amount_out: Uint256,
         message: Message,
-    ) -> Result<u128> {
+    ) -> Result<u64> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let current_record_message = &mut ctx.accounts.current_record_message;
 
@@ -642,7 +638,7 @@ impl EstimateTotalFee<'_> {
         ).ok_or(errors::ErrorCode::EstimateTotalFeeNotFound)?;
         current_record_message.estimate_total_fee=fee;
         //set return fee
-        set_return_data(&fee.low.to_le_bytes());
+        set_return_data(&fee.to_le_bytes());
         Ok(fee)
     }
 }
@@ -719,7 +715,7 @@ impl ExactInput<'_> {
     pub fn get_exact_input(
         ctx: Context<ExactInput>,
         dest_chain_id: u64,
-        amount_in: Uint256,
+        amount_in: u64,
     ) -> Result<Uint256> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
@@ -771,7 +767,7 @@ impl EstimateVizingGasFee1<'_>{
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message:Vec<u8>
-    ) -> Result<Uint256> {  
+    ) -> Result<u64> {  
 
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let current_record_message = &mut ctx.accounts.current_record_message;
@@ -805,7 +801,7 @@ impl EstimateVizingGasFee1<'_>{
         ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
         current_record_message.estimate_vizing_gas_fee=vizing_gas_fee;
         //set return vizing_gas_fee
-        set_return_data(&vizing_gas_fee.low.to_le_bytes());
+        set_return_data(&vizing_gas_fee.to_le_bytes());
         Ok(vizing_gas_fee)
     }
 }
@@ -837,7 +833,7 @@ impl EstimateVizingGasFee2<'_>{
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message: Message
-    ) -> Result<Uint256> {  
+    ) -> Result<u64> {  
 
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let current_record_message = &mut ctx.accounts.current_record_message;
@@ -873,7 +869,7 @@ impl EstimateVizingGasFee2<'_>{
         ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
         current_record_message.estimate_vizing_gas_fee=vizing_gas_fee;
         //set return vizing_gas_fee
-        set_return_data(&vizing_gas_fee.low.to_le_bytes());
+        set_return_data(&vizing_gas_fee.to_le_bytes());
         Ok(vizing_gas_fee)
     }
     
