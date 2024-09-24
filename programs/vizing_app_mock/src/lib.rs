@@ -84,6 +84,8 @@ pub mod vizing_app_mock {
             ErrorCode::ConstraintAddress
         );
 
+        msg!("msgID: {:?}", params.message_id);
+
         msg!("src_chainid: {}", params.src_chainid);
 
         msg!("src_contract: {:?}", params.src_contract);

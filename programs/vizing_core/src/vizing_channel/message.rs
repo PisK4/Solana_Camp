@@ -253,6 +253,7 @@ fn landing_check(ctx: &Context<LandingOp>) -> Result<()> {
 
 fn build_landing_ix_data(params: &LandingParams) -> Result<Vec<u8>> {
     let vizing_message = VizingMessage {
+        message_id: params.message_id,
         src_chainid: params.src_chainid,
         src_contract: params.src_contract,
         value: params.value,

@@ -8,6 +8,7 @@ pub const VIZING_APP_SOL_RECEIVER_SEED: &[u8] = b"Vizing_App_Sol_Receiver_Seed";
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct VizingMessage {
+    pub message_id: [u8; 32],
     pub src_chainid: u64,
     pub src_contract: [u8; 32],
     pub value: u64,
