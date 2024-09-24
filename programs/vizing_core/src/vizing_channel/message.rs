@@ -6,6 +6,7 @@ use crate::gas_system::*;
 use crate::governance::*;
 use crate::library::*;
 use crate::vizing_omni::*;
+use crate::library::Uint256;
 
 
 #[account]
@@ -15,11 +16,11 @@ pub struct CurrentRecordMessage {
     pub compute_trade_fee2: Uint256,
     pub estimate_price1: u64,
     pub estimate_price2: u64,
-    pub estimate_gas: Uint256,
-    pub estimate_total_fee: Uint256,
+    pub estimate_gas: u64,
+    pub estimate_total_fee: u64,
     pub exact_output: Uint256,
     pub exact_input: Uint256,
-    pub estimate_vizing_gas_fee: Uint256,
+    pub estimate_vizing_gas_fee: u64,
     pub init_state: bool
 }
 
@@ -65,9 +66,10 @@ impl LaunchOp<'_> {
 
         let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
         let get_fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
-        let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
         let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id, *dapp);
+        let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
         let dapp_config_value=get_trade_fee_config.value;
+        let dest_value=Uint256::new(params.value.high,params.value.low);
 
         let fee = vizing_gas_system::estimate_total_fee(
             get_gas_system_global.amount_in_threshold,
@@ -86,7 +88,7 @@ impl LaunchOp<'_> {
             get_gas_system_global.global_base_price,
             get_fee_config.base_price,
             dest_chain_id,
-            params.value,
+            dest_value,
             &serialized_data,
         ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
         msg!("launch fee high: {:?}",fee.high);
@@ -102,7 +104,7 @@ impl LaunchOp<'_> {
             fee.low.try_into().unwrap(),
         )?;
         
-        msg!("fee:{} to fee_collector", fee);
+        // msg!("fee:{} to fee_collector", fee);
 
         emit!(SuccessfulLaunchMessage {
             erliest_arrival_timestamp: params.erliest_arrival_timestamp,
@@ -323,8 +325,13 @@ impl InitCurrentRecordMessage<'_> {
 #[derive(Accounts)]
 pub struct ComputeTradeFee1<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -355,7 +362,11 @@ impl ComputeTradeFee1<'_> {
         ).ok_or(errors::ErrorCode::ComputeTradeFee1NotFound)?;
         current_record_message.compute_trade_fee1=fee;
         //set return fee
-        set_return_data(&fee.low.to_le_bytes());
+        let mut return_data = Vec::new();
+        return_data.extend_from_slice(&fee.high.to_le_bytes()); 
+        return_data.extend_from_slice(&fee.low.to_le_bytes()); 
+
+        set_return_data(&return_data);
         Ok(fee)
     }
 }
@@ -363,8 +374,13 @@ impl ComputeTradeFee1<'_> {
 #[derive(Accounts)]
 pub struct ComputeTradeFee2<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -400,7 +416,11 @@ impl ComputeTradeFee2<'_> {
         ).ok_or(errors::ErrorCode::ComputeTradeFee2NotFound)?;
         current_record_message.compute_trade_fee2=fee;
         //set return fee
-        set_return_data(&fee.low.to_le_bytes());
+        let mut return_data = Vec::new();
+        return_data.extend_from_slice(&fee.high.to_le_bytes()); 
+        return_data.extend_from_slice(&fee.low.to_le_bytes()); 
+
+        set_return_data(&return_data);
         Ok(fee)
     }
 }
@@ -408,8 +428,13 @@ impl ComputeTradeFee2<'_> {
 #[derive(Accounts)]
 pub struct EstimatePrice1<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -442,6 +467,7 @@ impl EstimatePrice1<'_> {
         ).ok_or(errors::ErrorCode::EstimatePrice2NotFound)?;
         current_record_message.estimate_price1=dapp_base_price;
         //set return dapp_base_price
+
         set_return_data(&dapp_base_price.to_le_bytes());
         Ok(dapp_base_price)
     }
@@ -450,8 +476,13 @@ impl EstimatePrice1<'_> {
 #[derive(Accounts)]
 pub struct EstimatePrice2<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -479,6 +510,7 @@ impl EstimatePrice2<'_> {
         ).ok_or(errors::ErrorCode::EstimatePrice2NotFound)?;
         current_record_message.estimate_price2=base_price;
         //set return base_price
+
         set_return_data(&base_price.to_le_bytes());
         Ok(base_price)
     }
@@ -487,8 +519,13 @@ impl EstimatePrice2<'_> {
 #[derive(Accounts)]
 pub struct EstimateGas<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -547,8 +584,13 @@ impl EstimateGas<'_> {
 #[derive(Accounts)]
 pub struct EstimateTotalFee<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -608,8 +650,13 @@ impl EstimateTotalFee<'_> {
 #[derive(Accounts)]
 pub struct ExactOutput<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -640,7 +687,10 @@ impl ExactOutput<'_> {
         ).ok_or(errors::ErrorCode::ExactOutputNotFound)?;
         current_record_message.exact_output=amount_in;
         //set return amount_in
-        set_return_data(&amount_in.low.to_le_bytes());
+        let mut return_data = Vec::new();
+        return_data.extend_from_slice(&amount_in.high.to_le_bytes()); 
+        return_data.extend_from_slice(&amount_in.low.to_le_bytes()); 
+        set_return_data(&return_data);
         Ok(amount_in)
     }
 }
@@ -648,8 +698,13 @@ impl ExactOutput<'_> {
 #[derive(Accounts)]
 pub struct ExactInput<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -680,7 +735,11 @@ impl ExactInput<'_> {
         ).ok_or(errors::ErrorCode::ExactInputputNotFound)?;
         current_record_message.exact_input=amount_out;
         //set return amount_out
-        set_return_data(&amount_out.low.to_le_bytes());
+        let mut return_data = Vec::new();
+        return_data.extend_from_slice(&amount_out.high.to_le_bytes()); 
+        return_data.extend_from_slice(&amount_out.low.to_le_bytes()); 
+
+        set_return_data(&return_data);
         Ok(amount_out)
     }
 }
@@ -688,8 +747,13 @@ impl ExactInput<'_> {
 #[derive(Accounts)]
 pub struct EstimateVizingGasFee1<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
@@ -749,8 +813,13 @@ impl EstimateVizingGasFee1<'_>{
 #[derive(Accounts)]
 pub struct EstimateVizingGasFee2<'info> {
     #[account(
+        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
+        bump = vizing_pad_config.bump
+    )]
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    #[account(
         mut,
-        seeds = [contants::VIZING_GAS_SYSTEM_SEED.as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,

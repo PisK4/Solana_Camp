@@ -181,7 +181,7 @@ describe("Test", () => {
     let arbitrum_chain_id = new anchor.BN(1101);
     let arbitrum_maxPrice = new anchor.BN(100000);
     let arbitrum_destChainBasePrice = new anchor.BN(10000);
-    let arbitrum_tradeLimit = new anchor.BN(500000000000); //500 sol limit
+    let arbitrum_tradeLimit = new anchor.BN(100000000000); //100 sol limit
     let arbitrum_tradeFee = {
       molecular: new anchor.BN(1),
       denominator: new anchor.BN(2),
@@ -209,7 +209,7 @@ describe("Test", () => {
     //init_mapping_fee_config
     let [mappingFeeConfigAuthority, mappingFeeConfigBump] =
       await PublicKey.findProgramAddress(
-        [Buffer.from("init_mapping_fee_config")],
+        [Buffer.from("init_mapping_fee_config"), vizingPadSettings.toBuffer()],
         pg.PROGRAM_ID
       );
     console.log(
@@ -377,7 +377,6 @@ describe("Test", () => {
           .initRecordMessage()
           .accounts({
             currentRecordMessage: recordMessageAuthority,
-            vizingPadConfig: vizingPadSettings,
             user: user,
             systemProgram: systemId,
           })
@@ -1340,7 +1339,7 @@ describe("Test", () => {
       globalBasePrice: new anchor.BN(500),
       defaultGasLimit: new anchor.BN(2000),
       amountInThreshold: new anchor.BN(100_000_000_000), //100 sol
-      molecular: new anchor.BN(1990),   
+      molecular: new anchor.BN(1990),
       denominator: new anchor.BN(10000),
     };
     await SetThisGasGlobal(
@@ -1384,8 +1383,8 @@ describe("Test", () => {
     );
 
     const Uint256Params6 = {
-      high: new anchor.BN(0),
-      low: new anchor.BN("10000000000000000"), //0.01 eth  100_000_000
+      high: new anchor.BN("0"),
+      low: new anchor.BN("100000000000000000000"), //10 eth
     };
     const ADDRESS_ZERO = [
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

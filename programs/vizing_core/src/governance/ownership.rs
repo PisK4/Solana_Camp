@@ -237,10 +237,8 @@ impl GasPoolAdminAuthorization<'_> {
     }
 }
 
-
 #[account]
 #[derive(InitSpace)]
 pub struct VizingAuthorityParams {
     pub bump: u8,
 }
-

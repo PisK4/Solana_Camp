@@ -60,7 +60,7 @@ pub mod vizing_core {
     // **********  governance start ************
 
     pub fn initialize_vizing_pad(
-        mut ctx: Context<InitVizingPad>,
+        ctx: Context<InitVizingPad>,
         params: InitVizingPadParams,
     ) -> Result<()> {
         InitVizingPad::initialize_vizing_pad(ctx, params)

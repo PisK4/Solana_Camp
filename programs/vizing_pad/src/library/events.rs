@@ -1,6 +1,6 @@
+use crate::library::Uint256;
 use crate::vizing_omni::*;
 use anchor_lang::prelude::*;
-use crate::library::Uint256;
 
 #[event]
 pub struct OAppRegisteredEvent {
@@ -16,7 +16,7 @@ pub struct SuccessfulLaunchMessage {
     pub sender: Pubkey,
     pub src_contract: Pubkey,
     pub value: Uint256,
-    pub fee: Uint256,
+    pub fee: u64,
     pub dest_chainid: u64,
     pub addition_params: Vec<u8>,
     pub message: Message,

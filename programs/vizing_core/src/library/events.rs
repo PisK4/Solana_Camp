@@ -17,7 +17,7 @@ pub struct SuccessfulLaunchMessage {
     pub sender: Pubkey,
     pub src_contract: Pubkey,
     pub value: Uint256,
-    pub fee: Uint256,
+    pub fee: u64,
     pub dest_chainid: u64,
     pub addition_params: AdditionalParams,
     pub message: Message,

@@ -1,6 +1,19 @@
+use crate::library::Uint256;
 use crate::library::*;
 use anchor_lang::prelude::*;
-use vizing_pad::{self, cpi::accounts::LaunchOp, cpi::launch};
+use vizing_pad::{
+    self,
+    cpi::accounts::{
+        ComputeTradeFee1, ComputeTradeFee2, EstimateGas, EstimatePrice1, EstimatePrice2,
+        EstimateTotalFee, EstimateVizingGasFee1, EstimateVizingGasFee2, ExactInput, ExactOutput,
+        LaunchOp,
+    },
+    cpi::{
+        compute_trade_fee1, compute_trade_fee2, estimate_gas, estimate_price1, estimate_price2,
+        estimate_total_fee, estimate_vizing_gas_fee1, estimate_vizing_gas_fee2, exact_input,
+        exact_output, launch,
+    },
+};
 
 pub const VIZING_MESSAGE_AUTHORITY_SEED: &[u8] = b"Vizing_Message_Authority_Seed";
 pub const VIZING_ERLIEST_ARRIVAL_TIMESTAMP_DEFAULT: u64 = 0;
@@ -122,6 +135,298 @@ pub fn launch_2_vizing<'c: 'info, 'info>(
     );
 
     let res = launch(cpi_ctx, params);
+
+    if res.is_ok() {
+        return Ok(());
+    } else {
+        return err!(AppErrors::VizingCallFailed);
+    }
+}
+
+//dev get data
+pub fn fetch_compute_trade_fee1<'c: 'info, 'info>(
+    vizing_pad_program: &AccountInfo<'info>,
+    vizing_pad_config: &AccountInfo<'info>,
+    mapping_fee_config: &AccountInfo<'info>,
+    current_record_message: &AccountInfo<'info>,
+    dest_chain_id: u64,
+    amount_out: Uint256,
+) -> Result<(Uint256)> {
+    let cpi_ctx = CpiContext::new(
+        vizing_pad_program.clone(),
+        ComputeTradeFee1 {
+            vizing_pad_config: vizing_pad_config.clone(),
+            mapping_fee_config: mapping_fee_config.clone(),
+            current_record_message: current_record_message.clone(),
+        },
+    );
+
+    let res = compute_trade_fee1(cpi_ctx, dest_chain_id, amount_out);
+
+    if res.is_ok() {
+        return Ok(());
+    } else {
+        return err!(AppErrors::VizingCallFailed);
+    }
+}
+
+pub fn fetch_compute_trade_fee2<'c: 'info, 'info>(
+    vizing_pad_program: &AccountInfo<'info>,
+    vizing_pad_config: &AccountInfo<'info>,
+    mapping_fee_config: &AccountInfo<'info>,
+    current_record_message: &AccountInfo<'info>,
+    target_contract: [u8; 32],
+    dest_chain_id: u64,
+    amount_out: Uint256,
+) -> Result<(Uint256)> {
+    let cpi_ctx = CpiContext::new(
+        vizing_pad_program.clone(),
+        ComputeTradeFee2 {
+            vizing_pad_config: vizing_pad_config.clone(),
+            mapping_fee_config: mapping_fee_config.clone(),
+            current_record_message: current_record_message.clone(),
+        },
+    );
+
+    let res = compute_trade_fee2(cpi_ctx, target_contract, dest_chain_id, amount_out);
+
+    if res.is_ok() {
+        return Ok(());
+    } else {
+        return err!(AppErrors::VizingCallFailed);
+    }
+}
+
+pub fn fetch_estimate_price1<'c: 'info, 'info>(
+    vizing_pad_program: &AccountInfo<'info>,
+    vizing_pad_config: &AccountInfo<'info>,
+    mapping_fee_config: &AccountInfo<'info>,
+    current_record_message: &AccountInfo<'info>,
+    target_contract: [u8; 32],
+    dest_chain_id: u64,
+) -> Result<(u64)> {
+    let cpi_ctx = CpiContext::new(
+        vizing_pad_program.clone(),
+        EstimatePrice1 {
+            vizing_pad_config: vizing_pad_config.clone(),
+            mapping_fee_config: mapping_fee_config.clone(),
+            current_record_message: current_record_message.clone(),
+        },
+    );
+
+    let res = estimate_price1(cpi_ctx, target_contract, dest_chain_id);
+
+    if res.is_ok() {
+        return Ok(());
+    } else {
+        return err!(AppErrors::VizingCallFailed);
+    }
+}
+
+pub fn fetch_estimate_price2<'c: 'info, 'info>(
+    vizing_pad_program: &AccountInfo<'info>,
+    vizing_pad_config: &AccountInfo<'info>,
+    mapping_fee_config: &AccountInfo<'info>,
+    current_record_message: &AccountInfo<'info>,
+    dest_chain_id: u64,
+) -> Result<(u64)> {
+    let cpi_ctx = CpiContext::new(
+        vizing_pad_program.clone(),
+        EstimatePrice2 {
+            vizing_pad_config: vizing_pad_config.clone(),
+            mapping_fee_config: mapping_fee_config.clone(),
+            current_record_message: current_record_message.clone(),
+        },
+    );
+
+    let res = estimate_price2(cpi_ctx, dest_chain_id);
+
+    if res.is_ok() {
+        return Ok(());
+    } else {
+        return err!(AppErrors::VizingCallFailed);
+    }
+}
+
+pub fn fetch_estimate_gas<'c: 'info, 'info>(
+    vizing_pad_program: &AccountInfo<'info>,
+    vizing_pad_config: &AccountInfo<'info>,
+    mapping_fee_config: &AccountInfo<'info>,
+    current_record_message: &AccountInfo<'info>,
+    amount_out: Uint256,
+    dest_chain_id: u64,
+    message: Message,
+) -> Result<(u64)> {
+    let cpi_message = vizing_pad::vizing_omni::Message {
+        mode: message.mode,
+        target_contract: message.target_contract,
+        execute_gas_limit: message.execute_gas_limit,
+        max_fee_per_gas: message.max_fee_per_gas,
+        signature: message.signature,
+    };
+
+    let cpi_ctx = CpiContext::new(
+        vizing_pad_program.clone(),
+        EstimateGas {
+            vizing_pad_config: vizing_pad_config.clone(),
+            mapping_fee_config: mapping_fee_config.clone(),
+            current_record_message: current_record_message.clone(),
+        },
+    );
+
+    let res = estimate_gas(cpi_ctx, amount_out, dest_chain_id, cpi_message);
+
+    if res.is_ok() {
+        return Ok(());
+    } else {
+        return err!(AppErrors::VizingCallFailed);
+    }
+}
+
+pub fn fetch_estimate_total_fee<'c: 'info, 'info>(
+    vizing_pad_program: &AccountInfo<'info>,
+    vizing_pad_config: &AccountInfo<'info>,
+    mapping_fee_config: &AccountInfo<'info>,
+    current_record_message: &AccountInfo<'info>,
+    amount_out: Uint256,
+    dest_chain_id: u64,
+    message: Message,
+) -> Result<(u64)> {
+    let cpi_message = vizing_pad::vizing_omni::Message {
+        mode: message.mode,
+        target_contract: message.target_contract,
+        execute_gas_limit: message.execute_gas_limit,
+        max_fee_per_gas: message.max_fee_per_gas,
+        signature: message.signature,
+    };
+
+    let cpi_ctx = CpiContext::new(
+        vizing_pad_program.clone(),
+        EstimateTotalFee {
+            vizing_pad_config: vizing_pad_config.clone(),
+            mapping_fee_config: mapping_fee_config.clone(),
+            current_record_message: current_record_message.clone(),
+        },
+    );
+
+    let res = estimate_total_fee(cpi_ctx, amount_out, dest_chain_id, cpi_message);
+
+    if res.is_ok() {
+        return Ok(());
+    } else {
+        return err!(AppErrors::VizingCallFailed);
+    }
+}
+
+pub fn fetch_exact_output<'c: 'info, 'info>(
+    vizing_pad_program: &AccountInfo<'info>,
+    vizing_pad_config: &AccountInfo<'info>,
+    mapping_fee_config: &AccountInfo<'info>,
+    current_record_message: &AccountInfo<'info>,
+    dest_chain_id: u64,
+    amount_out: Uint256,
+) -> Result<(Uint256)> {
+    let cpi_ctx = CpiContext::new(
+        vizing_pad_program.clone(),
+        ExactOutput {
+            vizing_pad_config: vizing_pad_config.clone(),
+            mapping_fee_config: mapping_fee_config.clone(),
+            current_record_message: current_record_message.clone(),
+        },
+    );
+
+    let res = exact_output(cpi_ctx, dest_chain_id, amount_out);
+
+    if res.is_ok() {
+        return Ok(());
+    } else {
+        return err!(AppErrors::VizingCallFailed);
+    }
+}
+
+pub fn fetch_exact_input<'c: 'info, 'info>(
+    vizing_pad_program: &AccountInfo<'info>,
+    vizing_pad_config: &AccountInfo<'info>,
+    mapping_fee_config: &AccountInfo<'info>,
+    current_record_message: &AccountInfo<'info>,
+    dest_chain_id: u64,
+    amount_in: Uint256,
+) -> Result<(Uint256)> {
+    let cpi_ctx = CpiContext::new(
+        vizing_pad_program.clone(),
+        ExactInput {
+            vizing_pad_config: vizing_pad_config.clone(),
+            mapping_fee_config: mapping_fee_config.clone(),
+            current_record_message: current_record_message.clone(),
+        },
+    );
+
+    let res = exact_input(cpi_ctx, dest_chain_id, amount_in);
+
+    if res.is_ok() {
+        return Ok(());
+    } else {
+        return err!(AppErrors::VizingCallFailed);
+    }
+}
+
+pub fn fetch_estimate_vizing_gas_fee1<'c: 'info, 'info>(
+    vizing_pad_program: &AccountInfo<'info>,
+    vizing_pad_config: &AccountInfo<'info>,
+    mapping_fee_config: &AccountInfo<'info>,
+    current_record_message: &AccountInfo<'info>,
+    value: Uint256,
+    dest_chain_id: u64,
+    _addition_params: Vec<u8>,
+    message: Vec<u8>,
+) -> Result<(u64)> {
+    let cpi_ctx = CpiContext::new(
+        vizing_pad_program.clone(),
+        EstimateVizingGasFee1 {
+            vizing_pad_config: vizing_pad_config.clone(),
+            mapping_fee_config: mapping_fee_config.clone(),
+            current_record_message: current_record_message.clone(),
+        },
+    );
+
+    let res = estimate_vizing_gas_fee1(cpi_ctx, value, dest_chain_id, _addition_params, message);
+
+    if res.is_ok() {
+        return Ok(());
+    } else {
+        return err!(AppErrors::VizingCallFailed);
+    }
+}
+
+pub fn fetch_estimate_vizing_gas_fee2<'c: 'info, 'info>(
+    vizing_pad_program: &AccountInfo<'info>,
+    vizing_pad_config: &AccountInfo<'info>,
+    mapping_fee_config: &AccountInfo<'info>,
+    current_record_message: &AccountInfo<'info>,
+    value: Uint256,
+    dest_chain_id: u64,
+    _addition_params: Vec<u8>,
+    message: Message,
+) -> Result<(u64)> {
+    let cpi_message = vizing_pad::vizing_omni::Message {
+        mode: message.mode,
+        target_contract: message.target_contract,
+        execute_gas_limit: message.execute_gas_limit,
+        max_fee_per_gas: message.max_fee_per_gas,
+        signature: message.signature,
+    };
+
+    let cpi_ctx = CpiContext::new(
+        vizing_pad_program.clone(),
+        EstimateVizingGasFee2 {
+            vizing_pad_config: vizing_pad_config.clone(),
+            mapping_fee_config: mapping_fee_config.clone(),
+            current_record_message: current_record_message.clone(),
+        },
+    );
+
+    let res =
+        estimate_vizing_gas_fee2(cpi_ctx, value, dest_chain_id, _addition_params, cpi_message);
 
     if res.is_ok() {
         return Ok(());

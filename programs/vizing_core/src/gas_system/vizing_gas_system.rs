@@ -731,7 +731,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
         amount_out: Uint256,
         dest_chain_id: u64,
         message: &[u8]
-    ) -> Option<Uint256> {
+    ) -> Option<u64> {
         let base_price: u64;
         let fee: u64;
         let mut this_dapp: [u8; 32]=[0; 32];
@@ -803,7 +803,8 @@ impl RemoveTradeFeeConfigDapp<'_>{
             final_fee = new_fee.check_add(trade_fee2)?;
 
         }
-        Some(final_fee)
+        let estimate_fee:u64=final_fee.low.try_into().unwrap();
+        Some(estimate_fee)
     }
 
     fn get_dapp_base_price(
@@ -951,8 +952,9 @@ impl RemoveTradeFeeConfigDapp<'_>{
             msg!("Exceed quantity limit");
             return None;
         }
+        let estimate_total_fee=final_fee.low.try_into().unwrap();
 
-        Some(final_fee)
+        Some(estimate_total_fee)
     }
 
     pub fn exact_output(
@@ -1091,7 +1093,6 @@ pub struct SetGasGlobal<'info> {
         bump
     )]
     pub mapping_fee_config: Account<'info, MappingFeeConfig>,
-
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
