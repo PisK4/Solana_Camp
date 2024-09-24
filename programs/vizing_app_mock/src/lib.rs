@@ -2,9 +2,15 @@ pub mod vizing_omni;
 use anchor_lang::prelude::*;
 use vizing_omni::*;
 
-declare_id!("2xiuj4ozxygvkmC1WKJTGZyJXSD8dtbFxWkuJiMLzrTg");
+declare_id!("mokB6FzEZx6vPVmasd19CyDDuqZ98auke1Bk59hmzVE");
 
 pub const RESULT_DATA_SEED: &[u8] = b"result_data_seed";
+
+// 0x4d20A067461fD60379DA001EdEC6E8CFb9862cE4
+pub const TRUSTED_ENDPOINT: [u8; 32] = [
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4d, 0x20, 0xa0, 0x67,
+    0x46, 0x1f, 0xd6, 0x03, 0x79, 0xda, 0x00, 0x1e, 0xde, 0xc6, 0xe8, 0xcf, 0xb9, 0x86, 0x2c, 0xe4,
+];
 
 #[program]
 pub mod vizing_app_mock {
@@ -13,7 +19,8 @@ pub mod vizing_app_mock {
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
         ctx.accounts.result_account.result = 0;
-        ctx.accounts.result_account.bump = *ctx.bumps.get("result_account").unwrap();
+        let (_, bump) = Pubkey::find_program_address(&[RESULT_DATA_SEED], &ctx.program_id);
+        ctx.accounts.result_account.bump = bump;
         Ok(())
     }
 
@@ -25,26 +32,32 @@ pub mod vizing_app_mock {
         VizingEmitterInitialize::handler(ctx)
     }
 
-    pub fn launch_vizing(ctx: Context<LaunchAppOpTemplate>) -> Result<()> {
+    pub fn launch_vizing(
+        ctx: Context<LaunchAppOpTemplate>,
+        target_program: [u8; 32],
+        meta: Vec<u8>,
+    ) -> Result<()> {
         let params = LaunchParams {
             erliest_arrival_timestamp: VIZING_ERLIEST_ARRIVAL_TIMESTAMP_DEFAULT,
             latest_arrival_timestamp: VIZING_LATEST_ARRIVAL_TIMESTAMP_DEFAULT,
             relayer: VIZING_RELAYER_DEFAULT,
             sender: ctx.accounts.user.key(),
-            value: 886,
-            dest_chainid: 1,
+            value: 0,
+            dest_chainid: 28516,
             addition_params: AdditionalParams {
                 mode: 0,
                 signature: vec![],
             },
             message: Message {
                 mode: 1,
-                target_program: [0; 32],
-                execute_gas_limit: VIZING_GASLIMIT_DEFAULT,
-                max_fee_per_gas: 0,
-                signature: vec![],
+                target_program,
+                execute_gas_limit: 200000,
+                max_fee_per_gas: 35,
+                signature: meta.clone(),
             },
         };
+
+        msg!("meta: {:?}", meta);
 
         launch_2_vizing(
             params,
@@ -54,12 +67,31 @@ pub mod vizing_app_mock {
             &ctx.accounts.vizing_app_message_authority.to_account_info(),
             &ctx.accounts.vizing_pad_config.to_account_info(),
             &ctx.accounts.vizing_pad_fee_collector.to_account_info(),
+            &ctx.accounts.mapping_fee_config.to_account_info(),
             &ctx.accounts.system_program.to_account_info(),
         )
+
+        // Ok(())
     }
 
     #[access_control(assert_vizing_authority(&ctx.accounts.vizing_authority))]
-    pub fn receive_from_vizing(ctx: Context<LandingAppOp>, params: VizingMessage) -> Result<()> {
+    pub fn receive_from_vizing(
+        ctx: Context<LandingAppOpTemplate>,
+        params: VizingMessage,
+    ) -> Result<()> {
+        require!(
+            TRUSTED_ENDPOINT == params.src_contract,
+            ErrorCode::ConstraintAddress
+        );
+
+        msg!("src_chainid: {}", params.src_chainid);
+
+        msg!("src_contract: {:?}", params.src_contract);
+
+        msg!("value: {}", params.value);
+
+        msg!("signature: {:?}", params.signature);
+
         msg!(
             "authority from vizing: {}",
             ctx.accounts.vizing_authority.key()
@@ -84,14 +116,6 @@ pub mod vizing_app_mock {
 
         msg!("{} + {} = {}", a_number, b_number, c);
 
-        msg!("src_chainid: {}", params.src_chainid);
-
-        msg!("src_contract: {:?}", params.src_contract);
-
-        msg!("value: {}", params.value);
-
-        msg!("signature: {:?}", params.signature);
-
         Ok(())
     }
 }
@@ -115,11 +139,14 @@ pub struct LaunchAppOpTemplate<'info> {
     /// CHECK: 3. Vizing Pad
     pub vizing_pad_program: AccountInfo<'info>,
 
+    /// CHECK: 4. Vizing fee account
+    pub mapping_fee_config: AccountInfo<'info>,
+
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
-pub struct LandingAppOp<'info> {
+pub struct LandingAppOpTemplate<'info> {
     /// CHECK: 1. Vizing Authority account
     #[account(signer)]
     pub vizing_authority: AccountInfo<'info>,

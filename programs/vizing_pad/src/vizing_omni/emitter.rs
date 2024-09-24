@@ -34,7 +34,9 @@ pub struct VizingMessageAuthority {
 
 impl VizingEmitterInitialize<'_> {
     pub fn handler(ctx: Context<Self>) -> Result<()> {
-        ctx.accounts.message_pda_authority.bump = *ctx.bumps.get("message_pda_authority").unwrap();
+        let (_, message_pda_authority_bump) =
+            Pubkey::find_program_address(&[b"message_pda_authority"], ctx.program_id);
+        ctx.accounts.message_pda_authority.bump = message_pda_authority_bump;
         Ok(())
     }
 }
@@ -56,7 +58,7 @@ pub struct LaunchParams {
 pub struct Message {
     pub mode: u8,
     pub target_program: [u8; 32],
-    pub execute_gas_limit: u64,
+    pub execute_gas_limit: u32,
     pub max_fee_per_gas: u64,
     #[max_len(1024)]
     pub signature: Vec<u8>,
@@ -67,4 +69,243 @@ pub struct AdditionalParams {
     pub mode: u8,
     #[max_len(512)]
     pub signature: Vec<u8>,
+}
+
+//get
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+pub struct GasSystemGlobal {
+    pub key: u64,
+    pub global_base_price: u64,
+    pub default_gas_limit: u64,
+    pub amount_in_threshold: u64,
+    pub molecular: u64,
+    pub denominator: u64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+pub struct NativeTokenTradeFeeConfig {
+    pub key: u64,
+    pub molecular: u64,
+    pub denominator: u64,
+}
+
+//42 bytes
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+pub struct FeeConfig {
+    pub key: u64,
+    pub base_price: u64,
+    pub reserve: u64,
+    pub molecular: u64,
+    pub denominator: u64,
+    pub molecular_decimal: u8,
+    pub denominator_decimal: u8,
+}
+//24 bytes
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+pub struct TradeFee {
+    pub key: u64,
+    pub molecular: u64,
+    pub denominator: u64,
+}
+
+//352 bytes
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
+pub struct TradeFeeAndDappConfig {
+    pub key: u64,
+    #[max_len(10)]
+    pub dapps: Vec<[u8; 32]>, //address group
+    pub molecular: u64,
+    pub denominator: u64,
+    pub value: u64,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct MappingFeeConfig {
+    #[max_len(20)]
+    pub gas_system_global_mappings: Vec<GasSystemGlobal>,
+    #[max_len(20)]
+    pub fee_config_mappings: Vec<FeeConfig>,
+    #[max_len(20)]
+    pub trade_fee_mappings: Vec<TradeFee>,
+    #[max_len(20)]
+    pub trade_fee_config_mappings: Vec<TradeFeeAndDappConfig>,
+    #[max_len(20)]
+    pub native_token_trade_fee_config_mappings: Vec<NativeTokenTradeFeeConfig>,
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct CurrentRecordMessage {
+    pub compute_trade_fee1: u64,
+    pub compute_trade_fee2: u64,
+    pub estimate_price1: u64,
+    pub estimate_price2: u64,
+    pub estimate_gas: u64,
+    pub estimate_total_fee: u64,
+    pub exact_output: u64,
+    pub exact_input: u64,
+    pub estimate_vizing_gas_fee: u64,
+    pub init_state: bool,
+}
+
+#[derive(Accounts)]
+pub struct ComputeTradeFee1<'info> {
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
+}
+
+#[derive(Accounts)]
+pub struct ComputeTradeFee2<'info> {
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
+}
+
+#[derive(Accounts)]
+pub struct EstimatePrice1<'info> {
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
+}
+
+#[derive(Accounts)]
+pub struct EstimatePrice2<'info> {
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
+}
+
+#[derive(Accounts)]
+pub struct EstimateGas<'info> {
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
+}
+
+#[derive(Accounts)]
+pub struct EstimateTotalFee<'info> {
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
+}
+
+#[derive(Accounts)]
+pub struct ExactOutput<'info> {
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
+}
+
+#[derive(Accounts)]
+pub struct ExactInput<'info> {
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
+}
+
+#[derive(Accounts)]
+pub struct EstimateVizingGasFee1<'info> {
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
+}
+
+#[derive(Accounts)]
+pub struct EstimateVizingGasFee2<'info> {
+    #[account(
+        mut,
+        seeds = [b"init_mapping_fee_config".as_ref()],
+        bump
+    )]
+    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    #[account(
+        mut,
+        seeds = [b"init_current_record_message".as_ref()],
+        bump
+    )]
+    pub current_record_message: Account<'info, CurrentRecordMessage>,
 }

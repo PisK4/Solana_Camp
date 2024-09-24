@@ -1,4 +1,4 @@
 {
-  "rust-analyzer.linkedProjects": ["./programs/camp/Cargo.toml"],
+  "rust-analyzer.linkedProjects": ["./programs/vizing_core/Cargo.toml"],
   "rust-analyzer.showUnlinkedFileNotification": false
 }
