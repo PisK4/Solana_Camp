@@ -12,8 +12,7 @@ use vizing_pad::{
         estimate_vizing_gas_fee2,
     },
 };
-use crate::emitter::vizing_pad::library::Uint256;
-
+use vizing_pad::library::Uint256;
 
 pub const VIZING_MESSAGE_AUTHORITY_SEED: &[u8] = b"Vizing_Message_Authority_Seed";
 pub const VIZING_ERLIEST_ARRIVAL_TIMESTAMP_DEFAULT: u64 = 0;

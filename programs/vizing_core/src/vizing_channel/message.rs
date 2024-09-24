@@ -115,7 +115,7 @@ impl LaunchOp<'_> {
             relayer: params.relayer,
             sender: params.sender,
             src_contract: ctx.accounts.vizing_app_message_authority.key(),
-            value: params.value,
+            value: dest_value,
             fee: fee,
             dest_chainid: params.dest_chainid,
             addition_params: params.addition_params,
