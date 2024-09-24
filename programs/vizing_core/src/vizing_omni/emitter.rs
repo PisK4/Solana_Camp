@@ -164,7 +164,7 @@ pub fn fetch_compute_trade_fee1<'c: 'info, 'info>(
     let res = compute_trade_fee1(cpi_ctx, dest_chain_id, amount_out);
 
     if res.is_ok() {
-        return Ok(());
+        return Ok((res.unwrap()));
     } else {
         return err!(AppErrors::VizingCallFailed);
     }

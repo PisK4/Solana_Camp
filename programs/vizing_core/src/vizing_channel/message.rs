@@ -6,7 +6,7 @@ use crate::gas_system::*;
 use crate::governance::*;
 use crate::library::*;
 use crate::vizing_omni::*;
-use crate::library::Uint256;
+use crate::library::{Uint256, VIZING_APP_CONFIG_SEED};
 
 
 #[account]
@@ -51,7 +51,7 @@ pub struct LaunchOp<'info> {
 }
 
 impl LaunchOp<'_> {
-    pub fn vizing_launch(ctx: Context<LaunchOp>, params: LaunchParams) -> Result<()> {
+    pub fn vizing_launch(ctx: &mut Context<LaunchOp>, params: LaunchParams) -> Result<()> {
         msg!("value high: {}", params.value.high);
         msg!("value low: {}", params.value.low);
 
