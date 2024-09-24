@@ -84,7 +84,7 @@ pub mod vizing_pad {
     pub fn exact_input(
         mut _ctx: Context<ExactInput>,
         dest_chain_id: u64,
-        amount_in: Uint256,
+        amount_in: u64,
     )-> Result<(Uint256)> {
         Ok(())
     }

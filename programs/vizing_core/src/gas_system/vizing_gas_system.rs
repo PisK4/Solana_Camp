@@ -985,8 +985,9 @@ impl RemoveTradeFeeConfigDapp<'_>{
         fee_config_molecular_decimal: u8,
         fee_config_denominator_decimal: u8,
         _dest_chain_id: u64,
-        amount_in: Uint256,
+        amount_in: u64,
     ) -> Option<Uint256> {
+        let new_amount_in = Uint256::new(0, amount_in as u128);
         let this_amount_in;
         let amount_out;
         msg!("molecular_decimal: {:?}", fee_config_molecular_decimal);
@@ -1005,16 +1006,16 @@ impl RemoveTradeFeeConfigDapp<'_>{
                 if fee_config_molecular_decimal > fee_config_denominator_decimal {
                     let power_value=Uint256::new(0,10u128
                         .pow((fee_config_molecular_decimal-fee_config_denominator_decimal) as u32));
-                    this_amount_in=amount_in.check_mul(power_value)?;
+                    this_amount_in=new_amount_in.check_mul(power_value)?;
                 } else {
                     let power_value=Uint256::new(0,10u128
                         .pow((fee_config_denominator_decimal-fee_config_molecular_decimal) as u32));
-                    this_amount_in=amount_in.check_div(power_value)?;
+                    this_amount_in=new_amount_in.check_div(power_value)?;
                 }
             } else {
-                this_amount_in=amount_in;
+                this_amount_in=new_amount_in;
             }
-            let new_amount_in = this_amount_in.check_mul(new_fee_config_denominator)?;
+            let mul_amount_in = this_amount_in.check_mul(new_fee_config_denominator)?;
             amount_out = new_amount_in.check_div(new_fee_config_molecular)?;
         }else{
             msg!("molecular_decimal or denominator_decimal is 0");
@@ -1045,7 +1046,7 @@ pub struct InitGasSystemParams {
 pub struct InitFeeConfig<'info> {
     #[account(seeds = [contants::VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump,
         constraint = vizing_pad_config.owner == user.key() @VizingError::NotOwner)]
-        pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         init,
         payer = user, 

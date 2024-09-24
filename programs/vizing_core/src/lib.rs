@@ -484,7 +484,7 @@ pub mod vizing_core {
     pub fn exact_input(
         ctx: Context<ExactInput>,
         dest_chain_id: u64,
-        amount_in: Uint256,
+        amount_in: u64,
     ) -> Result<Uint256> {
         ExactInput::get_exact_input(ctx, dest_chain_id, amount_in)
     }

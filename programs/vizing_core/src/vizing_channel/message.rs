@@ -719,7 +719,7 @@ impl ExactInput<'_> {
     pub fn get_exact_input(
         ctx: Context<ExactInput>,
         dest_chain_id: u64,
-        amount_in: Uint256,
+        amount_in: u64,
     ) -> Result<Uint256> {
         let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
         let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);

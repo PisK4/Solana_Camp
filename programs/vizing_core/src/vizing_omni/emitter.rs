@@ -351,7 +351,7 @@ pub fn fetch_exact_input<'c: 'info, 'info>(
     mapping_fee_config: &AccountInfo<'info>,
     current_record_message: &AccountInfo<'info>,
     dest_chain_id: u64,
-    amount_in: Uint256,
+    amount_in: u64,
 ) -> Result<(Uint256)> {
     let cpi_ctx = CpiContext::new(
         vizing_pad_program.clone(),
