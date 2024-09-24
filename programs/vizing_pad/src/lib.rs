@@ -27,7 +27,7 @@ pub mod vizing_pad {
         mut _ctx: Context<ComputeTradeFee1>, 
         dest_chain_id: u64,
         amount_out: Uint256
-    )-> Result<Uint256> {
+    )-> Result<()> {
         Ok(())
     }
 
@@ -36,7 +36,7 @@ pub mod vizing_pad {
         target_contract: [u8; 32],
         dest_chain_id: u64,
         amount_out: Uint256
-    )-> Result<Uint256> {
+    )-> Result<()> {
         Ok(())
     }
 
@@ -44,14 +44,14 @@ pub mod vizing_pad {
         mut _ctx: Context<EstimatePrice1>, 
         target_contract: [u8; 32],
         dest_chain_id: u64,
-    )-> Result<u64> {
+    )-> Result<()> {
         Ok(())
     }
 
     pub fn estimate_price2(
         mut _ctx: Context<EstimatePrice2>, 
         dest_chain_id: u64,
-    )-> Result<u64> {
+    )-> Result<()> {
         Ok(())
     }
 
@@ -60,7 +60,7 @@ pub mod vizing_pad {
         amount_out: Uint256,
         dest_chain_id: u64,
         message: Message,
-    )-> Result<u64> {
+    )-> Result<()> {
         Ok(())
     }
 
@@ -69,7 +69,7 @@ pub mod vizing_pad {
         dest_chain_id: u64,
         amount_out: Uint256,
         message: Message,
-    )-> Result<u64> {
+    )-> Result<()> {
         Ok(())
     }
 
@@ -77,7 +77,7 @@ pub mod vizing_pad {
         mut _ctx: Context<ExactOutput>,
         dest_chain_id: u64,
         amount_out: Uint256,
-    )-> Result<Uint256> {
+    )-> Result<()> {
         Ok(())
     }
 
@@ -85,7 +85,7 @@ pub mod vizing_pad {
         mut _ctx: Context<ExactInput>,
         dest_chain_id: u64,
         amount_in: u64,
-    )-> Result<Uint256> {
+    )-> Result<()> {
         Ok(())
     }
 
@@ -95,7 +95,7 @@ pub mod vizing_pad {
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message: Vec<u8>
-    )-> Result<u64> {
+    )-> Result<()> {
         Ok(())
     }
 
@@ -105,7 +105,7 @@ pub mod vizing_pad {
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message: Message
-    )-> Result<u64> {
+    )-> Result<()> {
         Ok(())
     }
 

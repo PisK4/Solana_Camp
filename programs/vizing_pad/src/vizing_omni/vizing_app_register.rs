@@ -57,7 +57,7 @@ impl VizingAppRegister<'_> {
             ],
             &ctx.program_id,
         );
-        ctx.accounts.vizing_app_configs.bump = vizing_app_configs_bump;
+        ctx.accounts.vizing_app_configs.bump = vizing_app_config_bump;
 
         emit!(VizingAppUpdated {
             sol_pda_receiver: params.sol_pda_receiver,
