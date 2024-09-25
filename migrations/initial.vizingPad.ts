@@ -298,13 +298,22 @@ export async function initializeVizingAppMock(
 
   console.table(vizingUtils.formatReturnInfo(ret));
 
-  await vizingAppProgram.methods
-    .initialize()
-    .accounts({
-      resultAccount: resultDataAccount,
-      payer: deployerPk,
-    })
-    .rpc();
+  try {
+    const tx = await vizingAppProgram.methods
+      .initialize()
+      .accounts({
+        resultAccount: resultDataAccount,
+        payer: deployerPk,
+      })
+      .rpc();
+    console.log(`initializeVizingAppMock tx: ${tx}`);
+  } catch (error) {
+    if (error.signature) {
+      console.log(`initializeVizingAppMock signature: ${error.signature}`);
+    } else {
+      console.error(error);
+    }
+  }
 
   return ret;
 }

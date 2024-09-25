@@ -3,7 +3,9 @@ import { VizingCore } from "../target/types/vizing_core";
 import * as vizingUtils from "../migrations/vizing.utils";
 import * as vizingInit from "../migrations/initial.vizingPad";
 
-let deployer: anchor.web3.Keypair;
+let deployer: anchor.web3.PublicKey = new anchor.web3.PublicKey(
+  "pisxReuiFWqib2JZno8MUtM6FyNe46er3s4YTHTzJLP"
+);
 let feeCollector: anchor.web3.PublicKey = new anchor.web3.PublicKey(
   "feeCFx1bo4Z6a7fRvkb9xAu3eniyp6q1JF5Mwwm6TRE"
 );
@@ -30,24 +32,18 @@ let registeredValidator: anchor.web3.PublicKey = new anchor.web3.PublicKey(
 );
 
 export async function main() {
-  console.log("### Deploy start");
-
-  // const provider = pg.program.provider;
-  // const programId = pg.program.programId;
-  // const bobProgram = new Program(IDL, programId, provider);
+  console.log("### vizing init start");
 
   const vizingCoreProgramId = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE";
   const vizingAppMockProgramId = "2xiuj4ozxygvkmC1WKJTGZyJXSD8dtbFxWkuJiMLzrTg";
 
-  let provider;
-  let programId;
-  let vizingProgram = new anchor.Program(IDL, programId, provider);
+  let vizingProgram = vizingUtils.generateVizingPadProgram("devnet");
 
-  let vizingAppMockProgram = new anchor.Program(
-    IDL,
-    vizingAppMockProgramId,
-    provider
-  );
+  if (deployer != vizingProgram.provider.publicKey) {
+    throw new Error(
+      "deployer keyPair wallet not match, set your keyPair wallet on Anhcor.toml file"
+    );
+  }
 
   const initGasSystemParams: vizingUtils.initializeVizingGasSystemParams = {
     chainId: new anchor.BN(28516),
@@ -63,47 +59,22 @@ export async function main() {
     globalDenominator: new anchor.BN(10),
   };
 
-  {
-    const initRet = await vizingInit.inititalizeVizingPad(
-      vizingProgram,
-      provider.wallet.publicKey,
-      feeCollector,
-      engineAdmin,
-      stationAdmin,
-      gasPoolAdmin,
-      swapManager,
-      trustedRelayers,
-      registeredValidator,
-      initGasSystemParams
-    );
+  const initRet = await vizingInit.inititalizeVizingPad(
+    vizingProgram,
+    vizingProgram.provider.publicKey,
+    feeCollector,
+    engineAdmin,
+    stationAdmin,
+    gasPoolAdmin,
+    swapManager,
+    trustedRelayers,
+    registeredValidator,
+    initGasSystemParams
+  );
 
-    console.log("initRet:", initRet);
+  console.log("initRet:", initRet);
 
-    const [_resultDataAccount, resultDataBump] =
-      vizingUtils.generatePdaForResultData(vizingAppMockProgram.programId);
-
-    const resultDataAccount = _resultDataAccount;
-
-    console.log(
-      `resultDataAccount: ${resultDataAccount.toBase58()}, bump: ${resultDataBump}`
-    );
-
-    const initVizingApp = await vizingInit.initializeVizingApp(
-      vizingAppMockProgram,
-      provider.wallet.publicKey
-    );
-
-    console.log("initVizingApp:", initVizingApp);
-
-    const initRegAppRet = await vizingInit.inititalizeRegisterVizingApp(
-      vizingProgram,
-      provider.wallet.publicKey,
-      vizingAppMockProgram.programId,
-      [resultDataAccount]
-    );
-
-    console.log("initRegAppRet:", initRegAppRet);
-  }
+  console.log("### vizing init end");
 }
 
 main()

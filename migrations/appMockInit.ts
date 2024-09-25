@@ -22,31 +22,21 @@ export async function main() {
   );
   console.log("vizingAppMockProgram balance: ", balance);
 
-  // try {
-  //   await vizingInit.initializeVizingAppMock(
-  //     vizingAppMockProgram,
-  //     vizingAppMockProgram.provider.publicKey
-  //   );
-  // } catch (error) {
-  //   console.error(error);
-  // }
-
-  // try {
-  //   await vizingInit.initializeVizingApp(
-  //     vizingAppMockProgram,
-  //     vizingAppMockProgram.provider.publicKey
-  //   );
-  // } catch (error) {
-  //   console.error(error);
-  // }
-
-  const resultDataAccount = vizingUtils.generatePublicKeyFromString(
-    "AN6Ujf4gZudtu7EGFUsg5xHswwsR2Mke3kenoEQQk1ya"
+  const ret1 = await vizingInit.initializeVizingAppMock(
+    vizingAppMockProgram,
+    vizingAppMockProgram.provider.publicKey
   );
 
-  const solPdaReceiver = vizingUtils.generatePublicKeyFromString(
-    "5jPBGc4fCev7a65135eknhRjayuBLrA6xEs7DKTqp2uw"
+  const ret2 = await vizingInit.initializeVizingApp(
+    vizingAppMockProgram,
+    vizingAppMockProgram.provider.publicKey
   );
+
+  // const resultDataAccount = vizingUtils.generatePublicKeyFromString(
+  //   "AN6Ujf4gZudtu7EGFUsg5xHswwsR2Mke3kenoEQQk1ya"
+  // );
+
+  const resultDataAccount = ret1.resultDataAccount;
 
   await vizingInit.inititalizeRegisterVizingApp(
     vizingProgram,
