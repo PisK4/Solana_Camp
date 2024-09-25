@@ -8,6 +8,8 @@ pub const VIZING_PAD_CONFIG_SEED: &[u8] = b"Vizing_Pad_Settings_Seed";
 pub const RELAYER_SETTINGS_SEED: &[u8] = b"Relayer_Settings_Seed";
 pub const VIZING_AUTHORITY_SEED: &[u8] = b"Vizing_Authority_Seed";
 pub const VIZING_GAS_SYSTEM_SEED: &[u8] = b"init_mapping_fee_config";
+pub const VIZING_APP_CONFIG_SEED: &[u8] = b"Vizing_App_Config_Seed";
+pub const VIZING_RECORD_SEED: &[u8] = b"init_current_record_message";
 
 // ******* governance ********
 pub const RELAYERS_LENGTH: usize = 3;

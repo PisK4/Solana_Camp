@@ -520,6 +520,8 @@ describe("Vizing Test", () => {
         console.log(
           `chain id: ${id.add(new anchor.BN(i))}, price: ${
             newLaunchParams.message.maxFeePerGas
+          } gaslimit: ${
+            newLaunchParams.message.executeGasLimit
           },feeReceiverBalanceBefore: ${
             feeReceiverBalanceBefore / anchor.web3.LAMPORTS_PER_SOL
           }, feeReceiverBalanceAfter: ${

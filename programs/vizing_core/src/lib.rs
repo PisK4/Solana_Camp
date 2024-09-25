@@ -7,6 +7,12 @@ use anchor_lang::prelude::*;
 use gas_system::*;
 use governance::*;
 use vizing_channel::*;
+// use vizing_channel::{
+//     ComputeTradeFee1, ComputeTradeFee2, CurrentRecordMessage, EstimateGas, EstimatePrice1,
+//     EstimatePrice2, EstimateTotalFee, EstimateVizingGasFee1, EstimateVizingGasFee2, ExactInput,
+//     ExactOutput, InitCurrentRecordMessage, LandingOp, LaunchOp, LandingParams, LandingMessage
+// };
+use library::Uint256;
 use vizing_omni::*;
 
 declare_id!("vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE");
@@ -180,7 +186,7 @@ pub mod vizing_core {
 
     //set_token_fee_config
     /*
-    /// @notice gas pool admin set fee for native token exchange mapping in MappingNativeTokenTradeFeeConfig
+    /// @notice gas pool admin set fee for native token exchange mapping in MappingFeeConfig
     /// @param key evm chainId
     /// @param molecular  evm dapp address
     /// @param denominator  base price
@@ -248,7 +254,7 @@ pub mod vizing_core {
 
     //batch_set_token_fee_config
     /*
-    /// @notice gas pool admin set trade fee config mapping in MappingFeeConfig and MappingNativeTokenTradeFeeConfig
+    /// @notice gas pool admin set trade fee config mapping in MappingFeeConfig
     /// @param dapps multi dapp address
     /// @param destChainIds  multi evm dest chainId
     /// @param moleculars  molecular group
@@ -270,7 +276,7 @@ pub mod vizing_core {
 
     //batch_set_trade_fee_config_map
     /*
-    /// @notice gas pool admin set trade fee config mapping in MappingFeeConfig and MappingNativeTokenTradeFeeConfig
+    /// @notice gas pool admin set trade fee config mapping in MappingFeeConfig
     /// @param dapps multi dapp address
     /// @param destChainIds  multi evm dest chainId
     /// @param moleculars  molecular group
@@ -381,8 +387,8 @@ pub mod vizing_core {
     pub fn compute_trade_fee1(
         ctx: Context<ComputeTradeFee1>,
         dest_chain_id: u64,
-        amount_out: u64,
-    ) -> Result<u64> {
+        amount_out: Uint256,
+    ) -> Result<Uint256> {
         ComputeTradeFee1::get_compute_trade_fee1(ctx, dest_chain_id, amount_out)
     }
 
@@ -396,8 +402,8 @@ pub mod vizing_core {
         ctx: Context<ComputeTradeFee2>,
         target_contract: [u8; 32],
         dest_chain_id: u64,
-        amount_out: u64,
-    ) -> Result<u64> {
+        amount_out: Uint256,
+    ) -> Result<Uint256> {
         ComputeTradeFee2::get_compute_trade_fee2(ctx, target_contract, dest_chain_id, amount_out)
     }
 
@@ -430,7 +436,7 @@ pub mod vizing_core {
      */
     pub fn estimate_gas(
         ctx: Context<EstimateGas>,
-        amount_out: u64,
+        amount_out: Uint256,
         dest_chain_id: u64,
         message: Message,
     ) -> Result<u64> {
@@ -446,7 +452,7 @@ pub mod vizing_core {
     pub fn estimate_total_fee(
         ctx: Context<EstimateTotalFee>,
         dest_chain_id: u64,
-        amount_out: u64,
+        amount_out: Uint256,
         message: Message,
     ) -> Result<u64> {
         EstimateTotalFee::get_estimate_total_fee(ctx, dest_chain_id, amount_out, message)
@@ -461,8 +467,8 @@ pub mod vizing_core {
     pub fn exact_output(
         ctx: Context<ExactOutput>,
         dest_chain_id: u64,
-        amount_out: u64,
-    ) -> Result<u64> {
+        amount_out: Uint256,
+    ) -> Result<Uint256> {
         ExactOutput::get_exact_output(ctx, dest_chain_id, amount_out)
     }
 
@@ -476,7 +482,7 @@ pub mod vizing_core {
         ctx: Context<ExactInput>,
         dest_chain_id: u64,
         amount_in: u64,
-    ) -> Result<u64> {
+    ) -> Result<Uint256> {
         ExactInput::get_exact_input(ctx, dest_chain_id, amount_in)
     }
 
@@ -491,7 +497,7 @@ pub mod vizing_core {
 
     pub fn estimate_vizing_gas_fee1(
         ctx: Context<EstimateVizingGasFee1>,
-        value: u64,
+        value: Uint256,
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message: Vec<u8>,
@@ -507,7 +513,7 @@ pub mod vizing_core {
 
     pub fn estimate_vizing_gas_fee2(
         ctx: Context<EstimateVizingGasFee2>,
-        value: u64,
+        value: Uint256,
         dest_chain_id: u64,
         _addition_params: Vec<u8>,
         message: Message,
