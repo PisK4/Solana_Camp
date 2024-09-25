@@ -21,7 +21,6 @@ pub struct LaunchOp<'info> {
     pub vizing_pad_fee_collector: AccountInfo<'info>,
 
     #[account(
-        mut,
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]

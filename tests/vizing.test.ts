@@ -530,8 +530,8 @@ describe("Vizing Test", () => {
         );
 
         expect(diff).to.equal(
-          anchor.web3.LAMPORTS_PER_SOL * (i + 1) +
-            newLaunchParams.value.toNumber()
+          newLaunchParams.message.maxFeePerGas.toNumber() *
+            newLaunchParams.message.executeGasLimit.toNumber()
         );
       }
     }
