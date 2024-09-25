@@ -6,13 +6,8 @@ pub mod vizing_omni;
 use anchor_lang::prelude::*;
 use gas_system::*;
 use governance::*;
+use library::*;
 use vizing_channel::*;
-// use vizing_channel::{
-//     ComputeTradeFee1, ComputeTradeFee2, CurrentRecordMessage, EstimateGas, EstimatePrice1,
-//     EstimatePrice2, EstimateTotalFee, EstimateVizingGasFee1, EstimateVizingGasFee2, ExactInput,
-//     ExactOutput, InitCurrentRecordMessage, LandingOp, LaunchOp, LandingParams, LandingMessage
-// };
-use library::Uint256;
 use vizing_omni::*;
 
 declare_id!("vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE");
@@ -115,6 +110,8 @@ pub mod vizing_core {
     }
 
     // ***********  governance end ************
+
+    // **********  fee management start ************
 
     /// @notice owner initialize record_message for dev get data
     pub fn init_record_message(ctx: Context<InitCurrentRecordMessage>) -> Result<()> {
@@ -526,4 +523,6 @@ pub mod vizing_core {
             message,
         )
     }
+
+    // **************** fee management end ****************
 }

@@ -1214,7 +1214,7 @@ pub struct BatchSetDappPriceConfigInSameChain<'info> {
 #[derive(Accounts)]
 pub struct SetExchangeRate<'info> {
     #[account(seeds = [VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
-        , constraint = vizing_pad_config.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+        , constraint = vizing_pad_config.swap_manager == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
@@ -1230,7 +1230,7 @@ pub struct SetExchangeRate<'info> {
 #[derive(Accounts)]
 pub struct BatchSetExchangeRate<'info> {
     #[account(seeds = [VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
-        , constraint = vizing_pad_config.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
+        , constraint = vizing_pad_config.swap_manager == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
