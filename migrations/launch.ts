@@ -61,7 +61,7 @@ export async function main() {
       vizingPadFeeCollector: vizingUtils.generatePublicKeyFromString(
         devnetConfig.vizingPadFeeCollector
       ),
-      mappingFeeConfig: vizingUtils.generatePublicKeyFromString(
+      vizingGasSystem: vizingUtils.generatePublicKeyFromString(
         devnetConfig.vizingGasSystem
       ),
     })

@@ -73,7 +73,7 @@ pub mod vizing_app_mock {
             &ctx.accounts.vizing_app_message_authority.to_account_info(),
             &ctx.accounts.vizing_pad_config.to_account_info(),
             &ctx.accounts.vizing_pad_fee_collector.to_account_info(),
-            &ctx.accounts.mapping_fee_config.to_account_info(),
+            &ctx.accounts.vizing_gas_system.to_account_info(),
             &ctx.accounts.system_program.to_account_info(),
         )
 
@@ -148,7 +148,7 @@ pub struct LaunchAppOpTemplate<'info> {
     pub vizing_pad_program: AccountInfo<'info>,
 
     /// CHECK: 4. Vizing fee account
-    pub mapping_fee_config: AccountInfo<'info>,
+    pub vizing_gas_system: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
 }

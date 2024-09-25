@@ -125,7 +125,7 @@ pub struct TradeFeeAndDappConfig {
 
 #[account]
 #[derive(InitSpace)]
-pub struct MappingFeeConfig {
+pub struct VizingGasSystem {
     #[max_len(20)]
     pub gas_system_global_mappings: Vec<GasSystemGlobal>,
     #[max_len(20)]
@@ -165,7 +165,7 @@ pub struct ComputeTradeFee1<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -186,7 +186,7 @@ pub struct ComputeTradeFee2<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -207,7 +207,7 @@ pub struct EstimatePrice1<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -228,7 +228,7 @@ pub struct EstimatePrice2<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -249,7 +249,7 @@ pub struct EstimateGas<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -270,7 +270,7 @@ pub struct EstimateTotalFee<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -291,7 +291,7 @@ pub struct ExactOutput<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -312,7 +312,7 @@ pub struct ExactInput<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -333,7 +333,7 @@ pub struct EstimateVizingGasFee1<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -354,7 +354,7 @@ pub struct EstimateVizingGasFee2<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],

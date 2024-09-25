@@ -57,7 +57,7 @@ pub struct NativeTokenTradeFeeConfig {
 
 #[account]
 #[derive(InitSpace)]
-pub struct MappingFeeConfig {
+pub struct VizingGasSystem {
     #[max_len(20)]
     pub gas_system_global_mappings: Vec<GasSystemGlobal>,
     #[max_len(20)]
@@ -70,7 +70,7 @@ pub struct MappingFeeConfig {
     pub native_token_trade_fee_config_mappings: Vec<NativeTokenTradeFeeConfig>,
 }
 
-impl MappingFeeConfig {
+impl VizingGasSystem {
     //gas_system_global
     pub fn set_gas_system_global(
         &mut self,
@@ -324,8 +324,8 @@ impl InitFeeConfig<'_>{
         params: InitGasSystemParams
     ) -> Result<()> {
         require!(params.denominator>0 ,ErrorCode::ZeroNumber);
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        mapping_fee_config.set_fee_config(
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
+        vizing_gas_system.set_fee_config(
             params.chain_id,
             params.base_price,
             0,
@@ -335,7 +335,7 @@ impl InitFeeConfig<'_>{
             params.denominator_decimal,
         );
 
-        mapping_fee_config.set_gas_system_global(
+        vizing_gas_system.set_gas_system_global(
             params.chain_id,
             params.global_base_price,
             params.default_gas_limit,
@@ -357,8 +357,8 @@ impl InitFeeConfig<'_>{
     //     molecular_decimal: u8,
     //     denominator_decimal: u8,
     // ) -> Result<()> {
-    //     let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-    //     mapping_fee_config.set_fee_config(
+    //     let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
+    //     vizing_gas_system.set_fee_config(
     //         key,
     //         base_price,
     //         reserve,
@@ -383,8 +383,8 @@ impl SetGasGlobal<'_>{
         denominator: u64,
     ) -> Result<()> {
         require!(denominator>0,ErrorCode::ZeroNumber);
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        mapping_fee_config.set_gas_system_global(
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
+        vizing_gas_system.set_gas_system_global(
             key,
             global_base_price,
             default_gas_limit,
@@ -408,8 +408,8 @@ impl SetFeeConfig<'_>{
         denominator_decimal: u8,
     ) -> Result<()> {
         require!(denominator>0,ErrorCode::ZeroNumber);
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        mapping_fee_config.set_fee_config(
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
+        vizing_gas_system.set_fee_config(
             key,
             base_price,
             reserve,
@@ -431,9 +431,9 @@ impl SetTokenFeeConfig<'_>{
         denominator: u64,
     ) -> Result<()> {
         require!(denominator>0,ErrorCode::ZeroNumber);
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        let gas_system_global = mapping_fee_config.get_gas_system_global(key);
-        mapping_fee_config.set_gas_system_global(
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
+        let gas_system_global = vizing_gas_system.get_gas_system_global(key);
+        vizing_gas_system.set_gas_system_global(
             key,
             gas_system_global.global_base_price,
             gas_system_global.default_gas_limit,
@@ -441,7 +441,7 @@ impl SetTokenFeeConfig<'_>{
             molecular,
             denominator
         );
-        mapping_fee_config.set_trade_fee(key, molecular, denominator);
+        vizing_gas_system.set_trade_fee(key, molecular, denominator);
         Ok(())
     }
 }
@@ -456,8 +456,8 @@ impl SetDappPriceConfig<'_>{
         base_price: u64,
     ) -> Result<()> {
         require!(denominator>0,ErrorCode::ZeroNumber);
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        mapping_fee_config.set_trade_fee_and_dapp_config(chain_id, dapp, molecular, denominator, base_price);
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
+        vizing_gas_system.set_trade_fee_and_dapp_config(chain_id, dapp, molecular, denominator, base_price);
         Ok(())
     }
 }
@@ -472,15 +472,15 @@ impl SetExchangeRate<'_>{
         denominator_decimal: u8,
     ) -> Result<()> {
         require!(denominator>0,ErrorCode::ZeroNumber);
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        let mut fee_config = mapping_fee_config.get_fee_config(chain_id);
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
+        let mut fee_config = vizing_gas_system.get_fee_config(chain_id);
 
         fee_config.molecular = molecular;
         fee_config.denominator = denominator;
         fee_config.molecular_decimal = molecular_decimal;
         fee_config.denominator_decimal = denominator_decimal;
 
-        mapping_fee_config.set_fee_config(
+        vizing_gas_system.set_fee_config(
             chain_id,
             fee_config.base_price,
             fee_config.reserve,
@@ -507,11 +507,11 @@ impl BatchSetTokenFeeConfig<'_>{
         for &denominator in &denominators {
             require!(denominator > 0, ErrorCode::ZeroNumber);
         }
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
 
         for (i, &current_id) in dest_chain_ids.iter().enumerate() {
-            mapping_fee_config.set_trade_fee(current_id, moleculars[i], denominators[i]);
-            mapping_fee_config.set_native_token_trade_fee_config(current_id, moleculars[i], denominators[i]);
+            vizing_gas_system.set_trade_fee(current_id, moleculars[i], denominators[i]);
+            vizing_gas_system.set_native_token_trade_fee_config(current_id, moleculars[i], denominators[i]);
         }   
         Ok(())
     }
@@ -536,11 +536,11 @@ impl BatchSetTradeFeeConfigMap<'_>{
             require!(denominator > 0, ErrorCode::ZeroNumber);
         }
 
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
 
         for (i, &current_id) in dest_chain_ids.iter().enumerate() {
-            mapping_fee_config.set_native_token_trade_fee_config(current_id, moleculars[i], denominators[i]);
-            mapping_fee_config.set_trade_fee_and_dapp_config(current_id, dapps[i], moleculars[i], denominators[i], values[i])
+            vizing_gas_system.set_native_token_trade_fee_config(current_id, moleculars[i], denominators[i]);
+            vizing_gas_system.set_trade_fee_and_dapp_config(current_id, dapps[i], moleculars[i], denominators[i], values[i])
         }
         Ok(())
     }
@@ -557,10 +557,10 @@ impl BatchSetDappPriceConfigInDiffChain<'_>{
             chain_ids.len() == dapps.len() && chain_ids.len() == base_prices.len(),
             errors::ErrorCode::InvalidLength
         );
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
         for (i, &current_id) in chain_ids.iter().enumerate() {
-            let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(current_id, dapps[i]);
-            mapping_fee_config.set_trade_fee_and_dapp_config(current_id, dapps[i],get_trade_fee_config.molecular,get_trade_fee_config.denominator, base_prices[i]);
+            let get_trade_fee_config = vizing_gas_system.get_trade_fee_config(current_id, dapps[i]);
+            vizing_gas_system.set_trade_fee_and_dapp_config(current_id, dapps[i],get_trade_fee_config.molecular,get_trade_fee_config.denominator, base_prices[i]);
         }
 
         Ok(())
@@ -575,10 +575,10 @@ impl BatchSetDappPriceConfigInSameChain<'_>{
         base_prices: Vec<u64>,
     ) -> Result<()> {
         require!(dapps.len() == base_prices.len(), errors::ErrorCode::InvalidLength);
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
         for (i, _) in base_prices.iter().enumerate() {
-            let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(chain_id, dapps[i]);
-            mapping_fee_config.set_trade_fee_and_dapp_config(chain_id, dapps[i],get_trade_fee_config.molecular,get_trade_fee_config.denominator, base_prices[i]);
+            let get_trade_fee_config = vizing_gas_system.get_trade_fee_config(chain_id, dapps[i]);
+            vizing_gas_system.set_trade_fee_and_dapp_config(chain_id, dapps[i],get_trade_fee_config.molecular,get_trade_fee_config.denominator, base_prices[i]);
         }
         Ok(())
     }
@@ -603,12 +603,12 @@ impl BatchSetExchangeRate<'_>{
         for &denominator in &denominators {
             require!(denominator > 0, ErrorCode::ZeroNumber);
         }
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
         for (i, &current_id) in chain_ids.iter().enumerate() {
-            let fee_config = mapping_fee_config.get_fee_config(current_id);
+            let fee_config = vizing_gas_system.get_fee_config(current_id);
             let this_base_price = fee_config.base_price;
             let this_reserve = fee_config.reserve;
-            mapping_fee_config.set_fee_config(
+            vizing_gas_system.set_fee_config(
                 current_id,
                 this_base_price,
                 this_reserve,
@@ -628,8 +628,8 @@ impl RemoveTradeFeeConfigDapp<'_>{
         key: u64,
         dapp: [u8; 32]
     )-> Result<()> {
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        mapping_fee_config.remove_trade_fee_config_dapp(
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
+        vizing_gas_system.remove_trade_fee_config_dapp(
             key,
             dapp
         );
@@ -1070,11 +1070,11 @@ pub struct InitFeeConfig<'info> {
     #[account(
         init,
         payer = payer, 
-        space = 8 + MappingFeeConfig::INIT_SPACE,
+        space = 8 + VizingGasSystem::INIT_SPACE,
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(mut)]
     pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -1091,7 +1091,7 @@ pub struct SetGasGlobal<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -1107,7 +1107,7 @@ pub struct SetFeeConfig<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -1123,7 +1123,7 @@ pub struct SetTokenFeeConfig<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -1140,7 +1140,7 @@ pub struct BatchSetTokenFeeConfig<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -1157,7 +1157,7 @@ pub struct BatchSetTradeFeeConfigMap<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -1173,7 +1173,7 @@ pub struct SetDappPriceConfig<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -1189,7 +1189,7 @@ pub struct BatchSetDappPriceConfigInDiffChain<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -1205,7 +1205,7 @@ pub struct BatchSetDappPriceConfigInSameChain<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -1221,7 +1221,7 @@ pub struct SetExchangeRate<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -1237,7 +1237,7 @@ pub struct BatchSetExchangeRate<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -1254,7 +1254,7 @@ pub struct RemoveTradeFeeConfigDapp<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,

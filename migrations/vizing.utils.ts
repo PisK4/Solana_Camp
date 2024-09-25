@@ -110,7 +110,7 @@ export async function initializeVizingGasSystem(
     .initializeGasSystem(params)
     .accounts({
       vizingPadConfig: accounts.vizingPadConfig,
-      mappingFeeConfig: accounts.vizingGasSystem,
+      vizingGasSystem: accounts.vizingGasSystem,
       payer: accounts.payer,
     })
     .rpc();
@@ -245,7 +245,7 @@ export async function launchFromVizingApp(
       vizingPadConfig: accounts.vizingPadConfig,
       vizingPadFeeCollector: accounts.vizingPadFeeCollector,
       vizingPadProgram: accounts.vizingPadProgram,
-      mappingFeeConfig: accounts.vizingGasSystem,
+      vizingGasSystem: accounts.vizingGasSystem,
     })
     .rpc();
 }

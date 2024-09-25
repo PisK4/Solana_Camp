@@ -45,7 +45,7 @@ pub struct LaunchOp<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     pub system_program: Program<'info, System>,
 }
 
@@ -60,12 +60,12 @@ impl LaunchOp<'_> {
         let dest_chain_id = params.dest_chainid;
 
         let dapp = &params.message.target_program;
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
 
-        let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
-        let get_fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
-        let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id, *dapp);
-        let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
+        let get_gas_system_global = vizing_gas_system.get_gas_system_global(dest_chain_id);
+        let get_fee_config = vizing_gas_system.get_fee_config(dest_chain_id);
+        let get_trade_fee_config = vizing_gas_system.get_trade_fee_config(dest_chain_id, *dapp);
+        let trade_fee = vizing_gas_system.get_trade_fee(dest_chain_id);
         let dapp_config_value=get_trade_fee_config.value;
         let dest_value=Uint256::new(params.value.high,params.value.low);
 
@@ -118,7 +118,7 @@ impl LaunchOp<'_> {
             addition_params: params.addition_params,
             message: params.message,
             vizing_pad_config: ctx.accounts.vizing_pad_config.key(),
-            vizing_gas_system_config: ctx.accounts.mapping_fee_config.key(),
+            vizing_gas_system_config: ctx.accounts.vizing_gas_system.key(),
         });
 
         Ok(())
@@ -333,7 +333,7 @@ pub struct ComputeTradeFee1<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -347,10 +347,10 @@ impl ComputeTradeFee1<'_> {
         dest_chain_id: u64,
         amount_out: Uint256,
     ) -> Result<Uint256> {
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
         let current_record_message = &mut ctx.accounts.current_record_message;
-        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
-        let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
+        let gas_system_global = vizing_gas_system.get_gas_system_global(dest_chain_id);
+        let trade_fee = vizing_gas_system.get_trade_fee(dest_chain_id);
         let fee = vizing_gas_system::compute_trade_fee1(
             trade_fee.molecular,
             trade_fee.denominator,
@@ -382,7 +382,7 @@ pub struct ComputeTradeFee2<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -397,10 +397,10 @@ impl ComputeTradeFee2<'_> {
         dest_chain_id: u64,
         amount_out: Uint256,
     ) -> Result<Uint256> {
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
-        let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,target_contract);
-        let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
+        let gas_system_global = vizing_gas_system.get_gas_system_global(dest_chain_id);
+        let trade_fee_config = vizing_gas_system.get_trade_fee_config(dest_chain_id,target_contract);
+        let trade_fee = vizing_gas_system.get_trade_fee(dest_chain_id);
         let current_record_message = &mut ctx.accounts.current_record_message;
         let fee = vizing_gas_system::compute_trade_fee2(
             trade_fee.molecular,
@@ -436,7 +436,7 @@ pub struct EstimatePrice1<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -450,10 +450,10 @@ impl EstimatePrice1<'_> {
         target_contract: [u8; 32],
         dest_chain_id: u64,
     ) -> Result<u64> {
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
-        let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,target_contract);
-        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
+        let gas_system_global = vizing_gas_system.get_gas_system_global(dest_chain_id);
+        let trade_fee_config = vizing_gas_system.get_trade_fee_config(dest_chain_id,target_contract);
+        let fee_config = vizing_gas_system.get_fee_config(dest_chain_id);
         let current_record_message = &mut ctx.accounts.current_record_message;
         let dapp_config_value=trade_fee_config.value;
 
@@ -484,7 +484,7 @@ pub struct EstimatePrice2<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -497,9 +497,9 @@ impl EstimatePrice2<'_> {
         ctx: Context<EstimatePrice2>,
         dest_chain_id: u64,
     ) -> Result<u64> {
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
-        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
+        let gas_system_global = vizing_gas_system.get_gas_system_global(dest_chain_id);
+        let fee_config = vizing_gas_system.get_fee_config(dest_chain_id);
         let current_record_message = &mut ctx.accounts.current_record_message;
 
         let base_price: u64 = vizing_gas_system::estimate_price2(
@@ -527,7 +527,7 @@ pub struct EstimateGas<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -542,16 +542,16 @@ impl EstimateGas<'_> {
         dest_chain_id: u64,
         message: Message,
     ) -> Result<u64> {
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
         let current_record_message = &mut ctx.accounts.current_record_message;
-        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
+        let gas_system_global = vizing_gas_system.get_gas_system_global(dest_chain_id);
 
         let serialized_data: Vec<u8> = message.try_to_vec()?;
         let Some((_, dapp, _, _, _))=message_monitor::slice_message(&serialized_data) else { todo!() };
 
-        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
-        let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,dapp);
-        let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
+        let fee_config = vizing_gas_system.get_fee_config(dest_chain_id);
+        let trade_fee_config = vizing_gas_system.get_trade_fee_config(dest_chain_id,dapp);
+        let trade_fee = vizing_gas_system.get_trade_fee(dest_chain_id);
         let dapp_config_value = trade_fee_config.value;
 
         let fee = vizing_gas_system::estimate_gas(
@@ -592,7 +592,7 @@ pub struct EstimateTotalFee<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -607,16 +607,16 @@ impl EstimateTotalFee<'_> {
         amount_out: Uint256,
         message: Message,
     ) -> Result<u64> {
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
         let current_record_message = &mut ctx.accounts.current_record_message;
 
         let serialized_data: Vec<u8> = message.try_to_vec()?;
         let Some((_, dapp, _, _, _))=message_monitor::slice_message(&serialized_data) else { todo!() };
 
-        let gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
-        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
-        let trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id,dapp);
-        let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
+        let gas_system_global = vizing_gas_system.get_gas_system_global(dest_chain_id);
+        let fee_config = vizing_gas_system.get_fee_config(dest_chain_id);
+        let trade_fee_config = vizing_gas_system.get_trade_fee_config(dest_chain_id,dapp);
+        let trade_fee = vizing_gas_system.get_trade_fee(dest_chain_id);
         let dapp_config_value = trade_fee_config.value;
 
         let fee = vizing_gas_system::estimate_total_fee(
@@ -658,7 +658,7 @@ pub struct ExactOutput<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -672,8 +672,8 @@ impl ExactOutput<'_> {
         dest_chain_id: u64,
         amount_out: Uint256,
     ) -> Result<Uint256> {
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
+        let fee_config = vizing_gas_system.get_fee_config(dest_chain_id);
         let current_record_message = &mut ctx.accounts.current_record_message;
 
         let amount_in = vizing_gas_system::exact_output(
@@ -706,7 +706,7 @@ pub struct ExactInput<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -720,8 +720,8 @@ impl ExactInput<'_> {
         dest_chain_id: u64,
         amount_in: u64,
     ) -> Result<Uint256> {
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
-        let fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
+        let fee_config = vizing_gas_system.get_fee_config(dest_chain_id);
         let current_record_message = &mut ctx.accounts.current_record_message;
 
         let amount_out = vizing_gas_system::exact_input(
@@ -755,7 +755,7 @@ pub struct EstimateVizingGasFee1<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -772,15 +772,15 @@ impl EstimateVizingGasFee1<'_>{
         message:Vec<u8>
     ) -> Result<u64> {  
 
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
         let current_record_message = &mut ctx.accounts.current_record_message;
         msg!("message: {:?}",message);
         let Some((_, dapp, _, _, _))=message_monitor::slice_message(&message) else { todo!() };
         
-        let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
-        let get_fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
-        let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id, dapp);
-        let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
+        let get_gas_system_global = vizing_gas_system.get_gas_system_global(dest_chain_id);
+        let get_fee_config = vizing_gas_system.get_fee_config(dest_chain_id);
+        let get_trade_fee_config = vizing_gas_system.get_trade_fee_config(dest_chain_id, dapp);
+        let trade_fee = vizing_gas_system.get_trade_fee(dest_chain_id);
         let dapp_config_value = get_trade_fee_config.value;
         
         let vizing_gas_fee = vizing_gas_system::estimate_gas(
@@ -821,7 +821,7 @@ pub struct EstimateVizingGasFee2<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
@@ -838,17 +838,17 @@ impl EstimateVizingGasFee2<'_>{
         message: Message
     ) -> Result<u64> {  
 
-        let mapping_fee_config = &mut ctx.accounts.mapping_fee_config;
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
         let current_record_message = &mut ctx.accounts.current_record_message;
 
         let serialized_data: Vec<u8> = message.try_to_vec()?;
         let Some((_, dapp, _, _, _))=message_monitor::slice_message(&serialized_data) else { todo!() };
 
         msg!("dapp: {:?}",dapp);
-        let get_gas_system_global = mapping_fee_config.get_gas_system_global(dest_chain_id);
-        let get_fee_config = mapping_fee_config.get_fee_config(dest_chain_id);
-        let get_trade_fee_config = mapping_fee_config.get_trade_fee_config(dest_chain_id, dapp);
-        let trade_fee = mapping_fee_config.get_trade_fee(dest_chain_id);
+        let get_gas_system_global = vizing_gas_system.get_gas_system_global(dest_chain_id);
+        let get_fee_config = vizing_gas_system.get_fee_config(dest_chain_id);
+        let get_trade_fee_config = vizing_gas_system.get_trade_fee_config(dest_chain_id, dapp);
+        let trade_fee = vizing_gas_system.get_trade_fee(dest_chain_id);
         let dapp_config_value = get_trade_fee_config.value;
         
         let vizing_gas_fee = vizing_gas_system::estimate_gas(

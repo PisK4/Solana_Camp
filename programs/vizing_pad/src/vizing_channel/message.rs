@@ -1,6 +1,6 @@
 use crate::governance::*;
 use crate::library::*;
-use crate::MappingFeeConfig;
+use crate::VizingGasSystem;
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
@@ -24,6 +24,6 @@ pub struct LaunchOp<'info> {
         seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
         bump
     )]
-    pub mapping_fee_config: Account<'info, MappingFeeConfig>,
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
     pub system_program: Program<'info, System>,
 }

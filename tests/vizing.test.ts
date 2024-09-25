@@ -224,7 +224,7 @@ describe("Vizing Test", () => {
               initGasSystemParams.denominator
             )
             .accounts({
-              mappingFeeConfig: vizingGasSystem,
+              vizingGasSystem: vizingGasSystem,
               vizingPadConfig: vizingPadConfigs,
               user: gasPoolAdminKeyPair.publicKey,
             })
@@ -263,7 +263,7 @@ describe("Vizing Test", () => {
         )
         .accounts({
           vizingPadConfig: vizingPadConfigs,
-          mappingFeeConfig: vizingGasSystem,
+          vizingGasSystem: vizingGasSystem,
           user: gasPoolAdminKeyPair.publicKey,
         })
         .signers([gasPoolAdminKeyPair])
@@ -430,7 +430,7 @@ describe("Vizing Test", () => {
             vizingAppMessageAuthority: provider.wallet.publicKey,
             vizingPadConfig: vizingPadConfigs,
             vizingPadFeeCollector: anchor.web3.Keypair.generate().publicKey,
-            mappingFeeConfig: vizingGasSystem,
+            vizingGasSystem: vizingGasSystem,
           })
           .rpc();
         throw new Error("should not come here");
@@ -457,7 +457,7 @@ describe("Vizing Test", () => {
           vizingAppMessageAuthority: provider.wallet.publicKey,
           vizingPadConfig: vizingPadConfigs,
           vizingPadFeeCollector: feeCollectorKeyPair.publicKey,
-          mappingFeeConfig: vizingGasSystem,
+          vizingGasSystem: vizingGasSystem,
         })
         .rpc();
       console.log(`launch: ${tx}`);
@@ -507,7 +507,7 @@ describe("Vizing Test", () => {
             vizingAppMessageAuthority: provider.wallet.publicKey,
             vizingPadConfig: vizingPadConfigs,
             vizingPadFeeCollector: feeCollectorKeyPair.publicKey,
-            mappingFeeConfig: vizingGasSystem,
+            vizingGasSystem: vizingGasSystem,
           })
           .rpc();
 

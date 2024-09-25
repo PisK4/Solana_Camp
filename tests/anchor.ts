@@ -277,12 +277,12 @@ describe("Test", () => {
     //   thisDenominator
     // ) {
     //   try {
-    //     const mappingFeeConfig =
-    //       await pg.program.account.mappingFeeConfig.fetch(
+    //     const vizingGasSystem =
+    //       await pg.program.account.vizingGasSystem.fetch(
     //         mappingFeeConfigAuthority
     //       );
     //     const gasSystemGlobalMappings =
-    //       mappingFeeConfig.gasSystemGlobalMappings;
+    //       vizingGasSystem.gasSystemGlobalMappings;
     //   } catch (e) {
     //     const initGasGlobal = await pg.program.methods
     //       .initGasGlobal(
@@ -294,7 +294,7 @@ describe("Test", () => {
     //         thisDenominator
     //       )
     //       .accounts({
-    //         mappingFeeConfig: mappingFeeConfigAuthority,
+    //         vizingGasSystem: mappingFeeConfigAuthority,
     //         vizingPadConfig: vizingPadSettings,
     //         user: user,
     //         systemProgram: systemId,
@@ -332,15 +332,14 @@ describe("Test", () => {
     //initialize_gas_system
     async function InitializeGasSystem(thisGasSystemParams) {
       try {
-        const mappingFeeConfig =
-          await pg.program.account.mappingFeeConfig.fetch(
-            mappingFeeConfigAuthority
-          );
+        const vizingGasSystem = await pg.program.account.vizingGasSystem.fetch(
+          mappingFeeConfigAuthority
+        );
       } catch (e) {
         const initializeGasSystem = await pg.program.methods
           .initializeGasSystem(thisGasSystemParams)
           .accounts({
-            mappingFeeConfig: mappingFeeConfigAuthority,
+            vizingGasSystem: mappingFeeConfigAuthority,
             vizingPadConfig: vizingPadSettings,
             user: user,
             systemProgram: systemId,
@@ -465,7 +464,7 @@ describe("Test", () => {
             thisDenominator
           )
           .accounts({
-            mappingFeeConfig: mappingFeeConfigAuthority,
+            vizingGasSystem: mappingFeeConfigAuthority,
             vizingPadConfig: vizingPadSettings,
             user: user,
             systemProgram: systemId,
@@ -512,7 +511,7 @@ describe("Test", () => {
           )
           .accounts({
             vizingPadConfig: vizingPadSettings,
-            mappingFeeConfig: mappingFeeConfigAuthority,
+            vizingGasSystem: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
           })
@@ -546,7 +545,7 @@ describe("Test", () => {
           .setThisTokenFeeConfig(thisChainId, thisMolecular, thisDenominator)
           .accounts({
             vizingPadConfig: vizingPadSettings,
-            mappingFeeConfig: mappingFeeConfigAuthority,
+            vizingGasSystem: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
           })
@@ -573,7 +572,7 @@ describe("Test", () => {
           )
           .accounts({
             vizingPadConfig: vizingPadSettings,
-            mappingFeeConfig: mappingFeeConfigAuthority,
+            vizingGasSystem: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
           })
@@ -601,7 +600,7 @@ describe("Test", () => {
           )
           .accounts({
             vizingPadConfig: vizingPadSettings,
-            mappingFeeConfig: mappingFeeConfigAuthority,
+            vizingGasSystem: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
           })
@@ -626,7 +625,7 @@ describe("Test", () => {
           .batchSetThisTokenFeeConfig(destChainIds, moleculars, denominators)
           .accounts({
             vizingPadConfig: vizingPadSettings,
-            mappingFeeConfig: mappingFeeConfigAuthority,
+            vizingGasSystem: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
           })
@@ -667,7 +666,7 @@ describe("Test", () => {
           )
           .accounts({
             vizingPadConfig: vizingPadSettings,
-            mappingFeeConfig: mappingFeeConfigAuthority,
+            vizingGasSystem: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
           })
@@ -705,7 +704,7 @@ describe("Test", () => {
           )
           .accounts({
             vizingPadConfig: vizingPadSettings,
-            mappingFeeConfig: mappingFeeConfigAuthority,
+            vizingGasSystem: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
           })
@@ -737,7 +736,7 @@ describe("Test", () => {
           )
           .accounts({
             vizingPadConfig: vizingPadSettings,
-            mappingFeeConfig: mappingFeeConfigAuthority,
+            vizingGasSystem: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
           })
@@ -759,10 +758,10 @@ describe("Test", () => {
     //get
     async function GetDappBasePrice(dest_chain_id, chain_base_price, dapp) {
       let dapp_base_price;
-      const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
+      const vizingGasSystem = await pg.program.account.vizingGasSystem.fetch(
         mappingFeeConfigAuthority
       );
-      const tradeFeeConfigMappings = mappingFeeConfig.tradeFeeConfigMappings;
+      const tradeFeeConfigMappings = vizingGasSystem.tradeFeeConfigMappings;
       const tradeFeeConfigMapping = tradeFeeConfigMappings.find(
         (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
       );
@@ -790,10 +789,10 @@ describe("Test", () => {
     }
 
     async function ExactOutput(dest_chain_id, amount_out) {
-      const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
+      const vizingGasSystem = await pg.program.account.vizingGasSystem.fetch(
         mappingFeeConfigAuthority
       );
-      const feeConfigMappings = mappingFeeConfig.feeConfigMappings;
+      const feeConfigMappings = vizingGasSystem.feeConfigMappings;
       const feeConfigMapping = feeConfigMappings.find(
         (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
       );
@@ -834,11 +833,11 @@ describe("Test", () => {
 
     async function ComputeTradeFee1(dest_chain_id, amount_out) {
       let computeTradeFee1;
-      const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
+      const vizingGasSystem = await pg.program.account.vizingGasSystem.fetch(
         mappingFeeConfigAuthority
       );
-      const tradeFeeMappings = mappingFeeConfig.tradeFeeMappings;
-      const gasSystemGlobalMappings = mappingFeeConfig.gasSystemGlobalMappings;
+      const tradeFeeMappings = vizingGasSystem.tradeFeeMappings;
+      const gasSystemGlobalMappings = vizingGasSystem.gasSystemGlobalMappings;
       let tradeFee_molecular = 0;
       let tradeFee_denominator = 0;
       let gasSystemGlobal_molecular = 0;
@@ -886,10 +885,10 @@ describe("Test", () => {
     ) {
       const isNonZero = target_contract.some((byte) => byte !== 0);
       let computeTradeFee2;
-      const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
+      const vizingGasSystem = await pg.program.account.vizingGasSystem.fetch(
         mappingFeeConfigAuthority
       );
-      const tradeFeeConfigMappings = mappingFeeConfig.tradeFeeConfigMappings;
+      const tradeFeeConfigMappings = vizingGasSystem.tradeFeeConfigMappings;
       let trade_fee_config_molecular = 0;
       let trade_fee_config_denominator = 0;
       const tradeFeeConfigMapping = tradeFeeConfigMappings.find(
@@ -931,11 +930,11 @@ describe("Test", () => {
     }
 
     async function EstimatePrice1(target_contract, dest_chain_id) {
-      const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
+      const vizingGasSystem = await pg.program.account.vizingGasSystem.fetch(
         mappingFeeConfigAuthority
       );
-      const gasSystemGlobalMappings = mappingFeeConfig.gasSystemGlobalMappings;
-      const tradeFeeConfigMappings = mappingFeeConfig.tradeFeeConfigMappings;
+      const gasSystemGlobalMappings = vizingGasSystem.gasSystemGlobalMappings;
+      const tradeFeeConfigMappings = vizingGasSystem.tradeFeeConfigMappings;
       const gasSystemGlobalMapping = gasSystemGlobalMappings.find(
         (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
       );
@@ -969,11 +968,11 @@ describe("Test", () => {
     }
 
     async function EstimatePrice2(dest_chain_id) {
-      const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
+      const vizingGasSystem = await pg.program.account.vizingGasSystem.fetch(
         mappingFeeConfigAuthority
       );
-      const feeConfigMappings = await mappingFeeConfig.feeConfigMappings;
-      const gasSystemGlobalMappings = mappingFeeConfig.gasSystemGlobalMappings;
+      const feeConfigMappings = await vizingGasSystem.feeConfigMappings;
+      const gasSystemGlobalMappings = vizingGasSystem.gasSystemGlobalMappings;
 
       const gasSystemGlobalMapping = gasSystemGlobalMappings.find(
         (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
@@ -1007,10 +1006,10 @@ describe("Test", () => {
     }
 
     async function ExactInput(dest_chain_id, amount_in) {
-      const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
+      const vizingGasSystem = await pg.program.account.vizingGasSystem.fetch(
         mappingFeeConfigAuthority
       );
-      const feeConfigMappings = mappingFeeConfig.feeConfigMappings;
+      const feeConfigMappings = vizingGasSystem.feeConfigMappings;
       const feeConfigMapping = feeConfigMappings.find(
         (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
       );
@@ -1057,11 +1056,11 @@ describe("Test", () => {
       signature: Buffer.from("transfer from alice to bob 10 usdt"),
     };
     async function EstimateGas(amount_out, dest_chain_id, this_message) {
-      const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
+      const vizingGasSystem = await pg.program.account.vizingGasSystem.fetch(
         mappingFeeConfigAuthority
       );
-      const feeConfigMappings = mappingFeeConfig.feeConfigMappings;
-      const gasSystemGlobalMappings = mappingFeeConfig.gasSystemGlobalMappings;
+      const feeConfigMappings = vizingGasSystem.feeConfigMappings;
+      const gasSystemGlobalMappings = vizingGasSystem.gasSystemGlobalMappings;
       const feeConfigMapping = feeConfigMappings.find(
         (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
       );
@@ -1133,11 +1132,11 @@ describe("Test", () => {
     // await EstimateGas(testAmountOut, arbitrum_chain_id, newMessage);
 
     async function EstimateTotalFee(dest_chain_id, amount_out, this_message) {
-      const mappingFeeConfig = await pg.program.account.mappingFeeConfig.fetch(
+      const vizingGasSystem = await pg.program.account.vizingGasSystem.fetch(
         mappingFeeConfigAuthority
       );
-      const feeConfigMappings = mappingFeeConfig.feeConfigMappings;
-      const gasSystemGlobalMappings = mappingFeeConfig.gasSystemGlobalMappings;
+      const feeConfigMappings = vizingGasSystem.feeConfigMappings;
+      const gasSystemGlobalMappings = vizingGasSystem.gasSystemGlobalMappings;
 
       const feeConfigMapping = feeConfigMappings.find(
         (mapping) => mapping.key.toNumber() === dest_chain_id.toNumber()
@@ -1251,7 +1250,7 @@ describe("Test", () => {
           )
           .accounts({
             vizingPadConfig: vizingPadSettings,
-            mappingFeeConfig: mappingFeeConfigAuthority,
+            vizingGasSystem: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
           })
@@ -1272,7 +1271,7 @@ describe("Test", () => {
           .estimateGas(amount_out, dest_chain_id, this_message)
           .accounts({
             vizingPadConfig: vizingPadSettings,
-            mappingFeeConfig: mappingFeeConfigAuthority,
+            vizingGasSystem: mappingFeeConfigAuthority,
             currentRecordMessage: recordMessageAuthority,
           })
           .signers([signer])
@@ -1346,7 +1345,7 @@ describe("Test", () => {
             vizingAppMessageAuthority: user,
             vizingPadConfig: thisVizingPadSettings,
             vizingPadFeeCollector: thisFeeCollector,
-            mappingFeeConfig: thisMappingFeeConfig,
+            vizingGasSystem: thisMappingFeeConfig,
             systemProgram: systemId,
           })
           .signers([signer])
@@ -1923,7 +1922,7 @@ describe("Test", () => {
     //       .estimateGas(amount_out, dest_chain_id, this_message)
     //       .accounts({
 
-    //         mappingFeeConfig: mappingFeeConfigAuthority,
+    //         vizingGasSystem: mappingFeeConfigAuthority,
     //         currentRecordMessage: recordMessageAuthority,
     //       })
     //       .signers([signer])
@@ -1954,7 +1953,7 @@ describe("Test", () => {
     //       .estimateTotalFee(dest_chain_id, amount_out, this_message)
     //       .accounts({
 
-    //         mappingFeeConfig: mappingFeeConfigAuthority,
+    //         vizingGasSystem: mappingFeeConfigAuthority,
     //         currentRecordMessage: recordMessageAuthority,
     //       })
     //       .signers([signer])
@@ -2021,7 +2020,7 @@ describe("Test", () => {
             this_message
           )
           .accounts({
-            mappingFeeConfig: mappingFeeConfigAuthority,
+            vizingGasSystem: mappingFeeConfigAuthority,
             currentRecordMessage: recordMessageAuthority,
           })
           .signers([signer])
@@ -2058,7 +2057,7 @@ describe("Test", () => {
           .removeTradeFeeDapp(this_chain_id, thisDapp)
           .accounts({
             vizingPadConfig: vizingPadSettings,
-            mappingFeeConfig: mappingFeeConfigAuthority,
+            vizingGasSystem: mappingFeeConfigAuthority,
             user: user,
             systemProgram: systemId,
           })
@@ -2067,12 +2066,12 @@ describe("Test", () => {
         console.log(`removeTradeFeeDapp tx:${removeTradeFeeDapp}'`);
         // Confirm transaction
         await pg.connection.confirmTransaction(removeTradeFeeDapp);
-        const mappingFeeConfig =
-          await pg.program.account.mappingFeeConfig.fetch(
+        const vizingGasSystem =
+          await pg.program.account.vizingGasSystem.fetch(
             mappingFeeConfigAuthority
           );
         const tradeFeeConfigDapps =
-          mappingFeeConfig.tradeFeeConfigMappings[0].dapps;
+          vizingGasSystem.tradeFeeConfigMappings[0].dapps;
         console.log("tradeFeeConfigDapps:", tradeFeeConfigDapps);
       } catch (e) {
         console.log("RemoveTradeFeeDapp error:", e);

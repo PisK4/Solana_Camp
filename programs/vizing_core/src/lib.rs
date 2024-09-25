@@ -153,7 +153,7 @@ pub mod vizing_core {
 
     //set_fee_config
     /*
-    /// @notice gas pool admin set fee config mapping in MappingFeeConfig
+    /// @notice gas pool admin set fee config mapping in VizingGasSystem
     /// @param key evm chainId
     /// @param basePrice  base price
     /// @param reserve  reserve
@@ -186,7 +186,7 @@ pub mod vizing_core {
 
     //set_token_fee_config
     /*
-    /// @notice gas pool admin set fee for native token exchange mapping in MappingFeeConfig
+    /// @notice gas pool admin set fee for native token exchange mapping in VizingGasSystem
     /// @param key evm chainId
     /// @param molecular  evm dapp address
     /// @param denominator  base price
@@ -202,7 +202,7 @@ pub mod vizing_core {
 
     //set_dapp_price_config
     /*
-    /// @notice gas pool admin set dapp price config in MappingFeeConfig
+    /// @notice gas pool admin set dapp price config in VizingGasSystem
     /// @param chainId evm chainId
     /// @param dapp  evm dapp address
     /// @param basePrice  base price
@@ -227,7 +227,7 @@ pub mod vizing_core {
 
     //set_exchange_rate
     /*
-    /// @notice gas pool admin set exchange rate in MappingFeeConfig
+    /// @notice gas pool admin set exchange rate in VizingGasSystem
     /// @param chainId evm chainId
     /// @param molecular  molecular
     /// @param denominator  denominator
@@ -254,7 +254,7 @@ pub mod vizing_core {
 
     //batch_set_token_fee_config
     /*
-    /// @notice gas pool admin set trade fee config mapping in MappingFeeConfig
+    /// @notice gas pool admin set trade fee config mapping in VizingGasSystem
     /// @param dapps multi dapp address
     /// @param destChainIds  multi evm dest chainId
     /// @param moleculars  molecular group
@@ -276,7 +276,7 @@ pub mod vizing_core {
 
     //batch_set_trade_fee_config_map
     /*
-    /// @notice gas pool admin set trade fee config mapping in MappingFeeConfig
+    /// @notice gas pool admin set trade fee config mapping in VizingGasSystem
     /// @param dapps multi dapp address
     /// @param destChainIds  multi evm dest chainId
     /// @param moleculars  molecular group
@@ -302,7 +302,7 @@ pub mod vizing_core {
 
     //batch_set_dapp_price_config_in_diff_chain
     /*
-    /// @notice gas pool admin batch set dapp price config different chain in MappingFeeConfig
+    /// @notice gas pool admin batch set dapp price config different chain in VizingGasSystem
     /// @param chainIds multi evm chainId
     /// @param dapps  multi dapp address
     /// @param basePrices  basePrice group
@@ -323,7 +323,7 @@ pub mod vizing_core {
 
     //batch_set_dapp_price_config_in_same_chain
     /*
-    /// @notice gas pool admin batch set dapp price config same chain in MappingFeeConfig
+    /// @notice gas pool admin batch set dapp price config same chain in VizingGasSystem
     /// @param chainId evm chainId
     /// @param dapps  multi dapp address
     /// @param basePrices  basePrice group
@@ -344,7 +344,7 @@ pub mod vizing_core {
 
     //batch_set_exchange_rate
     /*
-    /// @notice gas pool admin batch set exchange rate in MappingFeeConfig
+    /// @notice gas pool admin batch set exchange rate in VizingGasSystem
     /// @param chainIds multi evm chainId
     /// @param moleculars  molecular group
     /// @param denominators  denominator group

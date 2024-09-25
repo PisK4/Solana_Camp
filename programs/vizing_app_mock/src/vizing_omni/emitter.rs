@@ -101,7 +101,7 @@ pub fn launch_2_vizing<'c: 'info, 'info>(
     vizing_app_message_authority: &AccountInfo<'info>,
     vizing_pad_config: &AccountInfo<'info>,
     vizing_pad_fee_collector: &AccountInfo<'info>,
-    mapping_fee_config: &AccountInfo<'info>,
+    vizing_gas_system: &AccountInfo<'info>,
     system_program: &AccountInfo<'info>,
 ) -> Result<()> {
     let pass_value: vizing_pad::library::Uint256 =
@@ -140,7 +140,7 @@ pub fn launch_2_vizing<'c: 'info, 'info>(
             vizing_app_message_authority: vizing_app_message_authority.clone(),
             vizing_pad_config: vizing_pad_config.clone(),
             vizing_pad_fee_collector: vizing_pad_fee_collector.clone(),
-            mapping_fee_config: mapping_fee_config.clone(),
+            vizing_gas_system: vizing_gas_system.clone(),
             system_program: system_program.clone(),
         },
         signer,
@@ -159,7 +159,7 @@ pub fn launch_2_vizing<'c: 'info, 'info>(
 pub fn fetch_compute_trade_fee1<'c: 'info, 'info>(
     vizing_pad_program: &AccountInfo<'info>,
     vizing_pad_config: &AccountInfo<'info>,
-    mapping_fee_config: &AccountInfo<'info>,
+    vizing_gas_system: &AccountInfo<'info>,
     current_record_message: &AccountInfo<'info>,
     dest_chain_id: u64,
     amount_out: Uint256,
@@ -168,7 +168,7 @@ pub fn fetch_compute_trade_fee1<'c: 'info, 'info>(
         vizing_pad_program.clone(),
         ComputeTradeFee1 {
             vizing_pad_config: vizing_pad_config.clone(),
-            mapping_fee_config: mapping_fee_config.clone(),
+            vizing_gas_system: vizing_gas_system.clone(),
             current_record_message: current_record_message.clone(),
         },
     );
@@ -187,7 +187,7 @@ pub fn fetch_compute_trade_fee1<'c: 'info, 'info>(
 pub fn fetch_compute_trade_fee2<'c: 'info, 'info>(
     vizing_pad_program: &AccountInfo<'info>,
     vizing_pad_config: &AccountInfo<'info>,
-    mapping_fee_config: &AccountInfo<'info>,
+    vizing_gas_system: &AccountInfo<'info>,
     current_record_message: &AccountInfo<'info>,
     target_program: [u8; 32],
     dest_chain_id: u64,
@@ -197,7 +197,7 @@ pub fn fetch_compute_trade_fee2<'c: 'info, 'info>(
         vizing_pad_program.clone(),
         ComputeTradeFee2 {
             vizing_pad_config: vizing_pad_config.clone(),
-            mapping_fee_config: mapping_fee_config.clone(),
+            vizing_gas_system: vizing_gas_system.clone(),
             current_record_message: current_record_message.clone(),
         },
     );
@@ -216,7 +216,7 @@ pub fn fetch_compute_trade_fee2<'c: 'info, 'info>(
 pub fn fetch_estimate_price1<'c: 'info, 'info>(
     vizing_pad_program: &AccountInfo<'info>,
     vizing_pad_config: &AccountInfo<'info>,
-    mapping_fee_config: &AccountInfo<'info>,
+    vizing_gas_system: &AccountInfo<'info>,
     current_record_message: &AccountInfo<'info>,
     target_program: [u8; 32],
     dest_chain_id: u64,
@@ -225,7 +225,7 @@ pub fn fetch_estimate_price1<'c: 'info, 'info>(
         vizing_pad_program.clone(),
         EstimatePrice1 {
             vizing_pad_config: vizing_pad_config.clone(),
-            mapping_fee_config: mapping_fee_config.clone(),
+            vizing_gas_system: vizing_gas_system.clone(),
             current_record_message: current_record_message.clone(),
         },
     );
@@ -242,7 +242,7 @@ pub fn fetch_estimate_price1<'c: 'info, 'info>(
 pub fn fetch_estimate_price2<'c: 'info, 'info>(
     vizing_pad_program: &AccountInfo<'info>,
     vizing_pad_config: &AccountInfo<'info>,
-    mapping_fee_config: &AccountInfo<'info>,
+    vizing_gas_system: &AccountInfo<'info>,
     current_record_message: &AccountInfo<'info>,
     dest_chain_id: u64,
 ) -> Result<()> {
@@ -250,7 +250,7 @@ pub fn fetch_estimate_price2<'c: 'info, 'info>(
         vizing_pad_program.clone(),
         EstimatePrice2 {
             vizing_pad_config: vizing_pad_config.clone(),
-            mapping_fee_config: mapping_fee_config.clone(),
+            vizing_gas_system: vizing_gas_system.clone(),
             current_record_message: current_record_message.clone(),
         },
     );
@@ -267,7 +267,7 @@ pub fn fetch_estimate_price2<'c: 'info, 'info>(
 pub fn fetch_estimate_gas<'c: 'info, 'info>(
     vizing_pad_program: &AccountInfo<'info>,
     vizing_pad_config: &AccountInfo<'info>,
-    mapping_fee_config: &AccountInfo<'info>,
+    vizing_gas_system: &AccountInfo<'info>,
     current_record_message: &AccountInfo<'info>,
     amount_out: Uint256,
     dest_chain_id: u64,
@@ -285,7 +285,7 @@ pub fn fetch_estimate_gas<'c: 'info, 'info>(
         vizing_pad_program.clone(),
         EstimateGas {
             vizing_pad_config: vizing_pad_config.clone(),
-            mapping_fee_config: mapping_fee_config.clone(),
+            vizing_gas_system: vizing_gas_system.clone(),
             current_record_message: current_record_message.clone(),
         },
     );
@@ -304,7 +304,7 @@ pub fn fetch_estimate_gas<'c: 'info, 'info>(
 pub fn fetch_estimate_total_fee<'c: 'info, 'info>(
     vizing_pad_program: &AccountInfo<'info>,
     vizing_pad_config: &AccountInfo<'info>,
-    mapping_fee_config: &AccountInfo<'info>,
+    vizing_gas_system: &AccountInfo<'info>,
     current_record_message: &AccountInfo<'info>,
     amount_out: Uint256,
     dest_chain_id: u64,
@@ -322,7 +322,7 @@ pub fn fetch_estimate_total_fee<'c: 'info, 'info>(
         vizing_pad_program.clone(),
         EstimateTotalFee {
             vizing_pad_config: vizing_pad_config.clone(),
-            mapping_fee_config: mapping_fee_config.clone(),
+            vizing_gas_system: vizing_gas_system.clone(),
             current_record_message: current_record_message.clone(),
         },
     );
@@ -342,7 +342,7 @@ pub fn fetch_estimate_total_fee<'c: 'info, 'info>(
 pub fn fetch_exact_output<'c: 'info, 'info>(
     vizing_pad_program: &AccountInfo<'info>,
     vizing_pad_config: &AccountInfo<'info>,
-    mapping_fee_config: &AccountInfo<'info>,
+    vizing_gas_system: &AccountInfo<'info>,
     current_record_message: &AccountInfo<'info>,
     dest_chain_id: u64,
     amount_out: Uint256,
@@ -351,7 +351,7 @@ pub fn fetch_exact_output<'c: 'info, 'info>(
         vizing_pad_program.clone(),
         ExactOutput {
             vizing_pad_config: vizing_pad_config.clone(),
-            mapping_fee_config: mapping_fee_config.clone(),
+            vizing_gas_system: vizing_gas_system.clone(),
             current_record_message: current_record_message.clone(),
         },
     );
@@ -371,7 +371,7 @@ pub fn fetch_exact_output<'c: 'info, 'info>(
 pub fn fetch_exact_input<'c: 'info, 'info>(
     vizing_pad_program: &AccountInfo<'info>,
     vizing_pad_config: &AccountInfo<'info>,
-    mapping_fee_config: &AccountInfo<'info>,
+    vizing_gas_system: &AccountInfo<'info>,
     current_record_message: &AccountInfo<'info>,
     dest_chain_id: u64,
     amount_in: u64,
@@ -380,7 +380,7 @@ pub fn fetch_exact_input<'c: 'info, 'info>(
         vizing_pad_program.clone(),
         ExactInput {
             vizing_pad_config: vizing_pad_config.clone(),
-            mapping_fee_config: mapping_fee_config.clone(),
+            vizing_gas_system: vizing_gas_system.clone(),
             current_record_message: current_record_message.clone(),
         },
     );
@@ -397,7 +397,7 @@ pub fn fetch_exact_input<'c: 'info, 'info>(
 pub fn fetch_estimate_vizing_gas_fee1<'c: 'info, 'info>(
     vizing_pad_program: &AccountInfo<'info>,
     vizing_pad_config: &AccountInfo<'info>,
-    mapping_fee_config: &AccountInfo<'info>,
+    vizing_gas_system: &AccountInfo<'info>,
     current_record_message: &AccountInfo<'info>,
     value: Uint256,
     dest_chain_id: u64,
@@ -408,7 +408,7 @@ pub fn fetch_estimate_vizing_gas_fee1<'c: 'info, 'info>(
         vizing_pad_program.clone(),
         EstimateVizingGasFee1 {
             vizing_pad_config: vizing_pad_config.clone(),
-            mapping_fee_config: mapping_fee_config.clone(),
+            vizing_gas_system: vizing_gas_system.clone(),
             current_record_message: current_record_message.clone(),
         },
     );
@@ -434,7 +434,7 @@ pub fn fetch_estimate_vizing_gas_fee1<'c: 'info, 'info>(
 pub fn fetch_estimate_vizing_gas_fee2<'c: 'info, 'info>(
     vizing_pad_program: &AccountInfo<'info>,
     vizing_pad_config: &AccountInfo<'info>,
-    mapping_fee_config: &AccountInfo<'info>,
+    vizing_gas_system: &AccountInfo<'info>,
     current_record_message: &AccountInfo<'info>,
     value: Uint256,
     dest_chain_id: u64,
@@ -453,7 +453,7 @@ pub fn fetch_estimate_vizing_gas_fee2<'c: 'info, 'info>(
         vizing_pad_program.clone(),
         EstimateVizingGasFee2 {
             vizing_pad_config: vizing_pad_config.clone(),
-            mapping_fee_config: mapping_fee_config.clone(),
+            vizing_gas_system: vizing_gas_system.clone(),
             current_record_message: current_record_message.clone(),
         },
     );
