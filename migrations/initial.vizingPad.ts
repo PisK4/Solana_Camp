@@ -1,6 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
 import * as vizingUtils from "./vizing.utils";
-import fs from "fs";
 
 const deployerKeyPairPath = "governance/.config/wallet/deployer_keypair.json";
 
@@ -316,10 +315,4 @@ export async function initializeVizingAppMock(
   }
 
   return ret;
-}
-
-export function loadKeypairFromFile(filename: string): anchor.web3.Keypair {
-  const secret = JSON.parse(fs.readFileSync(filename).toString()) as number[];
-  const secretKey = Uint8Array.from(secret);
-  return anchor.web3.Keypair.fromSecretKey(secretKey);
 }

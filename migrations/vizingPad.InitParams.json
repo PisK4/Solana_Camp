@@ -1,0 +1,29 @@
+{
+  "vizingPadProgramId": "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE",
+  "deployer": "pisxReuiFWqib2JZno8MUtM6FyNe46er3s4YTHTzJLP",
+  "feeCollector": "feeCFx1bo4Z6a7fRvkb9xAu3eniyp6q1JF5Mwwm6TRE",
+  "engineAdmin": "pisxReuiFWqib2JZno8MUtM6FyNe46er3s4YTHTzJLP",
+  "stationAdmin": "pisxReuiFWqib2JZno8MUtM6FyNe46er3s4YTHTzJLP",
+  "gasPoolAdmin": "pisxReuiFWqib2JZno8MUtM6FyNe46er3s4YTHTzJLP",
+  "swapManager": "reLKZaXp8h1CnydbtFo4H1CSriTMvfTDa1KifqhdRjR",
+  "trustedRelayers": [
+    "pisxReuiFWqib2JZno8MUtM6FyNe46er3s4YTHTzJLP",
+    "reLKZaXp8h1CnydbtFo4H1CSriTMvfTDa1KifqhdRjR",
+    "reLDpKcA1GX5HmZgE2XUJfRX7JTwy9fM4bSE1AMmx84",
+    "reLYRvr7RCrvZwmtMHZMyXZZkC8LUZ9rJ3wrECL13Ly"
+  ],
+  "registeredValidator": "reLKZaXp8h1CnydbtFo4H1CSriTMvfTDa1KifqhdRjR",
+  "firstSetup": {
+    "chainId": 28516,
+    "basePrice": 33,
+    "molecular": 0,
+    "denominator": 10,
+    "molecularDecimal": 1,
+    "denominatorDecimal": 1,
+    "globalBasePrice": 33,
+    "defaultGasLimit": 200000,
+    "amountInThreshold": 100000000000,
+    "globalMolecular": 0,
+    "globalDenominator": 10
+  }
+}

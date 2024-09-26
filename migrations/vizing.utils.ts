@@ -1,4 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
+import fs from "fs";
 import vizingCoreIDL from "../target/idl/vizing_core.json";
 import vizingAppMockIDL from "../target/idl/vizing_app_mock.json";
 
@@ -131,6 +132,29 @@ export async function initializeRecordMessage(
 }
 
 // **** utils ****
+
+export function loadKeypairFromFile(filename: string): anchor.web3.Keypair {
+  const secret = JSON.parse(fs.readFileSync(filename).toString()) as number[];
+  const secretKey = Uint8Array.from(secret);
+  return anchor.web3.Keypair.fromSecretKey(secretKey);
+}
+
+export function loadProgramKeypairFromFile(
+  program: string
+): anchor.web3.Keypair {
+  let filename: string = "target/deploy/";
+  switch (program) {
+    case "vizingCore":
+      filename += "vizing_core-keypair.json";
+      break;
+    case "vizingAppMock":
+      filename += "vizing_app_mock-keypair.json";
+      break;
+    default:
+      throw new Error(`Program not supported: ${program}`);
+  }
+  return loadKeypairFromFile(filename);
+}
 
 export function padStringTo32Bytes(str: string): Buffer {
   const buffer = Buffer.alloc(32);
@@ -288,6 +312,10 @@ export function getProvider(network: string = "devnet"): anchor.Provider {
     case "devnet":
       url =
         "https://solana-devnet.g.alchemy.com/v2/-m2gJ2Fiv4w403IMR27nGoHUyonc0azl";
+      break;
+    case "mainnet":
+      url =
+        "https://solana-mainnet.g.alchemy.com/v2/-m2gJ2Fiv4w403IMR27nGoHUyonc0azl";
       break;
     case "local":
       url = "http://127.0.0.1:8899";

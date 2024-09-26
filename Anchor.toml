@@ -24,7 +24,7 @@ cluster = "Localnet"
 wallet = "./governance/.config/wallet/deployer_keypair.json"
 
 [scripts]
-init = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/initial.vizing.ts"
+init = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/vizingManagement.ts"
 init_bob = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/initial.bob.ts"
 init_mock = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/appMockInit.ts"
 launch = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/launch.ts"
