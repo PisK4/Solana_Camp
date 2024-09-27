@@ -8,22 +8,6 @@ use crate::library::*;
 use crate::vizing_omni::*;
 use crate::library::{Uint256, VIZING_APP_CONFIG_SEED};
 
-
-#[account]
-#[derive(InitSpace)]
-pub struct CurrentRecordMessage {
-    pub compute_trade_fee1: Uint256,
-    pub compute_trade_fee2: Uint256,
-    pub estimate_price1: u64,
-    pub estimate_price2: u64,
-    pub estimate_gas: u64,
-    pub estimate_total_fee: u64,
-    pub exact_output: Uint256,
-    pub exact_input: Uint256,
-    pub estimate_vizing_gas_fee: u64,
-    pub init_state: bool
-}
-
 #[derive(Accounts)]
 pub struct LaunchOp<'info> {
     /// CHECK: We need signer to claim ownership
@@ -290,7 +274,21 @@ pub struct LandingMessage {
     pub signature: Vec<u8>,
 }
 
-//get
+
+#[account]
+#[derive(InitSpace)]
+pub struct CurrentRecordMessage {
+    pub compute_trade_fee1: Uint256,
+    pub compute_trade_fee2: Uint256,
+    pub estimate_price1: u64,
+    pub estimate_price2: u64,
+    pub estimate_gas: u64,
+    pub estimate_total_fee: u64,
+    pub exact_output: Uint256,
+    pub exact_input: Uint256,
+    pub estimate_vizing_gas_fee: u64,
+    pub init_state: bool
+}
 
 #[derive(Accounts)]
 pub struct InitCurrentRecordMessage<'info> {

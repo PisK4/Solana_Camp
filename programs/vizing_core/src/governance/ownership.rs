@@ -159,29 +159,6 @@ impl EngineAdminAuthorization<'_> {
 }
 
 #[derive(Accounts)]
-#[instruction(relayer: Pubkey)]
-pub struct InitialRelayer<'info> {
-    #[account(mut)]
-    pub station_admin: Signer<'info>,
-
-    #[account(mut, has_one = station_admin @ VizingError::NotOwner, seeds = [contants::VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump, 
-     constraint = vizing_pad_config.owner != contants::SYSTEM_ACCOUNT
-        && vizing_pad_config.station_admin != contants::SYSTEM_ACCOUNT)]
-    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
-
-    #[account(
-        init,
-        payer = station_admin,
-        space = 8 + RelayerSettings::INIT_SPACE,
-        seeds = [contants::RELAYER_SETTINGS_SEED, relayer.key().as_ref()],
-        bump,
-    )]
-    pub relayer: Account<'info, RelayerSettings>,
-
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
 #[instruction(_relayer: Pubkey)]
 pub struct GrantRelayer<'info> {
     #[account(mut)]
