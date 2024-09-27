@@ -5,6 +5,7 @@ import vizingAppMockIDL from "../target/idl/vizing_app_mock.json";
 
 // **** Vizing Pad Configs ***
 export const VizingPadConfigsSeed = Buffer.from("Vizing_Pad_Settings_Seed");
+export const vizingSenderNonceSeed = Buffer.from("Vizing_Sender_Nonce_Seed");
 export const vizingAuthoritySeed = Buffer.from("Vizing_Authority_Seed");
 export const vizingAppConfigSeed = Buffer.from("Vizing_App_Config_Seed");
 export const vizingAppSolReceiverSeed = Buffer.from(
@@ -222,6 +223,17 @@ export function generatePdaForVizingAppConfig(
   );
 }
 
+export function generatePdaForVizingSenderNonce(
+  vizingPadProgramId: anchor.web3.PublicKey,
+  sender: anchor.web3.PublicKey,
+  destChainid: anchor.BN
+): [anchor.web3.PublicKey, number] {
+  return pdaFromSeeds(
+    [vizingSenderNonceSeed, sender.toBuffer(), destChainid.toBuffer("be", 8)],
+    vizingPadProgramId
+  );
+}
+
 export function generatePdaForVizingAppSolReceiver(
   vizingAppProgramId: anchor.web3.PublicKey
 ): [anchor.web3.PublicKey, number] {
@@ -256,6 +268,7 @@ interface launchAccounts {
   user: anchor.web3.PublicKey;
   vizingAppMessageAuthority: anchor.web3.PublicKey;
   vizingPadConfig: anchor.web3.PublicKey;
+  senderNonce: anchor.web3.PublicKey;
   vizingPadFeeCollector: anchor.web3.PublicKey;
   vizingPadProgram: anchor.web3.PublicKey;
   vizingGasSystem: anchor.web3.PublicKey;
@@ -273,6 +286,7 @@ export async function launchFromVizingApp(
       user: accounts.user,
       vizingAppMessageAuthority: accounts.vizingAppMessageAuthority,
       vizingPadConfig: accounts.vizingPadConfig,
+      senderNonce: accounts.senderNonce,
       vizingPadFeeCollector: accounts.vizingPadFeeCollector,
       vizingPadProgram: accounts.vizingPadProgram,
       vizingGasSystem: accounts.vizingGasSystem,

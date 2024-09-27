@@ -76,6 +76,12 @@ pub struct LaunchParams {
     pub message: Message,
 }
 
+#[account]
+#[derive(InitSpace)]
+pub struct SenderNonce {
+    pub nonce: u64,
+}
+
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct Message {
     pub mode: u8,
@@ -100,6 +106,7 @@ pub fn launch_2_vizing<'c: 'info, 'info>(
     vizing_app_fee_payer: &AccountInfo<'info>,
     vizing_app_message_authority: &AccountInfo<'info>,
     vizing_pad_config: &AccountInfo<'info>,
+    sender_nonce: &AccountInfo<'info>,
     vizing_pad_fee_collector: &AccountInfo<'info>,
     vizing_gas_system: &AccountInfo<'info>,
     system_program: &AccountInfo<'info>,
@@ -139,6 +146,7 @@ pub fn launch_2_vizing<'c: 'info, 'info>(
             vizing_app_fee_payer: vizing_app_fee_payer.clone(),
             vizing_app_message_authority: vizing_app_message_authority.clone(),
             vizing_pad_config: vizing_pad_config.clone(),
+            sender_nonce: sender_nonce.clone(),
             vizing_pad_fee_collector: vizing_pad_fee_collector.clone(),
             vizing_gas_system: vizing_gas_system.clone(),
             system_program: system_program.clone(),

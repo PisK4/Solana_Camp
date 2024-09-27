@@ -11,6 +11,7 @@ pub struct OAppRegisteredEvent {
 
 #[event]
 pub struct SuccessfulLaunchMessage {
+    pub nonce: u64,
     pub erliest_arrival_timestamp: u64,
     pub latest_arrival_timestamp: u64,
     pub relayer: [u8; 32],

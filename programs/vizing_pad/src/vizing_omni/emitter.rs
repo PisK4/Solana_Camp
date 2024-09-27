@@ -56,6 +56,12 @@ pub struct LaunchParams {
     pub message: Message,
 }
 
+#[account]
+#[derive(InitSpace)]
+pub struct SenderNonce {
+    pub nonce: u64,
+}
+
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct Message {
     pub mode: u8,

@@ -9,6 +9,7 @@ use crate::vizing_omni::*;
 use crate::library::{Uint256, VIZING_APP_CONFIG_SEED};
 
 #[derive(Accounts)]
+#[instruction(params: LaunchParams)]
 pub struct LaunchOp<'info> {
     /// CHECK: We need signer to claim ownership
     #[account(mut, signer)]
@@ -20,6 +21,14 @@ pub struct LaunchOp<'info> {
     #[account(seeds = [VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
         , constraint = vizing_pad_config.is_paused != true @VizingError::VizingNotActivated)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
+
+    #[account(
+        init_if_needed,
+        payer = vizing_app_fee_payer,
+        space = 8 + SenderNonce::INIT_SPACE,
+        seeds = [VIZING_SENDER_NONCE_SEED, params.sender.key().as_ref(), params.dest_chainid.to_le_bytes().as_ref()], bump
+    )]
+    pub sender_nonce: Account<'info, SenderNonce>,
 
     /// CHECK: We need this account as to receive the fee
     #[account(mut, address = vizing_pad_config.fee_collector @VizingError::FeeCollectorInvalid)]
@@ -34,14 +43,12 @@ impl LaunchOp<'_> {
         msg!("### VizingLauchOp::launch ###");
         msg!("sender: {} authority: {}", ctx.accounts.vizing_app_fee_payer.key(), ctx.accounts.vizing_app_message_authority.key());
         msg!("destChainId:{}, destProgram: {:?}", params.dest_chainid, params.message.target_program);
+
         let message = &params.message;
         let serialized_data: Vec<u8> = message.try_to_vec()?;
-
         let dest_chain_id = params.dest_chainid;
-
         let dapp = &params.message.target_program;
         let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
-
         let get_gas_system_global = vizing_gas_system.get_gas_system_global(dest_chain_id);
         let get_fee_config = vizing_gas_system.get_fee_config(dest_chain_id);
         let get_trade_fee_config = vizing_gas_system.get_trade_fee_config(dest_chain_id, *dapp);
@@ -87,6 +94,7 @@ impl LaunchOp<'_> {
         msg!("fee:{} to fee_collector", fee);
 
         emit!(SuccessfulLaunchMessage {
+            nonce: ctx.accounts.sender_nonce.nonce,
             erliest_arrival_timestamp: params.erliest_arrival_timestamp,
             latest_arrival_timestamp: params.latest_arrival_timestamp,
             relayer: params.relayer,
@@ -100,6 +108,9 @@ impl LaunchOp<'_> {
             vizing_pad_config: ctx.accounts.vizing_pad_config.key(),
             vizing_gas_system_config: ctx.accounts.vizing_gas_system.key(),
         });
+
+
+        ctx.accounts.sender_nonce.nonce += 1;
 
         Ok(())
     }

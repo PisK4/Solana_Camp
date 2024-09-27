@@ -89,16 +89,19 @@ pub fn launch_2_vizing<'c: 'info, 'info>(
     vizing_app_fee_payer: &AccountInfo<'info>,
     vizing_app_message_authority: &AccountInfo<'info>,
     vizing_pad_config: &AccountInfo<'info>,
+    sender_nonce: &AccountInfo<'info>,
     vizing_pad_fee_collector: &AccountInfo<'info>,
     vizing_gas_system: &AccountInfo<'info>,
     system_program: &AccountInfo<'info>,
 ) -> Result<()> {
+    let pass_value: vizing_pad::library::Uint256 =
+        vizing_pad::library::Uint256::new(launch_params.value.high, launch_params.value.low);
     let params = vizing_pad::vizing_omni::LaunchParams {
         erliest_arrival_timestamp: launch_params.erliest_arrival_timestamp,
         latest_arrival_timestamp: launch_params.latest_arrival_timestamp,
         relayer: launch_params.relayer,
         sender: launch_params.sender,
-        value: launch_params.value,
+        value: pass_value,
         dest_chainid: launch_params.dest_chainid,
         addition_params: vizing_pad::vizing_omni::AdditionalParams {
             mode: launch_params.addition_params.mode,
@@ -126,6 +129,7 @@ pub fn launch_2_vizing<'c: 'info, 'info>(
             vizing_app_fee_payer: vizing_app_fee_payer.clone(),
             vizing_app_message_authority: vizing_app_message_authority.clone(),
             vizing_pad_config: vizing_pad_config.clone(),
+            sender_nonce: sender_nonce.clone(),
             vizing_pad_fee_collector: vizing_pad_fee_collector.clone(),
             vizing_gas_system: vizing_gas_system.clone(),
             system_program: system_program.clone(),

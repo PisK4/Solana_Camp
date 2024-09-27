@@ -425,6 +425,13 @@ describe("Vizing Test", () => {
       message: message,
     };
 
+    const [vizingSenderNonce, bump] =
+      vizingUtils.generatePdaForVizingSenderNonce(
+        vizingProgram.programId,
+        launchParams.sender,
+        launchParams.destChainid
+      );
+    console.log(`vizingSenderNonce: ${vizingSenderNonce.toBase58()}`);
     {
       try {
         await vizingProgram.methods
@@ -433,12 +440,14 @@ describe("Vizing Test", () => {
             vizingAppFeePayer: provider.wallet.publicKey,
             vizingAppMessageAuthority: provider.wallet.publicKey,
             vizingPadConfig: vizingPadConfigs,
+            senderNonce: vizingSenderNonce,
             vizingPadFeeCollector: anchor.web3.Keypair.generate().publicKey,
             vizingGasSystem: vizingGasSystem,
           })
           .rpc();
         throw new Error("should not come here");
       } catch (error) {
+        console.log(error);
         expect(error.error.errorMessage).to.equal(
           "Unauthorized: Fee Collector Invalid"
         );
@@ -460,6 +469,7 @@ describe("Vizing Test", () => {
           vizingAppFeePayer: provider.wallet.publicKey,
           vizingAppMessageAuthority: provider.wallet.publicKey,
           vizingPadConfig: vizingPadConfigs,
+          senderNonce: vizingSenderNonce,
           vizingPadFeeCollector: feeCollectorKeyPair.publicKey,
           vizingGasSystem: vizingGasSystem,
         })
@@ -500,6 +510,13 @@ describe("Vizing Test", () => {
           },
         };
 
+        const [vizingSenderNonce, bump] =
+          vizingUtils.generatePdaForVizingSenderNonce(
+            vizingProgram.programId,
+            newLaunchParams.sender,
+            newLaunchParams.destChainid
+          );
+
         const feeReceiverBalanceBefore = await provider.connection.getBalance(
           feeCollectorKeyPair.publicKey
         );
@@ -510,6 +527,7 @@ describe("Vizing Test", () => {
             vizingAppFeePayer: provider.wallet.publicKey,
             vizingAppMessageAuthority: provider.wallet.publicKey,
             vizingPadConfig: vizingPadConfigs,
+            senderNonce: vizingSenderNonce,
             vizingPadFeeCollector: feeCollectorKeyPair.publicKey,
             vizingGasSystem: vizingGasSystem,
           })
@@ -559,6 +577,13 @@ describe("Vizing Test", () => {
 
       console.log(`meta: ${meta.toString("hex")}`);
 
+      const [vizingSenderNonce, bump] =
+        vizingUtils.generatePdaForVizingSenderNonce(
+          vizingProgram.programId,
+          provider.wallet.publicKey,
+          new anchor.BN(28516)
+        );
+
       const tx = await vizingUtils.launchFromVizingApp(
         vizingAppMockProgram,
         targetProgram,
@@ -567,6 +592,7 @@ describe("Vizing Test", () => {
           user: provider.wallet.publicKey,
           vizingAppMessageAuthority: vizingMessageAuthority,
           vizingPadConfig: vizingPadConfigs,
+          senderNonce: vizingSenderNonce,
           vizingPadFeeCollector: feeCollectorKeyPair.publicKey,
           vizingPadProgram: vizingProgram.programId,
           vizingGasSystem: vizingGasSystem,

@@ -72,6 +72,7 @@ pub mod vizing_app_mock {
             &ctx.accounts.user.to_account_info(),
             &ctx.accounts.vizing_app_message_authority.to_account_info(),
             &ctx.accounts.vizing_pad_config.to_account_info(),
+            &ctx.accounts.sender_nonce.to_account_info(),
             &ctx.accounts.vizing_pad_fee_collector.to_account_info(),
             &ctx.accounts.vizing_gas_system.to_account_info(),
             &ctx.accounts.system_program.to_account_info(),
@@ -140,14 +141,17 @@ pub struct LaunchAppOpTemplate<'info> {
     /// CHECK: 1. Vizing config account
     pub vizing_pad_config: AccountInfo<'info>,
 
-    /// CHECK: 2. Vizing fee collector account
+    /// CHECK: 2. Vizing sender nonce account
+    pub sender_nonce: AccountInfo<'info>,
+
+    /// CHECK: 3. Vizing fee collector account
     #[account(mut)]
     pub vizing_pad_fee_collector: AccountInfo<'info>,
 
-    /// CHECK: 3. Vizing Pad
+    /// CHECK: 4. Vizing Pad
     pub vizing_pad_program: AccountInfo<'info>,
 
-    /// CHECK: 4. Vizing fee account
+    /// CHECK: 5. Vizing fee account
     pub vizing_gas_system: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
