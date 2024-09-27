@@ -68,6 +68,7 @@ export async function main() {
   }
 
   const initGasSystemParams: vizingUtils.initializeVizingGasSystemParams = {
+    groupId: new anchor.BN(initParams.firstSetup.groupId),
     chainId: new anchor.BN(initParams.firstSetup.chainId),
     basePrice: new anchor.BN(initParams.firstSetup.basePrice),
     molecular: new anchor.BN(initParams.firstSetup.molecular),

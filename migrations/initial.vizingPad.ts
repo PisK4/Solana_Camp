@@ -84,7 +84,8 @@ export async function inititalizeVizingPad(
     [vizingGasSystem, vizingGasSystemBump] =
       vizingUtils.generatePdaForVizingGasSystem(
         vizingProgram.programId,
-        vizingPadConfigs
+        vizingPadConfigs,
+        gasSystemParams.groupId
       );
 
     const initGasSystemParams = gasSystemParams;

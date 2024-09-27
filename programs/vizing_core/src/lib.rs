@@ -130,6 +130,7 @@ pub mod vizing_core {
      */
     pub fn set_this_gas_global(
         ctx: Context<SetGasGlobal>,
+        group_id: u64,
         key: u64,
         global_base_price: u64,
         default_gas_limit: u64,
@@ -139,6 +140,7 @@ pub mod vizing_core {
     ) -> Result<()> {
         SetGasGlobal::set_gas_global(
             ctx,
+            group_id,
             key,
             global_base_price,
             default_gas_limit,
@@ -161,6 +163,7 @@ pub mod vizing_core {
      */
     pub fn set_this_fee_config(
         ctx: Context<SetFeeConfig>,
+        group_id: u64,
         key: u64,
         base_price: u64,
         reserve: u64,
@@ -171,6 +174,7 @@ pub mod vizing_core {
     ) -> Result<()> {
         SetFeeConfig::set_fee_config(
             ctx,
+            group_id,
             key,
             base_price,
             reserve,
@@ -190,11 +194,12 @@ pub mod vizing_core {
      */
     pub fn set_this_token_fee_config(
         ctx: Context<SetTokenFeeConfig>,
+        group_id: u64,
         key: u64,
         molecular: u64,
         denominator: u64,
     ) -> Result<()> {
-        SetTokenFeeConfig::set_token_fee_config(ctx, key, molecular, denominator)
+        SetTokenFeeConfig::set_token_fee_config(ctx, group_id, key, molecular, denominator)
     }
 
     //set_dapp_price_config
@@ -206,6 +211,7 @@ pub mod vizing_core {
      */
     pub fn set_this_dapp_price_config(
         ctx: Context<SetDappPriceConfig>,
+        group_id: u64,
         chain_id: u64,
         dapp: [u8; 32],
         molecular: u64,
@@ -214,6 +220,7 @@ pub mod vizing_core {
     ) -> Result<()> {
         SetDappPriceConfig::set_dapp_price_config(
             ctx,
+            group_id,
             chain_id,
             dapp,
             molecular,
@@ -233,6 +240,7 @@ pub mod vizing_core {
      */
     pub fn set_this_exchange_rate(
         ctx: Context<SetExchangeRate>,
+        group_id: u64,
         chain_id: u64,
         molecular: u64,
         denominator: u64,
@@ -241,6 +249,7 @@ pub mod vizing_core {
     ) -> Result<()> {
         SetExchangeRate::set_exchange_rate(
             ctx,
+            group_id,
             chain_id,
             molecular,
             denominator,
@@ -259,12 +268,14 @@ pub mod vizing_core {
      */
     pub fn batch_set_this_token_fee_config(
         ctx: Context<BatchSetTokenFeeConfig>,
+        group_id: u64,
         dest_chain_ids: Vec<u64>,
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
     ) -> Result<()> {
         BatchSetTokenFeeConfig::batch_set_token_fee_config(
             ctx,
+            group_id,
             dest_chain_ids,
             moleculars,
             denominators,
@@ -281,6 +292,7 @@ pub mod vizing_core {
      */
     pub fn batch_set_this_trade_fee_config_map(
         ctx: Context<BatchSetTradeFeeConfigMap>,
+        group_id: u64,
         dapps: Vec<[u8; 32]>,
         dest_chain_ids: Vec<u64>,
         moleculars: Vec<u64>,
@@ -289,6 +301,7 @@ pub mod vizing_core {
     ) -> Result<()> {
         BatchSetTradeFeeConfigMap::batch_set_trade_fee_and_dapp_config_map(
             ctx,
+            group_id,
             dapps,
             dest_chain_ids,
             moleculars,
@@ -306,12 +319,14 @@ pub mod vizing_core {
      */
     pub fn batch_set_this_dapp_price_config_in_diff_chain(
         ctx: Context<BatchSetDappPriceConfigInDiffChain>,
+        group_id: u64,
         chain_ids: Vec<u64>,
         dapps: Vec<[u8; 32]>,
         base_prices: Vec<u64>,
     ) -> Result<()> {
         BatchSetDappPriceConfigInDiffChain::batch_set_dapp_price_config_in_diff_chain(
             ctx,
+            group_id,
             chain_ids,
             dapps,
             base_prices,
@@ -327,12 +342,14 @@ pub mod vizing_core {
      */
     pub fn batch_set_this_dapp_price_config_in_same_chain(
         ctx: Context<BatchSetDappPriceConfigInSameChain>,
+        group_id: u64,
         chain_id: u64,
         dapps: Vec<[u8; 32]>,
         base_prices: Vec<u64>,
     ) -> Result<()> {
         BatchSetDappPriceConfigInSameChain::batch_set_dapp_price_config_in_same_chain(
             ctx,
+            group_id,
             chain_id,
             dapps,
             base_prices,
@@ -350,6 +367,7 @@ pub mod vizing_core {
      */
     pub fn batch_set_this_exchange_rate(
         ctx: Context<BatchSetExchangeRate>,
+        group_id: u64,
         chain_ids: Vec<u64>,
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
@@ -358,6 +376,7 @@ pub mod vizing_core {
     ) -> Result<()> {
         BatchSetExchangeRate::batch_set_exchange_rate(
             ctx,
+            group_id,
             chain_ids,
             moleculars,
             denominators,
@@ -369,10 +388,11 @@ pub mod vizing_core {
     //remove
     pub fn remove_trade_fee_dapp(
         ctx: Context<RemoveTradeFeeConfigDapp>,
+        group_id: u64,
         key: u64,
         dapp: [u8; 32],
     ) -> Result<()> {
-        RemoveTradeFeeConfigDapp::remove_this_trade_fee_config_dapp(ctx, key, dapp)
+        RemoveTradeFeeConfigDapp::remove_this_trade_fee_config_dapp(ctx, group_id, key, dapp)
     }
 
     //get

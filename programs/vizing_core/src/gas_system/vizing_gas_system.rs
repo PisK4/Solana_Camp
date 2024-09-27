@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-
 use crate::library::*;
 use crate::governance::*;
 use crate::library::ErrorCode;
@@ -346,35 +345,13 @@ impl InitFeeConfig<'_>{
         
         Ok(())
     }
-
-    // pub fn initialize_fee_config(
-    //     ctx: Context<InitFeeConfig>,
-    //     key: u64,
-    //     base_price: u64,
-    //     reserve: u64,
-    //     molecular: u64,
-    //     denominator: u64,
-    //     molecular_decimal: u8,
-    //     denominator_decimal: u8,
-    // ) -> Result<()> {
-    //     let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
-    //     vizing_gas_system.set_fee_config(
-    //         key,
-    //         base_price,
-    //         reserve,
-    //         molecular,
-    //         denominator,
-    //         molecular_decimal,
-    //         denominator_decimal,
-    //     );
-    //     Ok(())
-    // }
 }
 
 //set
 impl SetGasGlobal<'_>{
     pub fn set_gas_global(
         ctx: Context<SetGasGlobal>,
+        _group_id: u64,
         key: u64,
         global_base_price: u64,
         default_gas_limit: u64,
@@ -399,6 +376,7 @@ impl SetGasGlobal<'_>{
 impl SetFeeConfig<'_>{
     pub fn set_fee_config(
         ctx: Context<SetFeeConfig>,
+        _group_id: u64,
         key: u64,
         base_price: u64,
         reserve: u64,
@@ -426,6 +404,7 @@ impl SetFeeConfig<'_>{
 impl SetTokenFeeConfig<'_>{
     pub fn set_token_fee_config(
         ctx: Context<SetTokenFeeConfig>,
+        _group_id: u64,
         key: u64,
         molecular: u64,
         denominator: u64,
@@ -449,6 +428,7 @@ impl SetTokenFeeConfig<'_>{
 impl SetDappPriceConfig<'_>{
     pub fn set_dapp_price_config(
         ctx: Context<SetDappPriceConfig>,
+        _group_id: u64,
         chain_id: u64,
         dapp: [u8; 32],
         molecular: u64,
@@ -465,6 +445,7 @@ impl SetDappPriceConfig<'_>{
 impl SetExchangeRate<'_>{
     pub fn set_exchange_rate(
         ctx: Context<SetExchangeRate>,
+        _group_id: u64,
         chain_id: u64,
         molecular: u64,
         denominator: u64,
@@ -496,6 +477,7 @@ impl SetExchangeRate<'_>{
 impl BatchSetTokenFeeConfig<'_>{
     pub fn batch_set_token_fee_config(
         ctx: Context<BatchSetTokenFeeConfig>,
+        _group_id: u64,
         dest_chain_ids: Vec<u64>,
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
@@ -520,6 +502,7 @@ impl BatchSetTokenFeeConfig<'_>{
 impl BatchSetTradeFeeConfigMap<'_>{
     pub fn batch_set_trade_fee_and_dapp_config_map(
         ctx: Context<BatchSetTradeFeeConfigMap>,
+        _group_id: u64,
         dapps: Vec<[u8; 32]>,
         dest_chain_ids: Vec<u64>,
         moleculars: Vec<u64>,
@@ -549,6 +532,7 @@ impl BatchSetTradeFeeConfigMap<'_>{
 impl BatchSetDappPriceConfigInDiffChain<'_>{
     pub fn batch_set_dapp_price_config_in_diff_chain(
         ctx: Context<BatchSetDappPriceConfigInDiffChain>,
+        _group_id: u64,
         chain_ids: Vec<u64>,
         dapps: Vec<[u8; 32]>,
         base_prices: Vec<u64>,
@@ -570,6 +554,7 @@ impl BatchSetDappPriceConfigInDiffChain<'_>{
 impl BatchSetDappPriceConfigInSameChain<'_>{
     pub fn batch_set_dapp_price_config_in_same_chain(
         ctx: Context<BatchSetDappPriceConfigInSameChain>,
+        _group_id: u64,
         chain_id: u64,
         dapps: Vec<[u8; 32]>,
         base_prices: Vec<u64>,
@@ -587,6 +572,7 @@ impl BatchSetDappPriceConfigInSameChain<'_>{
 impl BatchSetExchangeRate<'_>{
     pub fn batch_set_exchange_rate(
         ctx: Context<BatchSetExchangeRate>,
+        _group_id: u64,
         chain_ids: Vec<u64>,
         moleculars: Vec<u64>,
         denominators: Vec<u64>,
@@ -625,6 +611,7 @@ impl BatchSetExchangeRate<'_>{
 impl RemoveTradeFeeConfigDapp<'_>{
     pub fn remove_this_trade_fee_config_dapp(
         ctx: Context<RemoveTradeFeeConfigDapp>,
+        _group_id: u64,
         key: u64,
         dapp: [u8; 32]
     )-> Result<()> {
@@ -1050,6 +1037,7 @@ impl RemoveTradeFeeConfigDapp<'_>{
 #[account]
 #[derive(InitSpace)]
 pub struct InitGasSystemParams {
+    group_id: u64,
     chain_id: u64,
     base_price: u64,
     molecular: u64,
@@ -1064,6 +1052,7 @@ pub struct InitGasSystemParams {
 }
 
 #[derive(Accounts)]
+#[instruction(params: InitGasSystemParams)]
 pub struct InitFeeConfig<'info> {
     #[account(seeds = [VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
@@ -1071,7 +1060,7 @@ pub struct InitFeeConfig<'info> {
         init,
         payer = payer, 
         space = 8 + VizingGasSystem::INIT_SPACE,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref(), &params.group_id.to_be_bytes()],
         bump
     )]
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
@@ -1082,13 +1071,14 @@ pub struct InitFeeConfig<'info> {
 
 
 #[derive(Accounts)]
+#[instruction(_group_id: u64)]
 pub struct SetGasGlobal<'info> {
     #[account(seeds = [contants::VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
         , constraint = vizing_pad_config.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref(), &_group_id.to_be_bytes()],
         bump
     )]
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
@@ -1098,13 +1088,14 @@ pub struct SetGasGlobal<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(_group_id: u64)]
 pub struct SetFeeConfig<'info> {
     #[account(seeds = [VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
         , constraint = vizing_pad_config.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref(), &_group_id.to_be_bytes()],
         bump
     )]
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
@@ -1114,13 +1105,14 @@ pub struct SetFeeConfig<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(_group_id: u64)]
 pub struct SetTokenFeeConfig<'info> {
     #[account(seeds = [VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
         , constraint = vizing_pad_config.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref(), &_group_id.to_be_bytes()],
         bump
     )]
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
@@ -1130,6 +1122,7 @@ pub struct SetTokenFeeConfig<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(_group_id: u64)]
 pub struct BatchSetTokenFeeConfig<'info> {
     #[account(seeds = [VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
         , constraint = vizing_pad_config.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin
@@ -1137,7 +1130,7 @@ pub struct BatchSetTokenFeeConfig<'info> {
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref() , &_group_id.to_be_bytes()],
         bump
     )]
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
@@ -1147,6 +1140,7 @@ pub struct BatchSetTokenFeeConfig<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(_group_id: u64)]
 pub struct BatchSetTradeFeeConfigMap<'info> {
     #[account(seeds = [VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
         , constraint = vizing_pad_config.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin
@@ -1154,7 +1148,7 @@ pub struct BatchSetTradeFeeConfigMap<'info> {
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref(), &_group_id.to_be_bytes()],
         bump
     )]
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
@@ -1164,13 +1158,14 @@ pub struct BatchSetTradeFeeConfigMap<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(_group_id: u64)]
 pub struct SetDappPriceConfig<'info> {
     #[account(seeds = [VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
         , constraint = vizing_pad_config.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref(), &_group_id.to_be_bytes()],
         bump
     )]
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
@@ -1180,13 +1175,14 @@ pub struct SetDappPriceConfig<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(_group_id: u64)]
 pub struct BatchSetDappPriceConfigInDiffChain<'info> {
     #[account(seeds = [VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
         , constraint = vizing_pad_config.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref(), &_group_id.to_be_bytes()],
         bump
     )]
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
@@ -1196,13 +1192,14 @@ pub struct BatchSetDappPriceConfigInDiffChain<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(_group_id: u64)]
 pub struct BatchSetDappPriceConfigInSameChain<'info> {
     #[account(seeds = [VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
         , constraint = vizing_pad_config.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref(), &_group_id.to_be_bytes()],
         bump
     )]
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
@@ -1212,13 +1209,14 @@ pub struct BatchSetDappPriceConfigInSameChain<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(_group_id: u64)]
 pub struct SetExchangeRate<'info> {
     #[account(seeds = [VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
         , constraint = vizing_pad_config.swap_manager == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref(), &_group_id.to_be_bytes()],
         bump
     )]
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
@@ -1228,13 +1226,14 @@ pub struct SetExchangeRate<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(_group_id: u64)]
 pub struct BatchSetExchangeRate<'info> {
     #[account(seeds = [VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
         , constraint = vizing_pad_config.swap_manager == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref(), &_group_id.to_be_bytes()],
         bump
     )]
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
@@ -1245,13 +1244,14 @@ pub struct BatchSetExchangeRate<'info> {
 
 
 #[derive(Accounts)]
+#[instruction(_group_id: u64)]
 pub struct RemoveTradeFeeConfigDapp<'info> {
     #[account(seeds = [VIZING_PAD_CONFIG_SEED], bump = vizing_pad_config.bump
         , constraint = vizing_pad_config.gas_pool_admin == user.key() @VizingError::NotGasPoolAdmin)]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
     #[account(
         mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
+        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref(), &_group_id.to_be_bytes()],
         bump
     )]
     pub vizing_gas_system: Account<'info, VizingGasSystem>,

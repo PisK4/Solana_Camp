@@ -36,6 +36,7 @@ interface initializeVizingPadAccounts {
 }
 
 export interface initializeVizingGasSystemParams {
+  groupId: anchor.BN;
   chainId: anchor.BN;
   basePrice: anchor.BN;
   molecular: anchor.BN;
@@ -73,10 +74,15 @@ export function generatePdaForVizingAuthority(
 
 export function generatePdaForVizingGasSystem(
   vizingPadProgramId: anchor.web3.PublicKey,
-  vizingPadConfig: anchor.web3.PublicKey
+  vizingPadConfig: anchor.web3.PublicKey,
+  groupId: anchor.BN
 ): [anchor.web3.PublicKey, number] {
   return pdaFromSeeds(
-    [vizingGasSystemSeed, vizingPadConfig.toBuffer()],
+    [
+      vizingGasSystemSeed,
+      vizingPadConfig.toBuffer(),
+      groupId.toBuffer("be", 8),
+    ],
     vizingPadProgramId
   );
 }

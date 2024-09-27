@@ -41,10 +41,6 @@ pub struct LaunchOp<'info> {
     #[account(mut, address = vizing_pad_config.fee_collector @VizingError::FeeCollectorInvalid)]
     pub vizing_pad_fee_collector: AccountInfo<'info>,
 
-    #[account(
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
-        bump
-    )]
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
     pub system_program: Program<'info, System>,
 }
@@ -328,11 +324,7 @@ pub struct ComputeTradeFee1<'info> {
         bump = vizing_pad_config.bump
     )]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
-    #[account(
-        mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
-        bump
-    )]
+
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
@@ -377,11 +369,7 @@ pub struct ComputeTradeFee2<'info> {
         bump = vizing_pad_config.bump
     )]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
-    #[account(
-        mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
-        bump
-    )]
+
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
@@ -431,11 +419,7 @@ pub struct EstimatePrice1<'info> {
         bump = vizing_pad_config.bump
     )]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
-    #[account(
-        mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
-        bump
-    )]
+
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
@@ -479,11 +463,7 @@ pub struct EstimatePrice2<'info> {
         bump = vizing_pad_config.bump
     )]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
-    #[account(
-        mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
-        bump
-    )]
+
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
@@ -522,11 +502,7 @@ pub struct EstimateGas<'info> {
         bump = vizing_pad_config.bump
     )]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
-    #[account(
-        mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
-        bump
-    )]
+
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
@@ -587,11 +563,7 @@ pub struct EstimateTotalFee<'info> {
         bump = vizing_pad_config.bump
     )]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
-    #[account(
-        mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
-        bump
-    )]
+
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
@@ -653,11 +625,7 @@ pub struct ExactOutput<'info> {
         bump = vizing_pad_config.bump
     )]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
-    #[account(
-        mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
-        bump
-    )]
+
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
@@ -701,11 +669,7 @@ pub struct ExactInput<'info> {
         bump = vizing_pad_config.bump
     )]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
-    #[account(
-        mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
-        bump
-    )]
+
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
@@ -750,11 +714,7 @@ pub struct EstimateVizingGasFee1<'info> {
         bump = vizing_pad_config.bump
     )]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
-    #[account(
-        mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
-        bump
-    )]
+
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,
@@ -816,11 +776,7 @@ pub struct EstimateVizingGasFee2<'info> {
         bump = vizing_pad_config.bump
     )]
     pub vizing_pad_config: Account<'info, VizingPadConfigs>,
-    #[account(
-        mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
-        bump
-    )]
+
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
         mut,

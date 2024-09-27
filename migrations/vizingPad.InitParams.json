@@ -14,6 +14,7 @@
   ],
   "registeredValidator": "reLKZaXp8h1CnydbtFo4H1CSriTMvfTDa1KifqhdRjR",
   "firstSetup": {
+    "groupId": 0,
     "chainId": 28516,
     "basePrice": 33,
     "molecular": 0,

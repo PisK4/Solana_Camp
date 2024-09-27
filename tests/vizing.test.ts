@@ -102,6 +102,7 @@ describe("Vizing Test", () => {
     let vizingPadBump: number;
 
     const initGasSystemParams: vizingUtils.initializeVizingGasSystemParams = {
+      groupId: new anchor.BN(0),
       chainId: new anchor.BN(28516),
       basePrice: new anchor.BN(33),
       molecular: new anchor.BN(0),
@@ -203,6 +204,7 @@ describe("Vizing Test", () => {
     }
 
     {
+      const groupId = new anchor.BN(0);
       {
         // ###test loop
         let id = new anchor.BN(100);
@@ -216,6 +218,7 @@ describe("Vizing Test", () => {
           );
           await vizingProgram.methods
             .setThisGasGlobal(
+              groupId,
               id.add(new anchor.BN(i)),
               new_global_base_price,
               new_default_gas_limit,
@@ -255,6 +258,7 @@ describe("Vizing Test", () => {
 
       await vizingProgram.methods
         .batchSetThisTradeFeeConfigMap(
+          groupId,
           tradeFeeConfig_dapps,
           tradeFeeConfig_destChainIds,
           tradeFeeConfig_moleculars,
