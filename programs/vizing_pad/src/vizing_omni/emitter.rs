@@ -70,6 +70,11 @@ pub struct AdditionalParams {
     pub signature: Vec<u8>,
 }
 
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace, Debug)]
+pub struct VizingReceipt {
+    pub fee: u64,
+}
+
 //get 
 //48 bytes
 #[derive(AnchorSerialize, AnchorDeserialize, Clone ,InitSpace)]

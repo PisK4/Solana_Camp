@@ -267,8 +267,9 @@ export async function launchFromVizingApp(
   meta: Buffer,
   accounts: launchAccounts
 ): Promise<anchor.web3.TransactionSignature> {
+  const expectedFee = new anchor.BN(7000000);
   return vizingAppMockProgram.methods
-    .launchVizing(targetProgram, meta)
+    .launchVizing(targetProgram, meta, expectedFee)
     .accounts({
       user: accounts.user,
       vizingAppMessageAuthority: accounts.vizingAppMessageAuthority,

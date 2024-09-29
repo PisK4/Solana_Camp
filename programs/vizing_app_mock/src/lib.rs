@@ -6,13 +6,7 @@ declare_id!("mokB6FzEZx6vPVmasd19CyDDuqZ98auke1Bk59hmzVE");
 
 pub const RESULT_DATA_SEED: &[u8] = b"result_data_seed";
 
-// // const demo address = "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD";
-// pub const TRUSTED_ENDPOINT: [u8; 32] = [
-//     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xc9, 0x1a, 0x3a,
-//     0xfd, 0x70, 0x39, 0x5c, 0xd4, 0x96, 0xc6, 0x47, 0xd5, 0xa6, 0xcc, 0x9d, 0x4b, 0x2b, 0x7f, 0xad,
-// ];
-
-// 0x4d20A067461fD60379DA001EdEC6E8CFb9862cE4
+// example: 0x4d20A067461fD60379DA001EdEC6E8CFb9862cE4
 pub const TRUSTED_ENDPOINT: [u8; 32] = [
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x4d, 0x20, 0xa0, 0x67,
     0x46, 0x1f, 0xd6, 0x03, 0x79, 0xda, 0x00, 0x1e, 0xde, 0xc6, 0xe8, 0xcf, 0xb9, 0x86, 0x2c, 0xe4,
@@ -42,6 +36,7 @@ pub mod vizing_app_mock {
         ctx: Context<LaunchAppOpTemplate>,
         target_program: [u8; 32],
         meta: Vec<u8>,
+        expected_fee: u64,
     ) -> Result<()> {
         let params = LaunchParams {
             erliest_arrival_timestamp: VIZING_ERLIEST_ARRIVAL_TIMESTAMP_DEFAULT,
@@ -63,9 +58,7 @@ pub mod vizing_app_mock {
             },
         };
 
-        msg!("meta: {:?}", meta);
-
-        launch_2_vizing(
+        let receipt: VizingReceipt = launch_2_vizing(
             params,
             &ctx.program_id,
             &ctx.accounts.vizing_pad_program.to_account_info(),
@@ -75,9 +68,11 @@ pub mod vizing_app_mock {
             &ctx.accounts.vizing_pad_fee_collector.to_account_info(),
             &ctx.accounts.vizing_gas_system.to_account_info(),
             &ctx.accounts.system_program.to_account_info(),
-        )
+        )?;
 
-        // Ok(())
+        require!(receipt.fee == expected_fee, AppErrors::FeeNotMatch);
+
+        Ok(())
     }
 
     #[access_control(assert_vizing_authority(&ctx.accounts.vizing_authority))]

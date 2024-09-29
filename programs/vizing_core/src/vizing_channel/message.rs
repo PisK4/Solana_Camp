@@ -30,7 +30,7 @@ pub struct LaunchOp<'info> {
 }
 
 impl LaunchOp<'_> {
-    pub fn vizing_launch(ctx: &mut Context<LaunchOp>, params: LaunchParams) -> Result<()> {
+    pub fn vizing_launch(ctx: &mut Context<LaunchOp>, params: LaunchParams) -> Result<VizingReceipt> {
         msg!("### VizingLauchOp::launch ###");
         msg!("sender: {} authority: {}", ctx.accounts.vizing_app_fee_payer.key(), ctx.accounts.vizing_app_message_authority.key());
         msg!("destChainId:{}, destProgram: {:?}", params.dest_chainid, params.message.target_program);
@@ -71,7 +71,6 @@ impl LaunchOp<'_> {
             dest_value,
             &serialized_data,
         ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
-        msg!("launch fee: {:?}",fee);
 
         transfer(
             CpiContext::new(
@@ -101,7 +100,10 @@ impl LaunchOp<'_> {
             vizing_gas_system_config: ctx.accounts.vizing_gas_system.key(),
         });
 
-        Ok(())
+        Ok(
+            VizingReceipt{
+                fee
+        })
     }
 }
 

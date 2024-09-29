@@ -16,8 +16,8 @@ pub mod vizing_pad {
 
     // **********  channel start ************
 
-    pub fn launch(mut _ctx: Context<LaunchOp>, _params: LaunchParams) -> Result<()> {
-        Ok(())
+    pub fn launch(mut _ctx: Context<LaunchOp>, _params: LaunchParams) -> Result<VizingReceipt> {
+        Ok(VizingReceipt { fee: 0 })
     }
 
     // **********  channel end ************

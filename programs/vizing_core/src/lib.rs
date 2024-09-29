@@ -19,7 +19,7 @@ pub mod vizing_core {
 
     // **********  channel start ************
 
-    pub fn launch(mut ctx: Context<LaunchOp>, params: LaunchParams) -> Result<()> {
+    pub fn launch(mut ctx: Context<LaunchOp>, params: LaunchParams) -> Result<VizingReceipt> {
         LaunchOp::vizing_launch(&mut ctx, params)
     }
 

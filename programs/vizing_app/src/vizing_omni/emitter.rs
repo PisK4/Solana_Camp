@@ -93,6 +93,11 @@ pub struct AdditionalParams {
     pub signature: Vec<u8>,
 }
 
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace, Debug)]
+pub struct VizingReceipt {
+    pub fee: u64,
+}
+
 pub fn launch_2_vizing<'c: 'info, 'info>(
     launch_params: LaunchParams,
     curr_program_id: &Pubkey,
@@ -103,7 +108,7 @@ pub fn launch_2_vizing<'c: 'info, 'info>(
     vizing_pad_fee_collector: &AccountInfo<'info>,
     vizing_gas_system: &AccountInfo<'info>,
     system_program: &AccountInfo<'info>,
-) -> Result<()> {
+) -> Result<VizingReceipt> {
     let pass_value: vizing_pad::library::Uint256 =
         vizing_pad::library::Uint256::new(launch_params.value.high, launch_params.value.low);
     let params = vizing_pad::vizing_omni::LaunchParams {
@@ -146,12 +151,12 @@ pub fn launch_2_vizing<'c: 'info, 'info>(
         signer,
     );
 
-    let res = launch(cpi_ctx, params);
-
-    if res.is_ok() {
-        return Ok(());
-    } else {
-        return err!(AppErrors::VizingCallFailed);
+    match launch(cpi_ctx, params) {
+        Ok(res) => {
+            let result = res.get();
+            Ok(VizingReceipt { fee: result.fee })
+        }
+        Err(err) => Err(err),
     }
 }
 
@@ -480,4 +485,6 @@ pub fn fetch_estimate_vizing_gas_fee2<'c: 'info, 'info>(
 pub enum AppErrors {
     #[msg("vizing call failed")]
     VizingCallFailed,
+    #[msg("fee not match what we expect")]
+    FeeNotMatch,
 }
