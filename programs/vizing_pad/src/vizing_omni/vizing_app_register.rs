@@ -50,6 +50,7 @@ impl VizingAppRegister<'_> {
         ctx.accounts.vizing_app_configs.vizing_app_accounts = params.vizing_app_accounts.clone();
         ctx.accounts.vizing_app_configs.vizing_app_program_id = params.vizing_app_program_id;
         ctx.accounts.vizing_app_configs.admin = ctx.accounts.admin.key();
+
         let (_, vizing_app_config_bump) = Pubkey::find_program_address(
             &[
                 VIZING_APP_CONFIG_SEED,
@@ -57,6 +58,7 @@ impl VizingAppRegister<'_> {
             ],
             &ctx.program_id,
         );
+
         ctx.accounts.vizing_app_configs.bump = vizing_app_config_bump;
 
         emit!(VizingAppUpdated {

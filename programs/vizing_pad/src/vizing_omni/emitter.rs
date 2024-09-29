@@ -5,11 +5,8 @@ use anchor_lang::prelude::*;
 pub const VIZING_MESSAGE_AUTHORITY_SEED: &[u8] = b"Vizing_Message_Authority_Seed";
 pub const VIZING_ERLIEST_ARRIVAL_TIMESTAMP_DEFAULT: u64 = 0;
 pub const VIZING_LATEST_ARRIVAL_TIMESTAMP_DEFAULT: u64 = 0;
-pub const VIZING_RELAYER_DEFAULT: Pubkey = Pubkey::new_from_array([
-    137, 71, 54, 167, 199, 236, 39, 80, 113, 216, 76, 7, 85, 39, 112, 180, 125, 214, 156, 170, 202,
-    74, 57, 119, 4, 40, 1, 88, 236, 158, 120, 105,
-]);
-pub const VIZING_GASLIMIT_DEFAULT: u64 = 0;
+pub const VIZING_RELAYER_DEFAULT: [u8; 32] = [0; 32];
+pub const VIZING_GASLIMIT_DEFAULT: u64 = 10000000;
 
 #[derive(Accounts)]
 pub struct VizingEmitterInitialize<'info> {
@@ -36,9 +33,9 @@ pub struct VizingMessageAuthority {
 
 impl VizingEmitterInitialize<'_> {
     pub fn handler(ctx: Context<Self>) -> Result<()> {
-        let (_, message_pda_authority_bump) =
-            Pubkey::find_program_address(&[b"message_pda_authority"], ctx.program_id);
-        ctx.accounts.message_pda_authority.bump = message_pda_authority_bump;
+        let (_, bump) =
+            Pubkey::find_program_address(&[VIZING_MESSAGE_AUTHORITY_SEED], &ctx.program_id);
+        ctx.accounts.message_pda_authority.bump = bump;
         Ok(())
     }
 }

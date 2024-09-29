@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use vizing_pad::library::Uint256;
 use vizing_pad::{
     self,
     cpi::accounts::{
@@ -19,6 +18,18 @@ pub const VIZING_ERLIEST_ARRIVAL_TIMESTAMP_DEFAULT: u64 = 0;
 pub const VIZING_LATEST_ARRIVAL_TIMESTAMP_DEFAULT: u64 = 0;
 pub const VIZING_RELAYER_DEFAULT: [u8; 32] = [0; 32];
 pub const VIZING_GASLIMIT_DEFAULT: u64 = 10000000;
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, InitSpace)]
+pub struct Uint256 {
+    pub high: u128,
+    pub low: u128,
+}
+
+impl Uint256 {
+    pub fn new(high: u128, low: u128) -> Self {
+        Self { high, low }
+    }
+}
 
 #[derive(Accounts)]
 pub struct VizingEmitterInitialize<'info> {
@@ -93,12 +104,14 @@ pub fn launch_2_vizing<'c: 'info, 'info>(
     vizing_gas_system: &AccountInfo<'info>,
     system_program: &AccountInfo<'info>,
 ) -> Result<()> {
+    let pass_value: vizing_pad::library::Uint256 =
+        vizing_pad::library::Uint256::new(launch_params.value.high, launch_params.value.low);
     let params = vizing_pad::vizing_omni::LaunchParams {
         erliest_arrival_timestamp: launch_params.erliest_arrival_timestamp,
         latest_arrival_timestamp: launch_params.latest_arrival_timestamp,
         relayer: launch_params.relayer,
         sender: launch_params.sender,
-        value: launch_params.value,
+        value: pass_value,
         dest_chainid: launch_params.dest_chainid,
         addition_params: vizing_pad::vizing_omni::AdditionalParams {
             mode: launch_params.addition_params.mode,
@@ -159,8 +172,10 @@ pub fn fetch_compute_trade_fee1<'c: 'info, 'info>(
             current_record_message: current_record_message.clone(),
         },
     );
+    let pass_value: vizing_pad::library::Uint256 =
+        vizing_pad::library::Uint256::new(amount_out.high, amount_out.low);
 
-    let res = compute_trade_fee1(cpi_ctx, dest_chain_id, amount_out);
+    let res = compute_trade_fee1(cpi_ctx, dest_chain_id, pass_value);
 
     if res.is_ok() {
         return Ok(());
@@ -174,7 +189,7 @@ pub fn fetch_compute_trade_fee2<'c: 'info, 'info>(
     vizing_pad_config: &AccountInfo<'info>,
     vizing_gas_system: &AccountInfo<'info>,
     current_record_message: &AccountInfo<'info>,
-    target_contract: [u8; 32],
+    target_program: [u8; 32],
     dest_chain_id: u64,
     amount_out: Uint256,
 ) -> Result<()> {
@@ -186,8 +201,10 @@ pub fn fetch_compute_trade_fee2<'c: 'info, 'info>(
             current_record_message: current_record_message.clone(),
         },
     );
+    let pass_value: vizing_pad::library::Uint256 =
+        vizing_pad::library::Uint256::new(amount_out.high, amount_out.low);
 
-    let res = compute_trade_fee2(cpi_ctx, target_contract, dest_chain_id, amount_out);
+    let res = compute_trade_fee2(cpi_ctx, target_program, dest_chain_id, pass_value);
 
     if res.is_ok() {
         return Ok(());
@@ -201,7 +218,7 @@ pub fn fetch_estimate_price1<'c: 'info, 'info>(
     vizing_pad_config: &AccountInfo<'info>,
     vizing_gas_system: &AccountInfo<'info>,
     current_record_message: &AccountInfo<'info>,
-    target_contract: [u8; 32],
+    target_program: [u8; 32],
     dest_chain_id: u64,
 ) -> Result<()> {
     let cpi_ctx = CpiContext::new(
@@ -213,7 +230,8 @@ pub fn fetch_estimate_price1<'c: 'info, 'info>(
         },
     );
 
-    let res = estimate_price1(cpi_ctx, target_contract, dest_chain_id);
+    let res = estimate_price1(cpi_ctx, target_program, dest_chain_id);
+
     if res.is_ok() {
         return Ok(());
     } else {
@@ -271,8 +289,10 @@ pub fn fetch_estimate_gas<'c: 'info, 'info>(
             current_record_message: current_record_message.clone(),
         },
     );
+    let pass_value: vizing_pad::library::Uint256 =
+        vizing_pad::library::Uint256::new(amount_out.high, amount_out.low);
 
-    let res = estimate_gas(cpi_ctx, amount_out, dest_chain_id, cpi_message);
+    let res = estimate_gas(cpi_ctx, pass_value, dest_chain_id, cpi_message);
 
     if res.is_ok() {
         return Ok(());
@@ -307,7 +327,10 @@ pub fn fetch_estimate_total_fee<'c: 'info, 'info>(
         },
     );
 
-    let res = estimate_total_fee(cpi_ctx, dest_chain_id, amount_out, cpi_message);
+    let pass_value: vizing_pad::library::Uint256 =
+        vizing_pad::library::Uint256::new(amount_out.high, amount_out.low);
+
+    let res = estimate_total_fee(cpi_ctx, dest_chain_id, pass_value, cpi_message);
 
     if res.is_ok() {
         return Ok(());
@@ -333,7 +356,10 @@ pub fn fetch_exact_output<'c: 'info, 'info>(
         },
     );
 
-    let res = exact_output(cpi_ctx, dest_chain_id, amount_out);
+    let pass_value: vizing_pad::library::Uint256 =
+        vizing_pad::library::Uint256::new(amount_out.high, amount_out.low);
+
+    let res = exact_output(cpi_ctx, dest_chain_id, pass_value);
 
     if res.is_ok() {
         return Ok(());
@@ -387,7 +413,16 @@ pub fn fetch_estimate_vizing_gas_fee1<'c: 'info, 'info>(
         },
     );
 
-    let res = estimate_vizing_gas_fee1(cpi_ctx, value, dest_chain_id, _addition_params, message);
+    let pass_value: vizing_pad::library::Uint256 =
+        vizing_pad::library::Uint256::new(value.high, value.low);
+
+    let res = estimate_vizing_gas_fee1(
+        cpi_ctx,
+        pass_value,
+        dest_chain_id,
+        _addition_params,
+        message,
+    );
 
     if res.is_ok() {
         return Ok(());
@@ -423,8 +458,16 @@ pub fn fetch_estimate_vizing_gas_fee2<'c: 'info, 'info>(
         },
     );
 
-    let res =
-        estimate_vizing_gas_fee2(cpi_ctx, value, dest_chain_id, _addition_params, cpi_message);
+    let pass_value: vizing_pad::library::Uint256 =
+        vizing_pad::library::Uint256::new(value.high, value.low);
+
+    let res = estimate_vizing_gas_fee2(
+        cpi_ctx,
+        pass_value,
+        dest_chain_id,
+        _addition_params,
+        cpi_message,
+    );
 
     if res.is_ok() {
         return Ok(());
