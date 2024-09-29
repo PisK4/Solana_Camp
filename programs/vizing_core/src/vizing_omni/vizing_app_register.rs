@@ -90,12 +90,13 @@ pub struct VizingAppManagement<'info> {
 }
 
 impl VizingAppManagement<'_> {
-    pub fn update_vizing_app_accounts(
+    pub fn update_vizing_app_configs(
         ctx: &mut Context<VizingAppManagement>,
-        vizing_app_accounts: Vec<Pubkey>,
+        new_vizing_app_accounts: Vec<Pubkey>,
+        new_sol_pda_receiver: Pubkey,
     ) -> Result<()> {
-        ctx.accounts.vizing_app_configs.vizing_app_accounts = vizing_app_accounts;
-
+        ctx.accounts.vizing_app_configs.vizing_app_accounts = new_vizing_app_accounts;
+        ctx.accounts.vizing_app_configs.sol_pda_receiver = new_sol_pda_receiver.key();
         emit!(VizingAppUpdated {
             sol_pda_receiver: ctx.accounts.vizing_app_configs.sol_pda_receiver,
             vizing_app_accounts: ctx.accounts.vizing_app_configs.vizing_app_accounts.clone(),
@@ -110,14 +111,12 @@ impl VizingAppManagement<'_> {
         new_admin: Pubkey,
     ) -> Result<()> {
         ctx.accounts.vizing_app_configs.admin = new_admin.key();
-        Ok(())
-    }
-
-    pub fn modify_sol_pda_receiver(
-        ctx: &mut Context<VizingAppManagement>,
-        new_sol_pda_receiver: Pubkey,
-    ) -> Result<()> {
-        ctx.accounts.vizing_app_configs.sol_pda_receiver = new_sol_pda_receiver.key();
+        emit!(VizingAppUpdated {
+            sol_pda_receiver: ctx.accounts.vizing_app_configs.sol_pda_receiver,
+            vizing_app_accounts: ctx.accounts.vizing_app_configs.vizing_app_accounts.clone(),
+            vizing_app_program_id: ctx.accounts.vizing_app_configs.vizing_app_program_id,
+            vizing_app_config_pda: ctx.accounts.vizing_app_configs.key(),
+        });
         Ok(())
     }
 }

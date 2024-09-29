@@ -43,9 +43,14 @@ pub mod vizing_core {
 
     pub fn update_vizing_app(
         mut ctx: Context<VizingAppManagement>,
-        vizing_app_accounts: Vec<Pubkey>,
+        new_vizing_app_accounts: Vec<Pubkey>,
+        new_sol_pda_receiver: Pubkey,
     ) -> Result<()> {
-        VizingAppManagement::update_vizing_app_accounts(&mut ctx, vizing_app_accounts)
+        VizingAppManagement::update_vizing_app_configs(
+            &mut ctx,
+            new_vizing_app_accounts,
+            new_sol_pda_receiver,
+        )
     }
 
     pub fn transfer_vizing_app_admin(
