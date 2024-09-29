@@ -17,19 +17,33 @@ pub mod vizing_app_mock {
 
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        ctx.accounts.result_account.result = 0;
-        let (_, bump) = Pubkey::find_program_address(&[RESULT_DATA_SEED], &ctx.program_id);
-        ctx.accounts.result_account.bump = bump;
-        Ok(())
-    }
-
     pub fn initialize_vizing_receiver(ctx: Context<VizingSolReceiverInitialize>) -> Result<()> {
         VizingSolReceiverInitialize::handler(ctx)
     }
 
     pub fn initialize_vizing_emitter(ctx: Context<VizingEmitterInitialize>) -> Result<()> {
         VizingEmitterInitialize::handler(ctx)
+    }
+
+    pub fn register_vizing_app(
+        ctx: Context<RegisterVizingApp>,
+        params: VizingAppRegisterParams,
+    ) -> Result<()> {
+        apply_register_vizing_app(
+            params,
+            &ctx.program_id,
+            &ctx.accounts.vizing_pad_program.to_account_info(),
+            &ctx.accounts.admin.to_account_info(),
+            &ctx.accounts.vizing_app_configs.to_account_info(),
+            &ctx.accounts.system_program.to_account_info(),
+        )
+    }
+
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        ctx.accounts.result_account.result = 0;
+        let (_, bump) = Pubkey::find_program_address(&[RESULT_DATA_SEED], &ctx.program_id);
+        ctx.accounts.result_account.bump = bump;
+        Ok(())
     }
 
     pub fn launch_vizing(

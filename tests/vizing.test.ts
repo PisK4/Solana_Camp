@@ -150,10 +150,17 @@ describe("Vizing Test", () => {
       solPdaReceiver = initVizingApp.solPdaReceiver;
       vizingMessageAuthority = initVizingApp.vizingAppAuthority;
 
-      const initRegAppRet = await vizingInit.inititalizeRegisterVizingApp(
-        vizingProgram,
+      // const initRegAppRet = await vizingInit.inititalizeRegisterVizingApp(
+      //   vizingProgram,
+      //   provider.wallet.publicKey,
+      //   vizingAppMockProgram.programId,
+      //   [resultDataAccount]
+      // );
+
+      const initRegAppRet = await vizingInit.inititalizeVizingAppMockRegister(
+        vizingAppMockProgram,
+        vizingProgram.programId,
         provider.wallet.publicKey,
-        vizingAppMockProgram.programId,
         [resultDataAccount]
       );
 

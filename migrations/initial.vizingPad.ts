@@ -317,3 +317,51 @@ export async function initializeVizingAppMock(
 
   return ret;
 }
+
+export async function inititalizeVizingAppMockRegister(
+  vizing_app_mock_program: anchor.Program,
+  vizingPadProgramId: anchor.web3.PublicKey,
+  admin: anchor.web3.PublicKey,
+  vizingAppAccounts: anchor.web3.PublicKey[]
+) {
+  console.log("### inititalizeRegisterVizingApp start");
+  let vizingAppBump: number;
+
+  // #### register vizing app start
+  [vizingAppConfig, vizingAppBump] = vizingUtils.generatePdaForVizingAppConfig(
+    vizingPadProgramId,
+    vizing_app_mock_program.programId
+  );
+
+  const registerParams = {
+    solPdaReceiver: solPdaReceiver,
+    vizingAppAccounts: vizingAppAccounts,
+    vizingAppProgramId: vizing_app_mock_program.programId,
+  };
+
+  const ret = {
+    vizingAppConfig,
+  };
+
+  console.table(vizingUtils.formatReturnInfo(ret));
+
+  try {
+    const tx = await vizingUtils.registerVizingApp(
+      vizing_app_mock_program,
+      vizingPadProgramId,
+      registerParams,
+      admin,
+      vizingAppConfig
+    );
+
+    console.log(`register vizing app: ${tx}`);
+  } catch (error) {
+    if (error.signature) {
+      console.log(`register vizing app signature: ${error.signature}`);
+    } else {
+      console.error(error);
+    }
+  }
+
+  return ret;
+}

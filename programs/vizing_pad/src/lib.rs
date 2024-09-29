@@ -22,6 +22,32 @@ pub mod vizing_pad {
 
     // **********  channel end ************
 
+    // **********  vizing app config start ************
+
+    pub fn register_vizing_app(
+        mut _ctx: Context<VizingAppRegister>,
+        _params: VizingAppRegisterParams,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn update_vizing_app(
+        mut _ctx: Context<VizingAppManagement>,
+        _new_vizing_app_accounts: Vec<Pubkey>,
+        _new_sol_pda_receiver: Pubkey,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    pub fn transfer_vizing_app_admin(
+        mut _ctx: Context<VizingAppManagement>,
+        _new_admin: Pubkey,
+    ) -> Result<()> {
+        Ok(())
+    }
+
+    // **********  vizing app config end ************
+
     // **********  get output data ***********
     pub fn compute_trade_fee1(
         mut _ctx: Context<ComputeTradeFee1>,

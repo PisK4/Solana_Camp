@@ -205,82 +205,6 @@ export function addressToNumberArray(address: string): number[] {
   return Array.from(Buffer.from(address.replace("0x", ""), "hex"));
 }
 
-// **** vizing app ****
-interface vizingAppRegisterParams {
-  solPdaReceiver: anchor.web3.PublicKey;
-  vizingAppAccounts: anchor.web3.PublicKey[];
-  vizingAppProgramId: anchor.web3.PublicKey;
-}
-
-export function generatePdaForVizingAppConfig(
-  vizingPadProgramId: anchor.web3.PublicKey,
-  vizingAppProgramId: anchor.web3.PublicKey
-): [anchor.web3.PublicKey, number] {
-  return pdaFromSeeds(
-    [vizingAppConfigSeed, vizingAppProgramId.toBuffer()],
-    vizingPadProgramId
-  );
-}
-
-export function generatePdaForVizingAppSolReceiver(
-  vizingAppProgramId: anchor.web3.PublicKey
-): [anchor.web3.PublicKey, number] {
-  return pdaFromSeeds([vizingAppSolReceiverSeed], vizingAppProgramId);
-}
-
-export async function vizingAppRegister(
-  vizingProgram: anchor.Program,
-  params: vizingAppRegisterParams,
-  admin: anchor.web3.PublicKey,
-  vizingAppConfig: anchor.web3.PublicKey
-): Promise<anchor.web3.TransactionSignature> {
-  return vizingProgram.methods
-    .registerVizingApp(params)
-    .accounts({
-      admin: admin,
-      vizingAppConfigs: vizingAppConfig,
-    })
-    .rpc();
-}
-
-// **** mock vizing app ****
-export const resultDataSeed = Buffer.from("result_data_seed");
-
-export function generatePdaForResultData(
-  vizingMockAppprogramId: anchor.web3.PublicKey
-): [anchor.web3.PublicKey, number] {
-  return pdaFromSeeds([resultDataSeed], vizingMockAppprogramId);
-}
-
-interface launchAccounts {
-  user: anchor.web3.PublicKey;
-  vizingAppMessageAuthority: anchor.web3.PublicKey;
-  vizingPadConfig: anchor.web3.PublicKey;
-  vizingPadFeeCollector: anchor.web3.PublicKey;
-  vizingPadProgram: anchor.web3.PublicKey;
-  vizingGasSystem: anchor.web3.PublicKey;
-}
-
-export async function launchFromVizingApp(
-  vizingAppMockProgram: anchor.Program,
-  targetProgram: number[],
-  meta: Buffer,
-  accounts: launchAccounts
-): Promise<anchor.web3.TransactionSignature> {
-  const expectedFee = new anchor.BN(7000000);
-  return vizingAppMockProgram.methods
-    .launchVizing(targetProgram, meta, expectedFee)
-    .accounts({
-      user: accounts.user,
-      vizingAppMessageAuthority: accounts.vizingAppMessageAuthority,
-      vizingPadConfig: accounts.vizingPadConfig,
-      vizingPadFeeCollector: accounts.vizingPadFeeCollector,
-      vizingPadProgram: accounts.vizingPadProgram,
-      vizingGasSystem: accounts.vizingGasSystem,
-    })
-    .rpc();
-}
-
 export function generateVizingPadProgram(
   network: string = "devnet"
 ): anchor.Program {
@@ -359,3 +283,96 @@ export const formatReturnInfo = (ret: any) => {
     })
   );
 };
+
+// **** vizing app ****
+interface vizingAppRegisterParams {
+  solPdaReceiver: anchor.web3.PublicKey;
+  vizingAppAccounts: anchor.web3.PublicKey[];
+  vizingAppProgramId: anchor.web3.PublicKey;
+}
+
+export function generatePdaForVizingAppConfig(
+  vizingPadProgramId: anchor.web3.PublicKey,
+  vizingAppProgramId: anchor.web3.PublicKey
+): [anchor.web3.PublicKey, number] {
+  return pdaFromSeeds(
+    [vizingAppConfigSeed, vizingAppProgramId.toBuffer()],
+    vizingPadProgramId
+  );
+}
+
+export function generatePdaForVizingAppSolReceiver(
+  vizingAppProgramId: anchor.web3.PublicKey
+): [anchor.web3.PublicKey, number] {
+  return pdaFromSeeds([vizingAppSolReceiverSeed], vizingAppProgramId);
+}
+
+export async function vizingAppRegister(
+  vizingProgram: anchor.Program,
+  params: vizingAppRegisterParams,
+  admin: anchor.web3.PublicKey,
+  vizingAppConfig: anchor.web3.PublicKey
+): Promise<anchor.web3.TransactionSignature> {
+  return vizingProgram.methods
+    .registerVizingApp(params)
+    .accounts({
+      admin: admin,
+      vizingAppConfigs: vizingAppConfig,
+    })
+    .rpc();
+}
+
+// **** mock vizing app ****
+export const resultDataSeed = Buffer.from("result_data_seed");
+
+export function generatePdaForResultData(
+  vizingMockAppprogramId: anchor.web3.PublicKey
+): [anchor.web3.PublicKey, number] {
+  return pdaFromSeeds([resultDataSeed], vizingMockAppprogramId);
+}
+
+interface launchAccounts {
+  user: anchor.web3.PublicKey;
+  vizingAppMessageAuthority: anchor.web3.PublicKey;
+  vizingPadConfig: anchor.web3.PublicKey;
+  vizingPadFeeCollector: anchor.web3.PublicKey;
+  vizingPadProgram: anchor.web3.PublicKey;
+  vizingGasSystem: anchor.web3.PublicKey;
+}
+
+export async function launchFromVizingApp(
+  vizingAppMockProgram: anchor.Program,
+  targetProgram: number[],
+  meta: Buffer,
+  accounts: launchAccounts
+): Promise<anchor.web3.TransactionSignature> {
+  const expectedFee = new anchor.BN(7000000);
+  return vizingAppMockProgram.methods
+    .launchVizing(targetProgram, meta, expectedFee)
+    .accounts({
+      user: accounts.user,
+      vizingAppMessageAuthority: accounts.vizingAppMessageAuthority,
+      vizingPadConfig: accounts.vizingPadConfig,
+      vizingPadFeeCollector: accounts.vizingPadFeeCollector,
+      vizingPadProgram: accounts.vizingPadProgram,
+      vizingGasSystem: accounts.vizingGasSystem,
+    })
+    .rpc();
+}
+
+export async function registerVizingApp(
+  vizingAppMockProgram: anchor.Program,
+  vizingPad: anchor.web3.PublicKey,
+  params: vizingAppRegisterParams,
+  admin: anchor.web3.PublicKey,
+  vizingAppConfig: anchor.web3.PublicKey
+): Promise<anchor.web3.TransactionSignature> {
+  return vizingAppMockProgram.methods
+    .registerVizingApp(params)
+    .accounts({
+      admin: admin,
+      vizingAppConfigs: vizingAppConfig,
+      vizingPadProgram: vizingPad,
+    })
+    .rpc();
+}

@@ -1,22 +1,24 @@
 use anchor_lang::prelude::*;
+use vizing_pad::{
+    self,
+    cpi::accounts::{VizingAppManagement, VizingAppRegister},
+    cpi::{register_vizing_app, transfer_vizing_app_admin, update_vizing_app},
+};
 
 pub const VIZING_APP_CONFIG_SEED: &[u8] = b"Vizing_App_Config_Seed";
+pub const VIZING_APP_AUTHORITY_SEED: &[u8] = b"Vizing_App_Authority_Seed";
 
 #[derive(Accounts)]
-#[instruction(params: VizingAppRegisterParams)]
-pub struct VizingAppRegister<'info> {
-    /// CHECK: We need signer to claim ownership
+pub struct RegisterVizingApp<'info> {
+    /// CHECK: 1. admin of the vizing app
     #[account(mut, signer)]
     pub admin: AccountInfo<'info>,
 
-    #[account(
-        init,
-        payer = admin,
-        space = 8 + VizingAppConfig::INIT_SPACE,
-        seeds = [VIZING_APP_CONFIG_SEED, &params.vizing_app_program_id.to_bytes()],
-        bump
-    )]
-    pub vizing_app_configs: Account<'info, VizingAppConfig>,
+    /// CHECK: 2. vizing app config
+    pub vizing_app_configs: AccountInfo<'info>,
+
+    /// CHECK: 3. Vizing Pad
+    pub vizing_pad_program: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
 }
@@ -41,91 +43,53 @@ pub struct VizingAppRegisterParams {
     pub vizing_app_program_id: Pubkey,
 }
 
-impl VizingAppRegister<'_> {
-    pub fn register_vizing_app(
-        ctx: &mut Context<VizingAppRegister>,
-        params: VizingAppRegisterParams,
-    ) -> Result<()> {
-        ctx.accounts.vizing_app_configs.sol_pda_receiver = params.sol_pda_receiver;
-        ctx.accounts.vizing_app_configs.vizing_app_accounts = params.vizing_app_accounts.clone();
-        ctx.accounts.vizing_app_configs.vizing_app_program_id = params.vizing_app_program_id;
-        ctx.accounts.vizing_app_configs.admin = ctx.accounts.admin.key();
+// #[derive(Accounts)]
+// #[instruction(params: VizingAppRegisterParams)]
+// pub struct VizingAppManagement<'info> {
+//     /// CHECK: We need signer to claim ownership
+//     #[account(mut, signer)]
+//     pub admin: AccountInfo<'info>,
 
-        let (_, vizing_app_config_bump) = Pubkey::find_program_address(
-            &[
-                VIZING_APP_CONFIG_SEED,
-                &params.vizing_app_program_id.to_bytes(),
-            ],
-            &ctx.program_id,
-        );
+//     #[account(
+//         seeds = [VIZING_APP_CONFIG_SEED, &vizing_app_configs.vizing_app_program_id.to_bytes()],
+//         bump = vizing_app_configs.bump,
+//         has_one = admin
+//     )]
+//     pub vizing_app_configs: Account<'info, VizingAppConfig>,
 
-        ctx.accounts.vizing_app_configs.bump = vizing_app_config_bump;
+//     pub system_program: Program<'info, System>,
+// }
 
-        emit!(VizingAppUpdated {
-            sol_pda_receiver: params.sol_pda_receiver,
-            vizing_app_accounts: params.vizing_app_accounts.clone(),
-            vizing_app_program_id: params.vizing_app_program_id,
-            vizing_app_config_pda: ctx.accounts.vizing_app_configs.key(),
-        });
+pub fn apply_register_vizing_app<'c: 'info, 'info>(
+    register_params: VizingAppRegisterParams,
+    curr_program_id: &Pubkey,
+    vizing_pad_program: &AccountInfo<'info>,
+    admin: &AccountInfo<'info>,
+    vizing_app_configs: &AccountInfo<'info>,
+    system_program: &AccountInfo<'info>,
+) -> Result<()> {
+    let params = vizing_pad::vizing_omni::VizingAppRegisterParams {
+        sol_pda_receiver: register_params.sol_pda_receiver,
+        vizing_app_accounts: register_params.vizing_app_accounts,
+        vizing_app_program_id: register_params.vizing_app_program_id,
+    };
 
-        Ok(())
-    }
-}
+    let (_, bump_authority) =
+        Pubkey::find_program_address(&[VIZING_APP_AUTHORITY_SEED], curr_program_id);
 
-#[derive(Accounts)]
-#[instruction(params: VizingAppRegisterParams)]
-pub struct VizingAppManagement<'info> {
-    /// CHECK: We need signer to claim ownership
-    #[account(mut, signer)]
-    pub admin: AccountInfo<'info>,
+    let seeds = &[VIZING_APP_AUTHORITY_SEED, &[bump_authority]];
 
-    #[account(
-        seeds = [VIZING_APP_CONFIG_SEED, &vizing_app_configs.vizing_app_program_id.to_bytes()],
-        bump = vizing_app_configs.bump,
-        has_one = admin
-    )]
-    pub vizing_app_configs: Account<'info, VizingAppConfig>,
+    let signer = &[&seeds[..]];
 
-    pub system_program: Program<'info, System>,
-}
+    let ctx = CpiContext::new_with_signer(
+        vizing_pad_program.clone(),
+        VizingAppRegister {
+            admin: admin.clone(),
+            vizing_app_configs: vizing_app_configs.clone(),
+            system_program: system_program.clone(),
+        },
+        signer,
+    );
 
-impl VizingAppManagement<'_> {
-    pub fn update_vizing_app_accounts(
-        ctx: &mut Context<VizingAppManagement>,
-        vizing_app_accounts: Vec<Pubkey>,
-    ) -> Result<()> {
-        ctx.accounts.vizing_app_configs.vizing_app_accounts = vizing_app_accounts;
-
-        emit!(VizingAppUpdated {
-            sol_pda_receiver: ctx.accounts.vizing_app_configs.sol_pda_receiver,
-            vizing_app_accounts: ctx.accounts.vizing_app_configs.vizing_app_accounts.clone(),
-            vizing_app_program_id: ctx.accounts.vizing_app_configs.vizing_app_program_id,
-            vizing_app_config_pda: ctx.accounts.vizing_app_configs.key(),
-        });
-        Ok(())
-    }
-
-    pub fn transfer_ownership(
-        ctx: &mut Context<VizingAppManagement>,
-        new_admin: Pubkey,
-    ) -> Result<()> {
-        ctx.accounts.vizing_app_configs.admin = new_admin.key();
-        Ok(())
-    }
-
-    pub fn modify_sol_pda_receiver(
-        ctx: &mut Context<VizingAppManagement>,
-        new_sol_pda_receiver: Pubkey,
-    ) -> Result<()> {
-        ctx.accounts.vizing_app_configs.sol_pda_receiver = new_sol_pda_receiver.key();
-        Ok(())
-    }
-}
-
-#[event]
-pub struct VizingAppUpdated {
-    pub sol_pda_receiver: Pubkey,
-    pub vizing_app_accounts: Vec<Pubkey>,
-    pub vizing_app_program_id: Pubkey,
-    pub vizing_app_config_pda: Pubkey,
+    Ok(register_vizing_app(ctx, params)?)
 }
