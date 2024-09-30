@@ -86,14 +86,15 @@ pub mod vizing_pad {
         Ok(())
     }
 
-    pub fn estimate_vizing_gas_fee1(
-        mut _ctx: Context<EstimateVizingGasFee1>,
+    pub fn estimate_vizing_gas_fee(
+        mut _ctx: Context<EstimateVizingGasFee>,
         _value: Uint256,
         _dest_chain_id: u64,
         _addition_params: Vec<u8>,
-        _message: Vec<u8>,
-    ) -> Result<()> {
-        Ok(())
+        _message: Message,
+    ) -> Result<u64> {
+        let fee: u64 = 0;
+        Ok(fee)
     }
 
     pub fn estimate_vizing_gas_fee2(
@@ -102,7 +103,8 @@ pub mod vizing_pad {
         _dest_chain_id: u64,
         _addition_params: Vec<u8>,
         _message: Message,
-    ) -> Result<()> {
-        Ok(())
+    ) -> Result<u64> {
+        let fee: u64 = 0;
+        Ok(fee)
     }
 }

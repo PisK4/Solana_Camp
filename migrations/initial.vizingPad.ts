@@ -40,7 +40,7 @@ export async function inititalizeVizingPad(
   let vizingPadConfigBump: number;
   let vizingAuthorityBump: number;
   let vizingGasSystemBump: number;
-  let recordMessageAuthority: anchor.web3.PublicKey;
+  let currentRecordMessage: anchor.web3.PublicKey;
   let recordMessagesBump: number;
 
   {
@@ -114,13 +114,13 @@ export async function inititalizeVizingPad(
   }
 
   {
-    [recordMessageAuthority, recordMessagesBump] =
+    [currentRecordMessage, recordMessagesBump] =
       vizingUtils.generatePdaForRecordMessage(vizingProgram.programId);
     {
       try {
         const tx = await vizingUtils.initializeRecordMessage(
           vizingProgram,
-          recordMessageAuthority,
+          currentRecordMessage,
           deployerPk
         );
         console.log(`recordMessage initialize: ${tx}`);
@@ -145,7 +145,7 @@ export async function inititalizeVizingPad(
     vizingAuthorityBump,
     vizingGasSystem,
     vizingGasSystemBump,
-    recordMessageAuthority,
+    currentRecordMessage,
     recordMessagesBump,
   };
 

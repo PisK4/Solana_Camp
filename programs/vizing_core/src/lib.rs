@@ -516,19 +516,18 @@ pub mod vizing_core {
     ///        if not in expert mode, set to 0 (`new bytes(0)`)
     /// @param message The message we want to send to the destination chain
      */
-
-    pub fn estimate_vizing_gas_fee1(
-        ctx: Context<EstimateVizingGasFee1>,
+    pub fn estimate_vizing_gas_fee(
+        ctx: Context<EstimateVizingGasFee>,
         value: Uint256,
         dest_chain_id: u64,
-        _addition_params: Vec<u8>,
-        message: Vec<u8>,
+        addition_params: Vec<u8>,
+        message: Message,
     ) -> Result<u64> {
-        EstimateVizingGasFee1::get_estimate_vizing_gas_fee(
+        EstimateVizingGasFee::get_estimate_vizing_gas_fee(
             ctx,
             value,
             dest_chain_id,
-            _addition_params,
+            addition_params,
             message,
         )
     }
@@ -537,14 +536,14 @@ pub mod vizing_core {
         ctx: Context<EstimateVizingGasFee2>,
         value: Uint256,
         dest_chain_id: u64,
-        _addition_params: Vec<u8>,
+        addition_params: Vec<u8>,
         message: Message,
     ) -> Result<u64> {
         EstimateVizingGasFee2::get_estimate_vizing_gas_fee(
             ctx,
             value,
             dest_chain_id,
-            _addition_params,
+            addition_params,
             message,
         )
     }

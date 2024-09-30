@@ -58,6 +58,16 @@ pub mod vizing_app_mock {
             },
         };
 
+        let fee_from_cpi: u64 = fetch_vizing_gas_fee(
+            &ctx.accounts.vizing_pad_program.to_account_info(),
+            &ctx.accounts.vizing_gas_system.to_account_info(),
+            None,
+            params.value,
+            params.dest_chainid,
+            vec![],
+            params.message.clone(),
+        )?;
+
         let receipt: VizingReceipt = launch_2_vizing(
             params,
             &ctx.program_id,
@@ -71,6 +81,7 @@ pub mod vizing_app_mock {
         )?;
 
         require!(receipt.fee == expected_fee, AppErrors::FeeNotMatch);
+        require!(receipt.fee == fee_from_cpi, AppErrors::FeeNotMatch);
 
         Ok(())
     }
@@ -144,6 +155,9 @@ pub struct LaunchAppOpTemplate<'info> {
 
     /// CHECK: 4. Vizing fee account
     pub vizing_gas_system: AccountInfo<'info>,
+
+    /// CHECK: 4. current_record_message account
+    pub current_record_message: AccountInfo<'info>,
 
     pub system_program: Program<'info, System>,
 }

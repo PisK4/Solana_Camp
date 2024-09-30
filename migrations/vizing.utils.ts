@@ -259,6 +259,7 @@ interface launchAccounts {
   vizingPadFeeCollector: anchor.web3.PublicKey;
   vizingPadProgram: anchor.web3.PublicKey;
   vizingGasSystem: anchor.web3.PublicKey;
+  currentRecordMessage: anchor.web3.PublicKey;
 }
 
 export async function launchFromVizingApp(
@@ -277,6 +278,7 @@ export async function launchFromVizingApp(
       vizingPadFeeCollector: accounts.vizingPadFeeCollector,
       vizingPadProgram: accounts.vizingPadProgram,
       vizingGasSystem: accounts.vizingGasSystem,
+      currentRecordMessage: accounts.currentRecordMessage,
     })
     .rpc();
 }

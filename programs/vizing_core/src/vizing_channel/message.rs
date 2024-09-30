@@ -770,21 +770,67 @@ impl EstimateVizingGasFee1<'_>{
 }
 
 #[derive(Accounts)]
-pub struct EstimateVizingGasFee2<'info> {
-    #[account(
-        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
-        bump = vizing_pad_config.bump
-    )]
-    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
-
+pub struct EstimateVizingGasFee<'info> {
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
+}
+
+impl EstimateVizingGasFee<'_>{
+    pub fn get_estimate_vizing_gas_fee (
+        ctx: Context<EstimateVizingGasFee>,
+        value: Uint256,
+        dest_chain_id: u64,
+        _addition_params: Vec<u8>,
+        message: Message
+    ) -> Result<u64> {  
+
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
+
+
+        let serialized_data: Vec<u8> = message.try_to_vec()?;
+        let Some((_, dapp, _, _, _))=message_monitor::slice_message(&serialized_data) else { todo!() };
+
+        let get_gas_system_global = vizing_gas_system.get_gas_system_global(dest_chain_id);
+        let get_fee_config = vizing_gas_system.get_fee_config(dest_chain_id);
+        let get_trade_fee_config = vizing_gas_system.get_trade_fee_config(dest_chain_id, dapp);
+        let trade_fee = vizing_gas_system.get_trade_fee(dest_chain_id);
+        let dapp_config_value = get_trade_fee_config.value;
+        
+        let vizing_gas_fee = vizing_gas_system::estimate_gas(
+            get_gas_system_global.global_base_price,
+            get_fee_config.base_price,
+            dapp_config_value,
+            get_fee_config.molecular_decimal,
+            get_fee_config.denominator_decimal,
+            get_fee_config.molecular,
+            get_fee_config.denominator,
+            trade_fee.molecular,
+            trade_fee.denominator,
+            get_trade_fee_config.molecular,
+            get_trade_fee_config.denominator,
+            get_gas_system_global.molecular,
+            get_gas_system_global.denominator,
+            get_gas_system_global.default_gas_limit,
+            value,
+            dest_chain_id,
+            &serialized_data,
+        ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
+
+        Ok(vizing_gas_fee)
+    }
+    
+}
+
+#[derive(Accounts)]
+pub struct EstimateVizingGasFee2<'info> {
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
+
     #[account(
-        mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
         bump
     )]
-    pub current_record_message: Account<'info, CurrentRecordMessage>,
+    pub current_record_message: Option<Account<'info, CurrentRecordMessage>>,
 }
+
 impl EstimateVizingGasFee2<'_>{
     pub fn get_estimate_vizing_gas_fee (
         ctx: Context<EstimateVizingGasFee2>,
@@ -795,7 +841,7 @@ impl EstimateVizingGasFee2<'_>{
     ) -> Result<u64> {  
 
         let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
-        let current_record_message = &mut ctx.accounts.current_record_message;
+
 
         let serialized_data: Vec<u8> = message.try_to_vec()?;
         let Some((_, dapp, _, _, _))=message_monitor::slice_message(&serialized_data) else { todo!() };
@@ -826,7 +872,10 @@ impl EstimateVizingGasFee2<'_>{
             dest_chain_id,
             &serialized_data,
         ).ok_or(errors::ErrorCode::EstimateGasNotFound)?;
-        current_record_message.estimate_vizing_gas_fee=vizing_gas_fee;
+
+        if let Some(current_record_message) = &mut ctx.accounts.current_record_message {
+            current_record_message.estimate_vizing_gas_fee=vizing_gas_fee;
+        }
         //set return vizing_gas_fee
         set_return_data(&vizing_gas_fee.to_le_bytes());
         Ok(vizing_gas_fee)

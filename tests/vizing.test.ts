@@ -15,6 +15,7 @@ describe("Vizing Test", () => {
   let vizingAppConfig: anchor.web3.PublicKey;
   let vizingMessageAuthority: anchor.web3.PublicKey;
   let vizingGasSystem: anchor.web3.PublicKey;
+  let currentRecordMessage: anchor.web3.PublicKey;
   let solPdaReceiver: anchor.web3.PublicKey;
 
   let resultDataAccount: anchor.web3.PublicKey;
@@ -135,6 +136,7 @@ describe("Vizing Test", () => {
       initParams = initRet.vizingPadInitParams;
       vizingAuthority = initRet.vizingAuthority;
       vizingGasSystem = initRet.vizingGasSystem;
+      currentRecordMessage = initRet.currentRecordMessage;
 
       const vizingAppMockRet = await vizingInit.initializeVizingAppMock(
         vizingAppMockProgram,
@@ -570,6 +572,7 @@ describe("Vizing Test", () => {
           vizingPadFeeCollector: feeCollectorKeyPair.publicKey,
           vizingPadProgram: vizingProgram.programId,
           vizingGasSystem: vizingGasSystem,
+          currentRecordMessage: currentRecordMessage,
         }
       );
 
