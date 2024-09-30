@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
-import * as vizingUtils from "./vizing.utils";
-import devnetConfig from "./deployment.devnet.json";
+import * as vizingUtils from "../utils/vizing.utils";
+import devnetConfig from "../deployment.devnet.json";
 
 export async function main() {
   console.log("### Launch start");
@@ -53,8 +53,8 @@ export async function main() {
   const tx = await vizingProgram.methods
     .launch(launchParams)
     .accounts({
-      vizingAppFeePayer: vizingProgram.provider.publicKey,
-      vizingAppMessageAuthority: vizingProgram.provider.publicKey,
+      vizingAppFeePayer: vizingProgram.provider.publicKey!,
+      vizingAppMessageAuthority: vizingProgram.provider.publicKey!,
       vizingPadConfig: vizingUtils.generatePublicKeyFromString(
         devnetConfig.vizingPadConfig
       ),

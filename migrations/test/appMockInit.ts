@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
-import * as vizingUtils from "./vizing.utils";
-import * as vizingInit from "./initial.vizingPad";
+import * as vizingUtils from "../utils/vizing.utils";
+import * as vizingInit from "../utils/initial.vizingPad";
 
 export async function main() {
   console.log("### init start");
@@ -40,7 +40,7 @@ export async function main() {
 
   await vizingInit.inititalizeRegisterVizingApp(
     vizingProgram,
-    vizingProgram.provider.publicKey,
+    vizingProgram.provider.publicKey!,
     vizingAppMockProgram.programId,
     [resultDataAccount]
   );

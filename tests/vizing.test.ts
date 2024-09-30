@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { expect } from "chai";
-import * as vizingUtils from "../migrations/vizing.utils";
-import * as vizingInit from "../migrations/initial.vizingPad";
+import * as vizingUtils from "../migrations/utils/vizing.utils";
+import * as vizingInit from "../migrations/utils/initial.vizingPad";
 
 describe("Vizing Test", () => {
   const provider = anchor.AnchorProvider.env();

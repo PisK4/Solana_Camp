@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import fs from "fs";
-import vizingCoreIDL from "../target/idl/vizing_core.json";
-import vizingAppMockIDL from "../target/idl/vizing_app_mock.json";
+import vizingCoreIDL from "../../target/idl/vizing_core.json";
+import vizingAppMockIDL from "../../target/idl/vizing_app_mock.json";
 
 // **** Vizing Pad Configs ***
 export const VizingPadConfigsSeed = Buffer.from("Vizing_Pad_Settings_Seed");

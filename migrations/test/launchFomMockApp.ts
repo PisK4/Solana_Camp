@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
-import * as vizingUtils from "./vizing.utils";
-import devnetConfig from "./deployment.devnet.json";
+import * as vizingUtils from "../utils/vizing.utils";
+import devnetConfig from "../deployment.devnet.json";
 
 export async function main() {
   console.log("### Launch start");
@@ -73,6 +73,9 @@ export async function main() {
         ),
         vizingGasSystem: vizingUtils.generatePublicKeyFromString(
           networkConfig.vizingGasSystem
+        ),
+        currentRecordMessage: vizingUtils.generatePublicKeyFromString(
+          networkConfig.currentRecordMessage
         ),
       }
     );

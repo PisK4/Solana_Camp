@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
-import * as vizingUtils from "../migrations/vizing.utils";
-import * as vizingInit from "../migrations/initial.vizingPad";
+import * as vizingUtils from "./utils/vizing.utils";
+import * as vizingInit from "./utils/initial.vizingPad";
 import initParams from "./vizingPad.InitParams.json";
 
 const vizingCoreProgramId = initParams.vizingPadProgramId;
