@@ -434,6 +434,14 @@ pub mod vizing_core {
     /// @param targetContract evm address
     /// @param destChainid The chain id of the destination chain
      */
+    pub fn estimate_price(
+        ctx: Context<EstimatePrice>,
+        target_contract: [u8; 32],
+        dest_chain_id: u64,
+    ) -> Result<u64> {
+        EstimatePrice::get_estimate_price(ctx, target_contract, dest_chain_id)
+    }
+
     pub fn estimate_price1(
         ctx: Context<EstimatePrice1>,
         target_contract: [u8; 32],

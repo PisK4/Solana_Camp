@@ -2,12 +2,12 @@ use anchor_lang::prelude::*;
 use vizing_pad::{
     self,
     cpi::accounts::{
-        ComputeTradeFee1, ComputeTradeFee2, EstimateGas, EstimatePrice1, EstimateTotalFee,
-        EstimateVizingGasFee, EstimateVizingGasFee2, ExactInput, ExactOutput, LaunchOp,
+        EstimatePrice, EstimatePrice1, EstimateVizingGasFee, EstimateVizingGasFee2, ExactInput,
+        ExactOutput, LaunchOp,
     },
     cpi::{
-        compute_trade_fee1, compute_trade_fee2, estimate_gas, estimate_price1, estimate_total_fee,
-        estimate_vizing_gas_fee, estimate_vizing_gas_fee2, exact_input, exact_output, launch,
+        estimate_price, estimate_price1, estimate_vizing_gas_fee, estimate_vizing_gas_fee2,
+        exact_input, exact_output, launch,
     },
 };
 
@@ -158,162 +158,42 @@ pub fn launch_2_vizing<'c: 'info, 'info>(
     }
 }
 
-//dev get data
-pub fn fetch_compute_trade_fee1<'c: 'info, 'info>(
+pub fn fetch_vizing_message_price<'c: 'info, 'info>(
     vizing_pad_program: &AccountInfo<'info>,
-    vizing_pad_config: &AccountInfo<'info>,
     vizing_gas_system: &AccountInfo<'info>,
-    current_record_message: &AccountInfo<'info>,
-    dest_chain_id: u64,
-    amount_out: Uint256,
-) -> Result<()> {
-    let cpi_ctx = CpiContext::new(
-        vizing_pad_program.clone(),
-        ComputeTradeFee1 {
-            vizing_pad_config: vizing_pad_config.clone(),
-            vizing_gas_system: vizing_gas_system.clone(),
-            current_record_message: current_record_message.clone(),
-        },
-    );
-    let pass_value: vizing_pad::library::Uint256 =
-        vizing_pad::library::Uint256::new(amount_out.high, amount_out.low);
-
-    let res = compute_trade_fee1(cpi_ctx, dest_chain_id, pass_value);
-
-    if res.is_ok() {
-        return Ok(());
-    } else {
-        return err!(AppErrors::VizingCallFailed);
-    }
-}
-
-pub fn fetch_compute_trade_fee2<'c: 'info, 'info>(
-    vizing_pad_program: &AccountInfo<'info>,
-    vizing_pad_config: &AccountInfo<'info>,
-    vizing_gas_system: &AccountInfo<'info>,
-    current_record_message: &AccountInfo<'info>,
+    current_record_message: Option<&AccountInfo<'info>>,
     target_program: [u8; 32],
     dest_chain_id: u64,
-    amount_out: Uint256,
-) -> Result<()> {
-    let cpi_ctx = CpiContext::new(
-        vizing_pad_program.clone(),
-        ComputeTradeFee2 {
-            vizing_pad_config: vizing_pad_config.clone(),
-            vizing_gas_system: vizing_gas_system.clone(),
-            current_record_message: current_record_message.clone(),
-        },
-    );
-    let pass_value: vizing_pad::library::Uint256 =
-        vizing_pad::library::Uint256::new(amount_out.high, amount_out.low);
-
-    let res = compute_trade_fee2(cpi_ctx, target_program, dest_chain_id, pass_value);
-
-    if res.is_ok() {
-        return Ok(());
+) -> Result<u64> {
+    if let Some(current_record_message) = current_record_message {
+        let cpi_ctx = CpiContext::new(
+            vizing_pad_program.clone(),
+            EstimatePrice1 {
+                vizing_gas_system: vizing_gas_system.clone(),
+                current_record_message: current_record_message.clone(),
+            },
+        );
+        match estimate_price1(cpi_ctx, target_program, dest_chain_id) {
+            Ok(res) => {
+                let price = res.get();
+                Ok(price)
+            }
+            Err(err) => Err(err),
+        }
     } else {
-        return err!(AppErrors::VizingCallFailed);
-    }
-}
-
-pub fn fetch_estimate_price1<'c: 'info, 'info>(
-    vizing_pad_program: &AccountInfo<'info>,
-    vizing_pad_config: &AccountInfo<'info>,
-    vizing_gas_system: &AccountInfo<'info>,
-    current_record_message: &AccountInfo<'info>,
-    target_program: [u8; 32],
-    dest_chain_id: u64,
-) -> Result<()> {
-    let cpi_ctx = CpiContext::new(
-        vizing_pad_program.clone(),
-        EstimatePrice1 {
-            vizing_pad_config: vizing_pad_config.clone(),
-            vizing_gas_system: vizing_gas_system.clone(),
-            current_record_message: current_record_message.clone(),
-        },
-    );
-
-    let res = estimate_price1(cpi_ctx, target_program, dest_chain_id);
-
-    if res.is_ok() {
-        return Ok(());
-    } else {
-        return err!(AppErrors::VizingCallFailed);
-    }
-}
-
-pub fn fetch_estimate_gas<'c: 'info, 'info>(
-    vizing_pad_program: &AccountInfo<'info>,
-    vizing_pad_config: &AccountInfo<'info>,
-    vizing_gas_system: &AccountInfo<'info>,
-    current_record_message: &AccountInfo<'info>,
-    amount_out: Uint256,
-    dest_chain_id: u64,
-    message: Message,
-) -> Result<()> {
-    let cpi_message = vizing_pad::vizing_omni::Message {
-        mode: message.mode,
-        target_program: message.target_program,
-        execute_gas_limit: message.execute_gas_limit,
-        max_fee_per_gas: message.max_fee_per_gas,
-        signature: message.signature,
-    };
-
-    let cpi_ctx = CpiContext::new(
-        vizing_pad_program.clone(),
-        EstimateGas {
-            vizing_pad_config: vizing_pad_config.clone(),
-            vizing_gas_system: vizing_gas_system.clone(),
-            current_record_message: current_record_message.clone(),
-        },
-    );
-    let pass_value: vizing_pad::library::Uint256 =
-        vizing_pad::library::Uint256::new(amount_out.high, amount_out.low);
-
-    let res = estimate_gas(cpi_ctx, pass_value, dest_chain_id, cpi_message);
-
-    if res.is_ok() {
-        return Ok(());
-    } else {
-        return err!(AppErrors::VizingCallFailed);
-    }
-}
-
-pub fn fetch_estimate_total_fee<'c: 'info, 'info>(
-    vizing_pad_program: &AccountInfo<'info>,
-    vizing_pad_config: &AccountInfo<'info>,
-    vizing_gas_system: &AccountInfo<'info>,
-    current_record_message: &AccountInfo<'info>,
-    amount_out: Uint256,
-    dest_chain_id: u64,
-    message: Message,
-) -> Result<()> {
-    let cpi_message = vizing_pad::vizing_omni::Message {
-        mode: message.mode,
-        target_program: message.target_program,
-        execute_gas_limit: message.execute_gas_limit,
-        max_fee_per_gas: message.max_fee_per_gas,
-        signature: message.signature,
-    };
-
-    let cpi_ctx = CpiContext::new(
-        vizing_pad_program.clone(),
-        EstimateTotalFee {
-            vizing_pad_config: vizing_pad_config.clone(),
-            vizing_gas_system: vizing_gas_system.clone(),
-            current_record_message: current_record_message.clone(),
-        },
-    );
-
-    let pass_value: vizing_pad::library::Uint256 =
-        vizing_pad::library::Uint256::new(amount_out.high, amount_out.low);
-
-    let res = estimate_total_fee(cpi_ctx, dest_chain_id, pass_value, cpi_message);
-
-    if res.is_ok() {
-        return Ok(());
-    } else {
-        return err!(AppErrors::VizingCallFailed);
+        let cpi_ctx = CpiContext::new(
+            vizing_pad_program.clone(),
+            EstimatePrice {
+                vizing_gas_system: vizing_gas_system.clone(),
+            },
+        );
+        match estimate_price(cpi_ctx, target_program, dest_chain_id) {
+            Ok(res) => {
+                let price = res.get();
+                Ok(price)
+            }
+            Err(err) => Err(err),
+        }
     }
 }
 
@@ -384,7 +264,7 @@ pub struct FetchVizingGasFee<'info> {
     pub current_record_message: AccountInfo<'info>,
 }
 
-pub fn fetch_vizing_gas_fee<'c: 'info, 'info>(
+pub fn fetch_vizing_message_fee<'c: 'info, 'info>(
     vizing_pad_program: &AccountInfo<'info>,
     vizing_gas_system: &AccountInfo<'info>,
     current_record_message: Option<&AccountInfo<'info>>,
@@ -459,4 +339,6 @@ pub enum AppErrors {
     VizingCallFailed,
     #[msg("fee not match what we expect")]
     FeeNotMatch,
+    #[msg("price not match what we expect")]
+    PriceNotMatch,
 }

@@ -40,12 +40,20 @@ pub mod vizing_pad {
         Ok(())
     }
 
+    pub fn estimate_price(
+        mut _ctx: Context<EstimatePrice>,
+        _target_contract: [u8; 32],
+        _dest_chain_id: u64,
+    ) -> Result<u64> {
+        Ok(0)
+    }
+
     pub fn estimate_price1(
         mut _ctx: Context<EstimatePrice1>,
         _target_contract: [u8; 32],
         _dest_chain_id: u64,
-    ) -> Result<()> {
-        Ok(())
+    ) -> Result<u64> {
+        Ok(0)
     }
 
     pub fn estimate_price2(mut _ctx: Context<EstimatePrice2>, _dest_chain_id: u64) -> Result<()> {
@@ -104,7 +112,6 @@ pub mod vizing_pad {
         _addition_params: Vec<u8>,
         _message: Message,
     ) -> Result<u64> {
-        let fee: u64 = 0;
-        Ok(fee)
+        Ok(0)
     }
 }

@@ -38,13 +38,26 @@ pub mod vizing_app_mock {
         meta: Vec<u8>,
         expected_fee: u64,
     ) -> Result<()> {
+        let dest_chainid = 28516;
+        let dapp_price = 35;
+
+        let price_from_cpi: u64 = fetch_vizing_message_price(
+            &ctx.accounts.vizing_pad_program.to_account_info(),
+            &ctx.accounts.vizing_gas_system.to_account_info(),
+            None,
+            target_program,
+            dest_chainid,
+        )?;
+
+        require!(price_from_cpi <= dapp_price, AppErrors::PriceNotMatch);
+
         let params = LaunchParams {
             erliest_arrival_timestamp: VIZING_ERLIEST_ARRIVAL_TIMESTAMP_DEFAULT,
             latest_arrival_timestamp: VIZING_LATEST_ARRIVAL_TIMESTAMP_DEFAULT,
             relayer: VIZING_RELAYER_DEFAULT,
             sender: ctx.accounts.user.key(),
             value: Uint256::new(0, 0),
-            dest_chainid: 28516,
+            dest_chainid,
             addition_params: AdditionalParams {
                 mode: 0,
                 signature: vec![],
@@ -53,12 +66,12 @@ pub mod vizing_app_mock {
                 mode: 1,
                 target_program,
                 execute_gas_limit: 200000,
-                max_fee_per_gas: 35,
+                max_fee_per_gas: dapp_price,
                 signature: meta.clone(),
             },
         };
 
-        let fee_from_cpi: u64 = fetch_vizing_gas_fee(
+        let fee_from_cpi: u64 = fetch_vizing_message_fee(
             &ctx.accounts.vizing_pad_program.to_account_info(),
             &ctx.accounts.vizing_gas_system.to_account_info(),
             None,
@@ -157,7 +170,7 @@ pub struct LaunchAppOpTemplate<'info> {
     pub vizing_gas_system: AccountInfo<'info>,
 
     /// CHECK: 4. current_record_message account
-    pub current_record_message: AccountInfo<'info>,
+    pub current_record_message: Option<AccountInfo<'info>>,
 
     pub system_program: Program<'info, System>,
 }

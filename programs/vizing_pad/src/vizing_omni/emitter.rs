@@ -198,20 +198,14 @@ pub struct ComputeTradeFee2<'info> {
 }
 
 #[derive(Accounts)]
+pub struct EstimatePrice<'info> {
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
+}
+
+#[derive(Accounts)]
 pub struct EstimatePrice1<'info> {
-    #[account(
-        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
-        bump = vizing_pad_config.bump
-    )]
-    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
-    #[account(
-        mut,
-        seeds = [VIZING_GAS_SYSTEM_SEED, vizing_pad_config.key().as_ref()],
-        bump
-    )]
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
-        mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
         bump
     )]

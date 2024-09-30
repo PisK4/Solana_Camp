@@ -205,29 +205,27 @@ pub fn fetch_compute_trade_fee2<'c: 'info, 'info>(
     }
 }
 
-pub fn fetch_estimate_price1<'c: 'info, 'info>(
+pub fn fetch_vizing_message_price<'c: 'info, 'info>(
     vizing_pad_program: &AccountInfo<'info>,
-    vizing_pad_config: &AccountInfo<'info>,
     vizing_gas_system: &AccountInfo<'info>,
     current_record_message: &AccountInfo<'info>,
     target_program: [u8; 32],
     dest_chain_id: u64,
-) -> Result<()> {
+) -> Result<u64> {
     let cpi_ctx = CpiContext::new(
         vizing_pad_program.clone(),
         EstimatePrice1 {
-            vizing_pad_config: vizing_pad_config.clone(),
             vizing_gas_system: vizing_gas_system.clone(),
             current_record_message: current_record_message.clone(),
         },
     );
 
-    let res = estimate_price1(cpi_ctx, target_program, dest_chain_id);
-
-    if res.is_ok() {
-        return Ok(());
-    } else {
-        return err!(AppErrors::VizingCallFailed);
+    match estimate_price1(cpi_ctx, target_program, dest_chain_id) {
+        Ok(res) => {
+            let price = res.get();
+            Ok(price)
+        }
+        Err(err) => Err(err),
     }
 }
 
@@ -361,7 +359,7 @@ pub fn fetch_exact_input<'c: 'info, 'info>(
     }
 }
 
-pub fn fetch_vizing_gas_fee<'c: 'info, 'info>(
+pub fn fetch_vizing_message_fee<'c: 'info, 'info>(
     vizing_pad_program: &AccountInfo<'info>,
     vizing_gas_system: &AccountInfo<'info>,
     current_record_message: Option<&AccountInfo<'info>>,

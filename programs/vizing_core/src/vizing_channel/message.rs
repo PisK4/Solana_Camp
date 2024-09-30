@@ -412,22 +412,48 @@ impl ComputeTradeFee2<'_> {
     }
 }
 
+
+#[derive(Accounts)]
+pub struct EstimatePrice<'info> {
+    pub vizing_gas_system: Account<'info, VizingGasSystem>,
+}
+
+impl EstimatePrice<'_> {
+    pub fn get_estimate_price(
+        ctx: Context<EstimatePrice>,
+        target_contract: [u8; 32],
+        dest_chain_id: u64,
+    ) -> Result<u64> {
+        let vizing_gas_system = &mut ctx.accounts.vizing_gas_system;
+        let gas_system_global = vizing_gas_system.get_gas_system_global(dest_chain_id);
+        let trade_fee_config = vizing_gas_system.get_trade_fee_config(dest_chain_id,target_contract);
+        let fee_config = vizing_gas_system.get_fee_config(dest_chain_id);
+        let dapp_config_value=trade_fee_config.value;
+
+        let dapp_base_price: u64 = vizing_gas_system::estimate_price1(
+            fee_config.base_price,
+            gas_system_global.global_base_price,
+            dapp_config_value,
+            target_contract,
+            dest_chain_id,
+        ).ok_or(errors::ErrorCode::EstimatePrice2NotFound)?;
+        //set return dapp_base_price
+
+        Ok(dapp_base_price)
+    }
+}
+
+
 #[derive(Accounts)]
 pub struct EstimatePrice1<'info> {
-    #[account(
-        seeds = [contants::VIZING_PAD_CONFIG_SEED], 
-        bump = vizing_pad_config.bump
-    )]
-    pub vizing_pad_config: Account<'info, VizingPadConfigs>,
-
     pub vizing_gas_system: Account<'info, VizingGasSystem>,
     #[account(
-        mut,
         seeds = [contants::VIZING_RECORD_SEED.as_ref()],
         bump
     )]
     pub current_record_message: Account<'info, CurrentRecordMessage>,
 }
+
 impl EstimatePrice1<'_> {
     pub fn get_estimate_price1(
         ctx: Context<EstimatePrice1>,
