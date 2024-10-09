@@ -50,24 +50,32 @@ export async function main() {
 
   console.log("run");
 
-  const tx = await vizingProgram.methods
-    .launch(launchParams)
-    .accounts({
-      vizingAppFeePayer: vizingProgram.provider.publicKey!,
-      vizingAppMessageAuthority: vizingProgram.provider.publicKey!,
-      vizingPadConfig: vizingUtils.generatePublicKeyFromString(
-        devnetConfig.vizingPadConfig
-      ),
-      vizingPadFeeCollector: vizingUtils.generatePublicKeyFromString(
-        devnetConfig.vizingPadFeeCollector
-      ),
-      vizingGasSystem: vizingUtils.generatePublicKeyFromString(
-        devnetConfig.vizingGasSystem
-      ),
-    })
-    .rpc();
+  try {
+    const tx = await vizingProgram.methods
+      .launch(launchParams)
+      .accounts({
+        vizingAppFeePayer: vizingProgram.provider.publicKey!,
+        vizingAppMessageAuthority: vizingProgram.provider.publicKey!,
+        vizingPadConfig: vizingUtils.generatePublicKeyFromString(
+          devnetConfig.vizingPadConfig
+        ),
+        vizingPadFeeCollector: vizingUtils.generatePublicKeyFromString(
+          devnetConfig.vizingPadFeeCollector
+        ),
+        vizingGasSystem: vizingUtils.generatePublicKeyFromString(
+          devnetConfig.vizingGasSystem
+        ),
+      })
+      .rpc();
 
-  console.log(`launch: ${tx}`);
+    console.log(`launch: ${tx}`);
+  } catch (error) {
+    if (error.signature) {
+      console.log(`launch: ${error.signature}`);
+    } else {
+      console.error(error);
+    }
+  }
 }
 
 main()

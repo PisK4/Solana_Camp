@@ -67,7 +67,7 @@ describe("Vizing Test", () => {
     ),
   ];
 
-  const EVM_src_address = "0x4d20A067461fD60379DA001EdEC6E8CFb9862cE4";
+  const EVM_src_address = "0x922BEA61bc185c4Ef7cF24bd1B4123a50676d6E8";
   const EVM_address_buffer =
     vizingUtils.padEthereumAddressToBuffer(EVM_src_address);
 

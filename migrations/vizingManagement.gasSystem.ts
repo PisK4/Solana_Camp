@@ -68,7 +68,9 @@ export async function main() {
     );
   }
 
-  const initGasSystemParams: vizingUtils.initializeVizingGasSystemParams = {
+  console.log("start!");
+
+  const gasSystemParams: vizingUtils.initializeVizingGasSystemParams = {
     groupId: new anchor.BN(initParams.firstSetup.groupId),
     chainId: new anchor.BN(initParams.firstSetup.chainId),
     basePrice: new anchor.BN(initParams.firstSetup.basePrice),
@@ -83,24 +85,43 @@ export async function main() {
     globalDenominator: new anchor.BN(initParams.firstSetup.globalDenominator),
   };
 
-  const initRet = await vizingInit.inititalizeVizingPad(
-    vizingProgram,
-    vizingProgram.provider.publicKey,
-    feeCollector,
-    engineAdmin,
-    stationAdmin,
-    gasPoolAdmin,
-    swapManager,
-    trustedRelayers,
-    registeredValidator,
-    initGasSystemParams
-  );
+  const [vizingPadConfigs, vizingPadConfigBump] =
+    vizingUtils.generatePdaForVizingPadConfig(vizingProgram.programId);
 
-  const timestamp = new Date().getTime();
-  const savePath = `./migrations/vizingPad.InitOutput.${timestamp}.json`;
-  fs.writeFileSync(savePath, JSON.stringify(initRet));
-  console.log(`init output file save at: ${savePath}`);
-  console.log("### vizing init end");
+  {
+    const [vizingGasSystem, vizingGasSystemBump] =
+      vizingUtils.generatePdaForVizingGasSystem(
+        vizingProgram.programId,
+        vizingPadConfigs,
+        gasSystemParams.groupId
+      );
+
+    console.log("vizingGasSystem: ", vizingGasSystem.toString());
+
+    const initGasSystemParams = gasSystemParams;
+
+    {
+      try {
+        const tx = await vizingUtils.initializeVizingGasSystem(
+          vizingProgram,
+          initGasSystemParams,
+          {
+            vizingPadConfig: vizingPadConfigs,
+            vizingGasSystem: vizingGasSystem,
+            payer: vizingProgram.provider.publicKey,
+          }
+        );
+
+        console.log(`gasSystem initialize: ${tx}`);
+      } catch (error) {
+        if (error.signature) {
+          console.log(`gasSystem initialize signature: ${error.signature}`);
+        } else {
+          console.error(error);
+        }
+      }
+    }
+  }
 }
 
 main()

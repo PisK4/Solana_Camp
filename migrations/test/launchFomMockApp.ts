@@ -18,7 +18,7 @@ export async function main() {
 
   const targetProgram = vizingUtils.addressToNumberArray(
     // "0x000000000000000000000000c3C7A782dda00a8E61Cb9Ba0ea8680bb3f3B9d10"
-    "0x0000000000000000000000004d20A067461fD60379DA001EdEC6E8CFb9862cE4"
+    "0x000000000000000000000000922BEA61bc185c4Ef7cF24bd1B4123a50676d6E8"
   );
 
   const meta = Buffer.concat([

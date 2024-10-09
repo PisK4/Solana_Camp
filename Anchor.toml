@@ -6,13 +6,13 @@ skip-lint = false
 
 [programs.devnet]
 vizing_app = "C17xMdoPdgPSYd7oGEjYf5LQ1mg6k6P3eavCBdMfaF1X"
-vizing_app_mock = "mokB6FzEZx6vPVmasd19CyDDuqZ98auke1Bk59hmzVE"
+vizing_app_mock = "mokfsGhmaCUURb7CoVTkfUbYgUibpMSaWz9iUsrHg8K"
 vizing_core = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
 vizing_pad = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
 
 [programs.localnet]
 vizing_app = "C17xMdoPdgPSYd7oGEjYf5LQ1mg6k6P3eavCBdMfaF1X"
-vizing_app_mock = "mokB6FzEZx6vPVmasd19CyDDuqZ98auke1Bk59hmzVE"
+vizing_app_mock = "mokfsGhmaCUURb7CoVTkfUbYgUibpMSaWz9iUsrHg8K"
 vizing_core = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
 vizing_pad = "vizngM8xTgmP15xuxpUZHbdec3LBG7bnTe9j1BtaqsE"
 
@@ -25,8 +25,9 @@ wallet = "./governance/.config/wallet/deployer_keypair.json"
 
 [scripts]
 init = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/vizingManagement.ts"
+init_gas_system = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/vizingManagement.gasSystem.ts"
 init_bob = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/initial.bob.ts"
-init_mock = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/appMockInit.ts"
-launch = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/launch.ts"
-launch_mock = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/launchFomMockApp.ts"
+init_mock = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/test/appMockInit.ts"
+launch = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/test/launch.ts"
+launch_mock = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 migrations/test/launchFomMockApp.ts"
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/vizing.test.ts"
